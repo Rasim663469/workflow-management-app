@@ -1,0 +1,36 @@
+<h1>{{title}}</h1>
+<p>Please log in to continue:</p>
+
+<form (ngSubmit)="submit()" [formGroup]="form">
+  
+    <label>Username
+      <input formControlName="username" type="text"/>
+    </label>
+    @if(form.get('username')?.touched && form.get('username')?.invalid) {
+      <p class="error-message">Username is required</p>
+    }
+
+  
+    <label>Password
+      <input formControlName="password" type="password"/>
+    </label>
+    @if(form.get('password')?.touched && form.get('password')?.invalid) {
+      <p class="error-message">Password is required</p>
+    }
+  
+    <button type="submit">
+      @if(auth.isLoading()) {
+      <span>Loading...</span>
+    } @else {
+      <span>Login</span>
+    }
+    </button>
+    
+
+  </form>
+  
+  @if(auth.error()) {
+    <p class="error">{{ auth.error() }}</p>
+  }
+
+ 

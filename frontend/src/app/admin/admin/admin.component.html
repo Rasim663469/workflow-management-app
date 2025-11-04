@@ -1,0 +1,9 @@
+<h1>Admin Panel</h1>
+<p>Manage users below:</p>
+@for (user of users(); track user.login) {
+    <div class="user-card">
+        <h3>{{user.login}}</h3>
+        <p>Role: {{user.role}}</p>
+    </div>   
+}
+

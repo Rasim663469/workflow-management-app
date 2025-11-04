@@ -1,0 +1,13 @@
+<nav class="app-header">
+  <div class="nav-inner">
+    <a routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
+    @if(auth.isAdmin()) {
+      <a routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Admin</a>
+    }
+    @if(!auth.isLoggedIn()) {
+      <a routerLink="/login" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Login</a>
+    }
+  </div>
+</nav>
+
+<router-outlet></router-outlet>

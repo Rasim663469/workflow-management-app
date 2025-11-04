@@ -1,0 +1,87 @@
+services:
+  # --------------------------------------------------------------------
+  # Base de données PostgreSQL
+  # --------------------------------------------------------------------
+  db:
+    image: postgres:16-alpine      # image légère et officielle de PostgreSQL
+    container_name: secureapp_db_prod # nom explicite du conteneur
+    restart: unless-stopped        # redémarrage automatique en cas de crash
+    environment:                   # variables d’environnement pour init.
+      POSTGRES_USER: secureapp
+      POSTGRES_PASSWORD: secureapp
+      POSTGRES_DB: secureapp
+    volumes:                       # persistance et initialisation de la base
+      - db_data:/var/lib/postgresql/data # volume persistant pour les données
+      - ./backend/db/init.sql:/docker-entrypoint-initdb.d/init.sql  # script
+                                            # SQL exécuté au 1er démarrage
+    networks:
+      - secure_net  # réseau privé partagé avec backend et frontend
+
+  # --------------------------------------------------------------------
+  # Backend Node.js (API Express + JWT + HTTPS)
+  # --------------------------------------------------------------------
+  backend:
+    build:                  # Build du backend via le Dockerfile dédié
+      context: ./backend    # répertoire racine du projet pour accéder à ./certs
+      dockerfile: Dockerfile # fichier Dockerfile à utiliser
+    container_name: secureapp_backend_prod
+    restart: unless-stopped
+    depends_on:             # s’assure que la base est prête avant le backend
+      - db
+    environment:            # variables d’environnement injectées au runtime
+      NODE_ENV: production
+      DATABASE_URL: postgresql://secureapp:secureapp@db:5432/secureapp
+      JWT_SECRET: "mon_secret_jwt_super_long_et_complexe"
+      JWT_EXPIRATION: "15m"
+      REFRESH_EXPIRATION: "7d"
+      FRONTEND_URL: http://localhost:8080
+    volumes:           # accès en lecture seule aux certificats SSL (mkcert)
+      - ./backend/certs:/app/certs:ro
+    ports:
+      - "4000:4000"    # expose le port HTTPS du backend sur la machine hôte
+    networks:
+      - secure_net     # même réseau Docker que les autres services
+
+  # --------------------------------------------------------------------
+  # Frontend Angular (servi via Nginx)
+  # --------------------------------------------------------------------
+  frontend:
+    build:                            # Build du front Angular + Nginx
+      context: ./frontend             # répertoire racine du frontend
+      dockerfile: Dockerfile          # Dockerfile pour le front (multi-stage avec Nginx)
+    container_name: secureapp_frontend_prod
+    restart: unless-stopped
+    depends_on:
+      - backend                       # le backend doit être prêt avant le front
+    ports:
+      - "8080:80"                     # le front est accessible sur http://localhost:8080
+    networks:
+      - secure_net                    # partage du réseau avec backend et db
+
+  # =========================================================
+  # Adminer (interface web de gestion PostgreSQL)
+  # =========================================================
+  adminer:
+    image: adminer:latest
+    container_name: secureapp_adminer_prod
+    restart: unless-stopped
+    depends_on:
+      - db
+    ports:
+      - "8081:8080"   # http://localhost:8081
+    environment:
+      - ADMINER_DEFAULT_SERVER=db
+    networks:
+      - secure_net
+
+# ----------------------------------------------------------------------
+# Volume persistant pour PostgreSQL
+# ----------------------------------------------------------------------
+volumes:
+  db_data:                            # stocke les données de la base entre les redémarrages
+
+# ----------------------------------------------------------------------
+# Réseau interne privé
+# ----------------------------------------------------------------------
+networks:
+  secure_net:                         # réseau isolé : aucun service n’est exposé publiquement sauf le front
