@@ -1,0 +1,137 @@
+@startuml Festival_DB_Schema
+
+' Styles
+skinparam linetype ortho
+skinparam roundcorner 5
+
+entity "FESTIVAL" as festival {
+  * id : INT <<PK>>
+  --
+  * nom : VARCHAR(255) <<UK>>
+  * nombre_total_tables : INT
+  * date_debut : DATE
+  * date_fin : DATE
+  
+}
+
+entity "ZONE_TARIFAIRE" as zone_tarifaire {
+  * id : INT <<PK>>
+  --
+  * festival_id : INT <<FK>>
+  * nom : VARCHAR(100)
+  * nombre_tables_total : INT
+  * nombre_tables_disponibles : INT
+  * prix_table : DECIMAL(10,2)
+  * prix_m2 : DECIMAL(10,2)
+  
+}
+
+entity "ZONE_PLAN" as zone_plan {
+  * id : INT <<PK>>
+  --
+  * festival_id : INT <<FK>>
+  * zone_tarifaire_id : INT <<FK>>
+  * nom : VARCHAR(100)
+  * nombre_tables : INT
+  
+}
+
+entity "EDITEUR" as editeur {
+  * id : INT <<PK>>
+  --
+  * nom : VARCHAR(255)
+  * description : TEXT
+}
+
+entity "CONTACT" as contact {
+  * id : INT <<PK>>
+  --
+  * editeur_id : INT <<FK>>
+  * nom : VARCHAR(100)
+  * prenom : VARCHAR(100)
+  * email : VARCHAR(255)
+  * telephone : VARCHAR(20)
+  * role : VARCHAR(100)
+}
+
+entity "JEU" as jeu {
+  * id : INT <<PK>>
+  --
+  * editeur_id : INT <<FK>>
+  * nom : VARCHAR(255)
+  * auteurs : VARCHAR(255)
+  * age_min : INT
+  * age_max : INT
+  * type_jeu : VARCHAR(100)
+}
+
+entity "RESERVATION" as reservation {
+  * id : INT <<PK>>
+  --
+  * editeur_id : INT <<FK>>
+  * festival_id : INT <<FK>>
+  * remise_tables_offertes : INT
+  * remise_argent : DECIMAL(10,2)
+  * prix_total : DECIMAL(10,2) 
+  * prix_final : DECIMAL(10,2)  
+  * editeur_presente_jeux : BOOLEAN
+  * statut_workflow : ENUM
+  
+  
+}
+
+entity "CONTACT_EDITEUR" as contact_editeur {
+  * id : INT <<PK>>
+  --
+  * editeur_id : INT <<FK>>
+  * festival_id : INT <<FK>>
+  * date_contact : DATETIME
+  * notes : TEXT
+}
+
+entity "RESERVATION_DETAIL" as reservation_detail {
+  * id : INT <<PK>>
+  --
+  * reservation_id : INT <<FK>>
+  * zone_tarifaire_id : INT <<FK>>
+  * nombre_tables : INT
+  * prix_zone : DECIMAL(10,2)
+
+}
+
+entity "JEU_FESTIVAL" as jeu_festival {
+  * id : INT <<PK>>
+  --
+  * jeu_id : INT <<FK>>
+  * reservation_id : INT <<FK>>
+  * zone_plan_id : INT <<FK>>
+  * quantite : INT 
+  * nombre_tables_allouees : DECIMAL(4,2)
+  * liste_demandee : BOOLEAN
+  * liste_obtenue : BOOLEAN
+  * jeux_recus : BOOLEAN
+   
+}
+
+
+festival "1,1" -- "1,n" zone_tarifaire : possède >
+festival "1,1" -- "1,n" zone_plan : possède >
+festival "1,1" -- "0,n" reservation : concerne >
+festival "1,1" -- "0,n" contact_editeur : suit les contacts >
+
+zone_tarifaire "1,1" -- "0,n" reservation_detail : est réservée dans >
+zone_tarifaire "1,1" -- "1,n" zone_plan : correspond à >
+
+zone_plan "0,1" -- "0,n" jeu_festival : contient des jeux >
+
+editeur "1,1" -- "0,n" contact : possède >
+editeur "1,1" -- "0,n" jeu : possède >
+editeur "1,1" -- "0,n" reservation : effectue >
+editeur "1,1" -- "0,n" contact_editeur : est contacté >
+
+reservation "1,1" -- "1,n" reservation_detail : occupe des zones >
+reservation "1,1" -- "0,n" jeu_festival : inclut des jeux >
+
+jeu "1,1" -- "0,n" jeu_festival : est présenté au festival >
+
+@enduml

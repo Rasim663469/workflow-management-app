@@ -1,0 +1,23 @@
+@startuml UC05_Liste_Jeux_Editeur
+
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Admin" as adm
+
+rectangle "Liste des Jeux d'un Éditeur" {
+  usecase "Afficher liste jeux" as UC5
+  usecase "Afficher détails jeu" as UC5_1
+  usecase "Ajouter jeu" as UC5_2
+  usecase "Supprimer jeu" as UC5_3
+  usecase "Trier selon critères" as UC5_4
+}
+
+adm --> UC5
+
+UC5 ..> UC5_1 : <<include>>
+UC5 ..> UC5_2 : <<extend>>
+UC5 ..> UC5_3 : <<extend>>
+UC5 ..> UC5_4 : <<extend>>
+
+@enduml

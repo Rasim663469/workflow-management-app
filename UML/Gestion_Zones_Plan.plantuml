@@ -1,0 +1,28 @@
+@startuml UC12_Gestion_Zones_Plan
+
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Admin" as adm
+
+rectangle "Gestion des Zones du Plan" {
+  usecase "Gérer zones du plan" as UC12
+  usecase "Afficher liste zones plan" as UC12_1
+  usecase "Créer zone plan" as UC12_2
+  usecase "Modifier zone plan" as UC12_3
+  usecase "Lier à zone tarifaire" as UC12_4
+  usecase "Afficher jeux de la zone" as UC12_5
+  usecase "Afficher éditeurs présents" as UC12_6
+}
+
+adm --> UC12
+
+UC12 ..> UC12_1 : <<include>>
+UC12 ..> UC12_2 : <<extend>>
+UC12 ..> UC12_3 : <<extend>>
+UC12 ..> UC12_4 : <<include>>
+UC12 ..> UC12_5 : <<include>>
+UC12 ..> UC12_6 : <<include>>
+
+
+@enduml

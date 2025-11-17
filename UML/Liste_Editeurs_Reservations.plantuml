@@ -1,0 +1,29 @@
+@startuml UC06_Liste_Editeurs_Reservations
+
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Admin" as adm
+
+rectangle "Liste Éditeurs + Réservations Festival" {
+  usecase "Afficher liste éditeurs avec statut" as UC6
+  usecase "Afficher statut contact" as UC6_1
+  usecase "Afficher dernière date contact" as UC6_1_1
+  usecase "Afficher statut réservation" as UC6_1_2
+  usecase "Trier" as UC6_2
+  usecase "Dernière date de contact" as UC6_3
+  usecase "Sélectionner pour gérer réservation" as UC6_4
+  usecase "Éditer état réservation" as UC6_5
+}
+
+adm --> UC6
+
+UC6 ..> UC6_1 : <<include>>
+UC6_1 ..> UC6_1_1 : <<include>>
+UC6_1 ..> UC6_1_2 : <<include>>
+UC6 ..> UC6_2 : <<extend>>
+UC6 ..> UC6_3 : <<extend>>
+UC6 ..> UC6_4 : <<extend>>
+UC6 ..> UC6_5 : <<extend>>
+
+@enduml

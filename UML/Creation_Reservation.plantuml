@@ -1,0 +1,33 @@
+@startuml UC10_Creation_Reservation
+
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Admin et éditeur" as adm
+
+rectangle "Création/Édition Réservation" {
+  usecase "Créer/Éditer réservation" as UC10
+  usecase "Réserver tables par zone" as UC10_1
+  usecase "Calculer prix total" as UC10_2
+  usecase "Appliquer remises" as UC10_3
+  usecase "Remise en tables offertes" as UC10_3_1
+  usecase "Remise en argent" as UC10_3_2
+  usecase "Ajouter jeux à réservation" as UC10_4
+  usecase "Indiquer nombre de jeux" as UC10_4_1
+  usecase "Allouer tables par jeu" as UC10_4_2
+  usecase "Placer jeux dans zones plan" as UC10_5
+}
+
+adm --> UC10
+
+UC10 ..> UC10_1 : <<include>>
+UC10 ..> UC10_2 : <<include>>
+UC10 ..> UC10_3 : <<extend>>
+UC10_3 <|-- UC10_3_1
+UC10_3 <|-- UC10_3_2
+UC10 ..> UC10_4 : <<extend>>
+UC10_4 ..> UC10_4_1 : <<include>>
+UC10_4 ..> UC10_4_2 : <<include>>
+UC10 ..> UC10_5 : <<extend>>
+
+@enduml

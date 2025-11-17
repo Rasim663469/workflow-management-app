@@ -1,0 +1,27 @@
+@startuml UC11_Gestion_Zones
+
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Admin" as adm
+
+rectangle "Gestion des Zones Tarifaires" {
+  usecase "Gérer zones tarifaires" as UC11
+  usecase "Afficher liste zones" as UC11_1
+  usecase "Créer zone tarifaire" as UC11_2
+  usecase "Modifier zone tarifaire" as UC11_3
+  usecase "Supprimer zone tarifaire" as UC11_4
+  usecase "Ajouter réservation à zone" as UC11_5
+  usecase "Calculer tables restantes" as UC11_6
+}
+
+adm --> UC11
+
+UC11 ..> UC11_1 : <<include>>
+UC11 ..> UC11_2 : <<extend>>
+UC11 ..> UC11_3 : <<extend>>
+UC11 ..> UC11_4 : <<extend>>
+UC11 ..> UC11_5 : <<extend>>
+UC11 ..> UC11_6 : <<include>>
+
+@enduml

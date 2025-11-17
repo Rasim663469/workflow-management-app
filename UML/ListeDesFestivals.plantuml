@@ -1,0 +1,27 @@
+@startuml UC01_Liste_Festivals
+
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Admin" as adm
+actor "User" as us
+rectangle "Liste des Festivals" {
+  usecase "Afficher liste des festivals" as UC1
+  usecase "Afficher carte festival" as UC1_1
+  usecase "Afficher nom festival" as UC1_1_1
+  usecase "Afficher total tables disponibles" as UC1_1_2
+  usecase "Afficher tables par zone" as UC1_1_3
+  usecase "Edit festival" as UC1_2
+  usecase "Ajouter nouveau festival" as UC1_3
+}
+
+us --> UC1
+adm -->UC1
+adm -->UC1_3
+adm -->UC1_2
+UC1 ..> UC1_1 : <<include>>
+UC1_1 ..> UC1_1_1 : <<include>>
+UC1_1 ..> UC1_1_2 : <<include>>
+UC1_1 ..> UC1_1_3 : <<include>>
+
+@enduml

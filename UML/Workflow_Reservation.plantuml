@@ -1,0 +1,42 @@
+@startuml UC08_Workflow_Reservation
+
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Admin" as adm
+
+rectangle "Workflow de Réservation" {
+  usecase "Gérer workflow réservation" as UC8
+  usecase "Gérer statut contact" as UC8_1
+  usecase "Ajouter date contact" as UC8_1_1
+  usecase "Gérer état suivi" as UC8_2
+  usecase "Marquer pas de contact" as UC8_2_1
+  usecase "Marquer contact pris" as UC8_2_2
+  usecase "Marquer discussion en cours" as UC8_2_3
+  usecase "Marquer sera absent" as UC8_2_4
+  usecase "Marquer considéré absent" as UC8_2_5
+  usecase "Marquer présent" as UC8_2_6
+  usecase "Marquer facturé" as UC8_2_7
+  usecase "Marquer facture payée" as UC8_2_8
+}
+
+adm --> UC8
+
+UC8 ..> UC8_1 : <<include>>
+UC8 ..> UC8_2 : <<include>>
+UC8_1 ..> UC8_1_1 : <<extend>>
+UC8_2 ..> UC8_2_1 : <<extend>>
+UC8_2 ..> UC8_2_2 : <<extend>>
+UC8_2 ..> UC8_2_3 : <<extend>>
+UC8_2 ..> UC8_2_4 : <<extend>>
+UC8_2 ..> UC8_2_5 : <<extend>>
+UC8_2 ..> UC8_2_6 : <<extend>>
+UC8_2 ..> UC8_2_7 : <<extend>>
+UC8_2 ..> UC8_2_8 : <<extend>>
+
+note right of UC8_1_1
+  Plusieurs relances possibles
+  Liste des dates de contact
+end note
+
+@enduml

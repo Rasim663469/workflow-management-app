@@ -1,0 +1,21 @@
+@startuml UC03_Liste_Editeurs
+
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Admin" as adm
+
+rectangle "Liste des Éditeurs" {
+  usecase "Afficher liste éditeurs" as UC3
+  usecase "Trier selon critères" as UC3_1
+  usecase "Sélectionner éditeur" as UC3_2
+  usecase "Ajouter éditeur" as UC3_3
+}
+
+adm --> UC3
+
+UC3 ..> UC3_1 : <<extend>>
+UC3 ..> UC3_2 : <<extend>>
+UC3 ..> UC3_3 : <<extend>>
+
+@enduml
