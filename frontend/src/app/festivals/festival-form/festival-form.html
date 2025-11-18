@@ -1,0 +1,52 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()">
+  <div class="grid">
+    <div class="field">
+      <label for="name">Nom du festival</label>
+      <input id="name" formControlName="name" type="text" placeholder="Festival des Jeux 2025" />
+    </div>
+    <div class="field">
+      <label for="location">Lieu</label>
+      <input id="location" formControlName="location" type="text" placeholder="Montpellier" />
+    </div>
+    <div class="field">
+      <label for="date">Date</label>
+      <input id="date" formControlName="date" type="date" />
+    </div>
+  </div>
+
+  <div class="zones" formArrayName="tariffZones">
+    @for (zone of tariffZones.controls; track $index; let i = $index) {
+      <fieldset [formGroupName]="i">
+        <div class="zone-header">
+          <h2>Zone tarifaire {{ i + 1 }}</h2>
+          @if (tariffZones.length > 1) {
+            <button type="button" class="secondary" (click)="removeZone(i)">Supprimer</button>
+          }
+        </div>
+        <div class="grid">
+          <div class="field">
+            <label>Nom de la zone</label>
+            <input formControlName="name" type="text" placeholder="Zone A" />
+          </div>
+          <div class="field">
+            <label>Tables totales</label>
+            <input formControlName="totalTables" type="number" min="1" />
+          </div>
+          <div class="field">
+            <label>Prix par table (€)</label>
+            <input formControlName="pricePerTable" type="number" min="0" step="0.01" />
+          </div>
+          <div class="field">
+            <label>Prix au m² (€) <span class="hint">(optionnel)</span></label>
+            <input formControlName="pricePerM2" type="number" min="0" step="0.01" placeholder="Auto si vide" />
+          </div>
+        </div>
+      </fieldset>
+    }
+    <button type="button" class="secondary" (click)="addZone()">Ajouter une zone tarifaire</button>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit">Créer le festival</button>
+  </div>
+</form>

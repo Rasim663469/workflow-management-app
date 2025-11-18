@@ -1,6 +1,7 @@
 <h1>{{title}}</h1>
 @if(auth.isLoggedIn()) {
     <p>Welcome, <strong>{{auth.currentUser()?.login}}</strong>!</p>
+    <button routerLink="/festivals/new">Ajouter un festival</button>
     <button (click)="auth.logout()" [disabled]="auth.isLoading()">Logout</button>
 }
 @else {
