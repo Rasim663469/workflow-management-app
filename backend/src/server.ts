@@ -11,6 +11,7 @@ import { requireAdmin } from './middleware/auth-admin.js';
 import usersRouter from './routes/users.js';
 import publicRouter from './routes/public.js';
 import { ensureAdmin } from './db/initAdmin.js';
+import { ensureFestivals } from './db/initFestivals.js';
 
 
 
@@ -66,12 +67,13 @@ https.createServer({ key, cert }, app).listen(4000, () => {
 });
 
 await ensureAdmin()
+await ensureFestivals()
 app.use('/api/public', publicRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/users', verifyToken, usersRouter);
 app.use('/api/admin', verifyToken, requireAdmin, (req, res) => {
   res.json({ message: 'Welcome admin' });
 });
-
+app.use('/api/festivals', verifyToken,  (await import('./routes/festival.js')).default);
 
 

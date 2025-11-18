@@ -5,6 +5,7 @@ declare global {
     interface Request {
       cookies?: Record<string, string>;
       user?: TokenPayload;
+      festival?: any;
     }
   }
 }
