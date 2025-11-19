@@ -16,21 +16,21 @@ export class UserService {
   readonly loading = this._loading.asReadonly();
   readonly error   = this._error.asReadonly();
 
-loadAll(): void {
-  this._loading.set(true);
-  this._error.set(null);
+  loadAll(): void {
+    this._loading.set(true);
+    this._error.set(null);
 
-  this.http.get<UserDto[]>(`${environment.apiUrl}/users`, { withCredentials: true })
-    .pipe(
-      catchError(err => {
-        this._error.set(err.message);
-        return of([] as UserDto[]); 
-      })
-    )
-    .subscribe(data => {
-      this._users.set(data ?? []);
-      this._loading.set(false);
-    });
+    this.http.get<UserDto[]>(`${environment.apiUrl}/users`, { withCredentials: true })
+      .pipe(
+        catchError(err => {
+          this._error.set(err.message);
+          return of([] as UserDto[]); 
+        })
+      )
+      .subscribe(data => {
+        this._users.set(data ?? []);
+        this._loading.set(false);
+      });
 
   }
 }

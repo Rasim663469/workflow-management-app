@@ -1,0 +1,76 @@
+@use 'sass:color';
+
+.festival-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow:
+    0 8px 16px rgba(0, 0, 0, 0.05),
+    0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e7e9ee;
+
+  header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .festival-name {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1f2937;
+  }
+
+  .festival-location {
+    margin: 0;
+    color: #4b5563;
+    font-weight: 500;
+  }
+
+  .festival-date {
+    margin: 0;
+    color: #6b7280;
+    font-size: 0.95rem;
+  }
+
+  .festival-description {
+    margin: 0;
+    color: #374151;
+    font-weight: 500;
+  }
+
+  .tariff-zones {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .tariff-zone {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0.85rem;
+    border-radius: 10px;
+    background: #f9fafb;
+    border: 1px solid #eef0f4;
+  }
+
+  .zone-name {
+    font-weight: 600;
+    color: #1f2937;
+  }
+
+  .zone-details {
+    display: flex;
+    gap: 0.75rem;
+    color: #4b5563;
+    font-size: 0.95rem;
+  }
+}
