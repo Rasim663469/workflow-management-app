@@ -52,3 +52,12 @@ router.get('/', async (_req, res) => {
 });
 
 
+//mettre a jour un festival
+
+//suppression d'un festival
+
+//Sélectionner le festival courant
+
+//Statistiques du festival
+
+export default router;

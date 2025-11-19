@@ -10,6 +10,7 @@ import { verifyToken } from './middleware/token-management.js';
 import { requireAdmin } from './middleware/auth-admin.js';
 import usersRouter from './routes/users.js';
 import publicRouter from './routes/public.js';
+import festivalRouter from './routes/festival.js'
 import { ensureAdmin } from './db/initAdmin.js';
 
 
@@ -69,6 +70,7 @@ await ensureAdmin()
 app.use('/api/public', publicRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/users', verifyToken, usersRouter);
+app.use('api/festival',festivalRouter);
 app.use('/api/admin', verifyToken, requireAdmin, (req, res) => {
   res.json({ message: 'Welcome admin' });
 });
