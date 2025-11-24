@@ -1,0 +1,26 @@
+<section class="editeurs-section">
+  <header class="section-header">
+    <div>
+      <p class="eyebrow">Editeurs</p>
+      <h2>Découvrez les editeurs</h2>
+    </div>
+    <button class="primary" routerLink="/festivals/new">Ajouter un editeur</button>
+  </header>
+
+  @if (loading()) {
+    <p class="status">Chargement des editeurs...</p>
+  }
+  @else if (error()) {
+    <p class="status error">Erreur : {{ error() }}</p>
+  }
+  @else if (editeurs().length === 0) {
+    <p class="status">Aucun editeur disponible pour le moment.</p>
+  }
+  @else {
+    <div class="editeur-grid">
+      @for (editeur of editeurs(); track editeur.id) {
+        <app-editeur-card [editeur]="editeur" />
+      }
+    </div>
+  }
+</section>
