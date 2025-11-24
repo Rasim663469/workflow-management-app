@@ -10,6 +10,7 @@ import { verifyToken } from './middleware/token-management.js';
 import { requireAdmin } from './middleware/auth-admin.js';
 import usersRouter from './routes/users.js';
 import publicRouter from './routes/public.js';
+import festivalRouter from './routes/festival.js'
 import { ensureAdmin } from './db/initAdmin.js';
 import { ensureFestivals } from './db/initFestivals.js';
 import zoneTarifaireRouter from './routes/zone_tarifaire.js';
@@ -79,6 +80,7 @@ app.use('/jeux', jeuRouter);
 app.use('/contacts', contatcRouter);
 app.use('/editeurs', editeurROuter);
 app.use('/zone-plans', zonePlanRouter);
+app.use('api/festival',festivalRouter);
 app.use('/api/admin', verifyToken, requireAdmin, (req, res) => {
   res.json({ message: 'Welcome admin' });
 });
