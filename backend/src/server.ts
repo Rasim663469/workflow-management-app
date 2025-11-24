@@ -52,7 +52,7 @@ app.use(cookieParser());
 
 // Configuration CORS : autoriser le front Angular en HTTPS local
 app.use(cors({
-  origin: "https://localhost:8080",
+  origin: ["https://localhost:8080", "https://localhost:4200"],
   credentials: true,
   methods: ["GET","POST","PUT","PATCH","DELETE","OPTIONS"],
   allowedHeaders: ["Content-Type","Authorization"]
