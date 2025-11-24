@@ -12,8 +12,11 @@ import usersRouter from './routes/users.js';
 import publicRouter from './routes/public.js';
 import { ensureAdmin } from './db/initAdmin.js';
 import { ensureFestivals } from './db/initFestivals.js';
-
-
+import zoneTarifaireRouter from './routes/zone_tarifaire.js';
+import jeuRouter from './routes/jeu.js';
+import contatcRouter from './routes/contact.js'
+import editeurROuter from './routes/editeur.js'
+import zonePlanRouter from './routes/zone-plan.js'
 
 // Création de l’application Express
 const app = express();
@@ -71,6 +74,11 @@ await ensureFestivals()
 app.use('/api/public', publicRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/users', verifyToken, usersRouter);
+app.use('/zones-tarifaires', zoneTarifaireRouter);
+app.use('/jeux', jeuRouter);
+app.use('/contacts', contatcRouter);
+app.use('/editeurs', editeurROuter);
+app.use('/zone-plans', zonePlanRouter);
 app.use('/api/admin', verifyToken, requireAdmin, (req, res) => {
   res.json({ message: 'Welcome admin' });
 });
