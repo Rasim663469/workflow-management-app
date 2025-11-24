@@ -12,6 +12,7 @@ import usersRouter from './routes/users.js';
 import publicRouter from './routes/public.js';
 import { ensureAdmin } from './db/initAdmin.js';
 import { ensureFestivals } from './db/initFestivals.js';
+import { ensureEditeurs } from './db/initEditeur.js';
 
 
 
@@ -66,14 +67,14 @@ https.createServer({ key, cert }, app).listen(4000, () => {
   console.log('👍 Serveur API démarré sur https://localhost:4000');
 });
 
-await ensureAdmin()
-await ensureFestivals()
+await ensureAdmin();
+await ensureEditeurs();
+await ensureFestivals();
 app.use('/api/public', publicRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/users', verifyToken, usersRouter);
+app.use('/api/editeurs', verifyToken, (await import('./routes/editeurs.js')).default);
 app.use('/api/admin', verifyToken, requireAdmin, (req, res) => {
   res.json({ message: 'Welcome admin' });
 });
 app.use('/api/festivals', verifyToken,  (await import('./routes/festival.js')).default);
-
-

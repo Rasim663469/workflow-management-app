@@ -1,0 +1,46 @@
+.editeur-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1rem 1.1rem;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border: 1px solid #e5e7eb;
+  box-shadow:
+    0 8px 16px rgba(0, 0, 0, 0.05),
+    0 2px 8px rgba(0, 0, 0, 0.04);
+
+  header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .eyebrow {
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.7rem;
+    color: #6b7280;
+    font-weight: 700;
+  }
+
+  .editeur-name {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  .editeur-login {
+    margin: 0;
+    color: #475569;
+    font-weight: 600;
+  }
+
+  .editeur-description {
+    margin: 0;
+    color: #374151;
+    line-height: 1.5;
+  }
+}

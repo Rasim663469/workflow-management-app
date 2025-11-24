@@ -1,5 +1,5 @@
 export interface UserDto {
-    login: string;
-    password: string;
-    role: 'user' | 'admin';
+  login: string;
+  password: string;
+  role: 'user' | 'admin' | 'editeur';
 }
