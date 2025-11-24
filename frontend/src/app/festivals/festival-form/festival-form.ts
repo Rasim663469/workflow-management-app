@@ -2,6 +2,8 @@ import { Component, inject } from '@angular/core';
 import { FormGroup, FormControl, ReactiveFormsModule, Validators, FormArray } from '@angular/forms';
 import { FestivalService } from '@services/festival.service';
 import { TariffZoneDto } from '../festival/festival-dto';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '@env/environment';
 
 type TariffZoneFormGroup = FormGroup<{
   name: FormControl<string>;
@@ -19,6 +21,7 @@ type TariffZoneFormGroup = FormGroup<{
 })
 export class FestivalForm {
   private readonly festivalService = inject(FestivalService);
+  private readonly http = inject(HttpClient);
   readonly festivals = this.festivalService.festivals;
 
   private createZoneGroup(initial?: Partial<TariffZoneDto>): TariffZoneFormGroup {
@@ -82,6 +85,12 @@ export class FestivalForm {
       date,
       tariffZones: normalizedZones,
     });
+    this.persistFestival({
+      name: name.trim(),
+      location: location.trim(),
+      date,
+      totalTables: normalizedZones.reduce((sum, zone) => sum + zone.totalTables, 0),
+    });
 
     this.form.reset({
       name: '',
@@ -90,5 +99,23 @@ export class FestivalForm {
     });
     this.tariffZones.clear();
     this.tariffZones.push(this.createZoneGroup());
+  }
+
+  private persistFestival(payload: { name: string; location: string; date: string; totalTables: number }): void {
+    this.http
+      .post(
+        `${environment.apiUrl}/festivals`,
+        {
+          nom: payload.name,
+          location: payload.location,
+          nombre_total_tables: payload.totalTables,
+          date_debut: payload.date,
+          date_fin: payload.date,
+        },
+        { withCredentials: true }
+      )
+      .subscribe({
+        error: err => console.error('Erreur lors de la création du festival', err),
+      });
   }
 }
