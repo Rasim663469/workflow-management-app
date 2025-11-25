@@ -1,0 +1,36 @@
+<section class="editeur-jeux">
+  <header>
+    <h3>Jeux de l'éditeur {{ editeurId }}</h3>
+    <p>Retrouvez ici tous les jeux associés à cet éditeur.</p>
+  </header>
+
+  @if (error()) {
+    <p class="alert alert-error">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="alert alert-info">Chargement des jeux...</p>
+  }
+
+  @if (!loading()) {
+    @if (jeux().length === 0) {
+      <div class="jeux-placeholder">
+        <p>Aucun jeu trouvé pour cet éditeur.</p>
+      </div>
+    }
+    @else {
+      <div class="jeux-grid">
+        @for (jeu of jeux(); track jeu.id) {
+          <article class="jeu-card">
+            <div class="jeu-head">
+              <h4>{{ jeu.name }}</h4>
+              <span class="jeu-type">{{ jeu.type || 'Type non spécifié' }}</span>
+            </div>
+            <p class="jeu-authors">Auteur(s) : {{ jeu.authors || 'Non renseigné' }}</p>
+            <p class="jeu-age">{{ ageRange(jeu) }}</p>
+          </article>
+        }
+      </div>
+    }
+  }
+</section>

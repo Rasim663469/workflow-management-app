@@ -13,6 +13,7 @@ import publicRouter from './routes/public.js';
 import { ensureAdmin } from './db/initAdmin.js';
 import { ensureFestivals } from './db/initFestivals.js';
 import { ensureEditeurs } from './db/initEditeur.js';
+import { ensureJeux } from './db/initJeu.js';
 
 
 
@@ -70,6 +71,7 @@ https.createServer({ key, cert }, app).listen(4000, () => {
 await ensureAdmin();
 await ensureEditeurs();
 await ensureFestivals();
+await ensureJeux();
 app.use('/api/public', publicRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/users', verifyToken, usersRouter);

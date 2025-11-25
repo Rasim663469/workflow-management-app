@@ -1,0 +1,62 @@
+%base-card {
+  border: 1px solid #e3e8f2;
+  border-radius: 12px;
+  background: #f5f7fb;
+}
+
+.editeur-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
+
+.detail-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.subtitle {
+  color: #5b667a;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.action-card {
+  @extend %base-card;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  min-width: 260px;
+}
+
+.action-text {
+  h3 {
+    margin: 0 0 0.25rem;
+    font-size: 1.05rem;
+  }
+
+  p {
+    margin: 0;
+    color: #5b667a;
+  }
+}
+
+.action-link {
+  color: #0b6bcb;
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible {
+    text-decoration: underline;
+  }
+}
