@@ -58,7 +58,8 @@ router.post('/', async (req, res) => {
 
     } catch (err) {
         console.error(err);
-        if (err.code === '23503') {
+        const dbError = err as { code?: string };
+        if (dbError.code === '23503') {
             res.status(400).json({ error: 'Le festival, l\'éditeur ou la zone spécifié n\'existe pas.' });
         } else {
             res.status(500).json({ error: 'Erreur serveur.' });

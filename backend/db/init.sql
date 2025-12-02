@@ -56,6 +56,8 @@ CREATE TABLE zone_plan (
 CREATE TABLE editeur (
     id INT PRIMARY KEY AUTO_INCREMENT,
     nom VARCHAR(255) NOT NULL,
+    login TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
     description TEXT
 );
 

@@ -1,0 +1,20 @@
+<section class="editeur-detail">
+  <header class="detail-header">
+    <h2>Détails de l'éditeur</h2>
+    <p class="subtitle">Sélectionnez un onglet pour gérer les infos ou les jeux.</p>
+  </header>
+
+  @if(editeurId) {
+    <section class="detail-actions">
+      <div class="action-card">
+        <div class="action-text">
+          <h3>Jeux</h3>
+          <p>Consulter tous les jeux associés à cet éditeur.</p>
+        </div>
+        <a class="action-link" [routerLink]="['/editeurs', editeurId, 'jeux']">Voir les jeux</a>
+      </div>
+    </section>
+  }
+
+  <router-outlet></router-outlet>
+</section>
