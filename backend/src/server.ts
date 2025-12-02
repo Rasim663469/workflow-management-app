@@ -13,11 +13,14 @@ import publicRouter from './routes/public.js';
 import festivalRouter from './routes/festival.js'
 import { ensureAdmin } from './db/initAdmin.js';
 import { ensureFestivals } from './db/initFestivals.js';
+
 import zoneTarifaireRouter from './routes/zone_tarifaire.js';
 import jeuRouter from './routes/jeu.js';
 import contatcRouter from './routes/contact.js'
 import zonePlanRouter from './routes/zone-plan.js'
 import { ensureEditeurs } from './db/initEditeur.js';
+import jeuFestivalRoutes from './routes/jeu_festival.js';
+import contactRoutes from './routes/contact.js';
 import { ensureJeux } from './db/initJeu.js';
 
 
@@ -59,8 +62,8 @@ app.use(cookieParser());
 app.use(cors({
   origin: ["https://localhost:8080", "https://localhost:4200"],
   credentials: true,
-  methods: ["GET","POST","PUT","PATCH","DELETE","OPTIONS"],
-  allowedHeaders: ["Content-Type","Authorization"]
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
 // Chargement du certificat et clé générés par mkcert (étape 0)
@@ -79,13 +82,15 @@ await ensureJeux();
 app.use('/api/public', publicRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/users', verifyToken, usersRouter);
-app.use('/zones-tarifaires', zoneTarifaireRouter);
-app.use('/jeux', jeuRouter);
-app.use('/contacts', contatcRouter);
-app.use('/zone-plans', zonePlanRouter);
-app.use('api/festival',festivalRouter);
+app.use('/zones-tarifaires', zoneTarifaireRouter, verifyToken, requireAdmin);
+app.use('/jeux', jeuRouter, verifyToken, requireAdmin);
+app.use('/contacts', contatcRouter, verifyToken, requireAdmin);
+app.use('/zone-plans', zonePlanRouter, verifyToken, requireAdmin);
+app.use('api/festival', festivalRouter, verifyToken, requireAdmin);
 app.use('/api/editeurs', verifyToken, (await import('./routes/editeurs.js')).default);
+app.use('/jeu_festival', jeuFestivalRoutes, verifyToken, requireAdmin);
+app.use('/contact_editeur', contactRoutes, verifyToken, requireAdmin);
 app.use('/api/admin', verifyToken, requireAdmin, (req, res) => {
   res.json({ message: 'Welcome admin' });
 });
-app.use('/api/festivals', verifyToken,  (await import('./routes/festival.js')).default);
+app.use('/api/festivals', verifyToken, (await import('./routes/festival.js')).default);
