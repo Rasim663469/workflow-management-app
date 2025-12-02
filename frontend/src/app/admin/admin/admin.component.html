@@ -1,9 +1,64 @@
 <h1>Admin Panel</h1>
-<p>Manage users below:</p>
-@for (user of users(); track user.login) {
-    <div class="user-card">
-        <h3>{{user.login}}</h3>
-        <p>Role: {{user.role}}</p>
-    </div>   
-}
 
+<section class="card">
+  <header>
+    <p class="eyebrow">Éditeurs</p>
+    <h2>Créer un éditeur</h2>
+    <p class="lead">Formulaire simple connecté à l’API.</p>
+  </header>
+
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <div class="field">
+      <label for="nom">Nom *</label>
+      <input id="nom" type="text" formControlName="nom" placeholder="Nom de l’éditeur" />
+      @if (form.controls.nom.invalid && form.controls.nom.touched) {
+        <p class="error">Le nom est obligatoire (2 caractères mini).</p>
+      }
+    </div>
+
+    <div class="field">
+      <label for="description">Description</label>
+      <textarea
+        id="description"
+        rows="2"
+        formControlName="description"
+        placeholder="Optionnel"
+      ></textarea>
+    </div>
+
+    <button type="submit" [disabled]="creating() || form.invalid">
+      {{ creating() ? 'Création...' : 'Créer' }}
+    </button>
+
+    @if (success()) {
+      <p class="success">{{ success() }}</p>
+    }
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+    }
+  </form>
+</section>
+
+<section class="card">
+  <h3>Liste des éditeurs</h3>
+  @if (editeurs().length === 0) {
+    <p>Aucun éditeur pour le moment.</p>
+  } @else {
+    <ul class="editeur-list">
+      @for (editeur of editeurs(); track editeur.id) {
+        <li>
+          <strong>{{ editeur.name }}</strong>
+          <small>{{ editeur.description }}</small>
+        </li>
+      }
+    </ul>
+  }
+</section>
+
+<p>Utilisateurs :</p>
+@for (user of users(); track user.login) {
+  <div class="user-card">
+    <h3>{{user.login}}</h3>
+    <p>Role: {{user.role}}</p>
+  </div>
+}

@@ -22,6 +22,7 @@ import { ensureEditeurs } from './db/initEditeur.js';
 import jeuFestivalRoutes from './routes/jeu_festival.js';
 import contactRoutes from './routes/contact.js';
 import { ensureJeux } from './db/initJeu.js';
+import editeurRouter from './routes/editeur.js';
 
 
 // Création de l’application Express
@@ -87,7 +88,7 @@ app.use('/jeux', jeuRouter, verifyToken, requireAdmin);
 app.use('/contacts', contatcRouter, verifyToken, requireAdmin);
 app.use('/zone-plans', zonePlanRouter, verifyToken, requireAdmin);
 app.use('api/festival', festivalRouter, verifyToken, requireAdmin);
-app.use('/api/editeurs', verifyToken, (await import('./routes/editeurs.js')).default);
+app.use('/api/editeurs', verifyToken, editeurRouter);
 app.use('/jeu_festival', jeuFestivalRoutes, verifyToken, requireAdmin);
 app.use('/contact_editeur', contactRoutes, verifyToken, requireAdmin);
 app.use('/api/admin', verifyToken, requireAdmin, (req, res) => {

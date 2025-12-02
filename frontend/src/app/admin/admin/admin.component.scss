@@ -19,6 +19,136 @@ p {
   margin-bottom: 1.5rem;
 }
 
+.card {
+  width: 100%;
+  max-width: 720px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  margin-bottom: 1.5rem;
+}
+
+header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+
+  .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin: 0;
+  }
+
+  h2 {
+    margin: 0;
+    color: #192a56;
+  }
+
+  .lead {
+    margin: 0;
+    color: #4b5563;
+  }
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+
+  label {
+    font-weight: 600;
+    color: #111827;
+  }
+
+  input,
+  textarea {
+    padding: 0.65rem 0.75rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #ffffff;
+    font-size: 1rem;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    &:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+    }
+  }
+}
+
+button {
+  align-self: flex-start;
+  padding: 0.65rem 1.2rem;
+  border-radius: 10px;
+  border: none;
+  background: #2563eb;
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.05s ease, box-shadow 0.1s ease;
+  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.2);
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 30px rgba(37, 99, 235, 0.24);
+  }
+}
+
+.error {
+  color: #b91c1c;
+  margin: 0;
+}
+
+.success {
+  color: #0f766e;
+  margin: 0;
+  font-weight: 600;
+}
+
+.editeur-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+
+  li {
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+
+    strong {
+      color: #111827;
+    }
+
+    small {
+      color: #4b5563;
+    }
+  }
+}
+
 .user-card {
   background: #fff;
   border-radius: 12px;

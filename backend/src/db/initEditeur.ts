@@ -18,6 +18,15 @@ const seedEditeurs: SeedEditeur[] = [
 ];
 
 export async function ensureEditeurs(): Promise<void> {
+  // Table editeur simple (nom unique)
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS editeur (
+      id SERIAL PRIMARY KEY,
+      nom TEXT UNIQUE NOT NULL,
+      description TEXT
+    )
+  `);
+
   for (const editeur of seedEditeurs) {
     const hash = await bcrypt.hash(editeur.password, 10);
 
