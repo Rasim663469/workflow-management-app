@@ -16,6 +16,18 @@ export class JeuService {
   readonly loading = this._loading.asReadonly();
   readonly error = this._error.asReadonly();
 
+  private normalizeJeu(dto: any): JeuDto {
+    return {
+      id: `${dto.id ?? ''}`,
+      editeurId: Number(dto.editeurId ?? dto.editeur_id ?? 0),
+      name: dto.name ?? dto.nom ?? 'Nom non renseigné',
+      authors: dto.authors ?? dto.auteurs ?? null,
+      ageMin: dto.ageMin ?? dto.age_min ?? null,
+      ageMax: dto.ageMax ?? dto.age_max ?? null,
+      type: dto.type ?? dto.type_jeu ?? null,
+    };
+  }
+
   loadByEditeur(editeurId: string | number): void {
     const normalizedId = `${editeurId ?? ''}`.trim();
 
@@ -40,6 +52,9 @@ export class JeuService {
         }),
         finalize(() => this._loading.set(false))
       )
-      .subscribe(data => this._jeux.set(data ?? []));
+      .subscribe(data => {
+        const normalized = (data ?? []).map(dto => this.normalizeJeu(dto));
+        this._jeux.set(normalized);
+      });
   }
 }

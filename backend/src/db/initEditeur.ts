@@ -22,8 +22,8 @@ export async function ensureEditeurs(): Promise<void> {
     const hash = await bcrypt.hash(editeur.password, 10);
 
     await pool.query(
-      `INSERT INTO users (login, password_hash, role)
-       VALUES ($1, $2, 'editeur')
+      `INSERT INTO editeur (login, password_hash)
+       VALUES ($1, $2)
        ON CONFLICT (login) DO NOTHING`,
       [editeur.login, hash]
     );
