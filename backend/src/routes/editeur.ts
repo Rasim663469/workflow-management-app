@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import pool from '../db/database.js';
-//SERT A RIEN ON UTILSIE user ROLE editeur
 const router = Router();
 
 //CRÉER un éditeur 
@@ -37,7 +36,7 @@ router.get('/', async (req, res) => {
 
     try {
         const query = `SELECT * FROM editeur ORDER BY ${orderBy}`;
-        
+
         const { rows } = await pool.query(query);
         res.json(rows);
     } catch (err) {

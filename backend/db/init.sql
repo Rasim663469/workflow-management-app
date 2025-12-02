@@ -178,11 +178,8 @@ CREATE TABLE jeu_festival (
         FOREIGN KEY (zone_plan_id) REFERENCES zone_plan(id)
         ON DELETE CASCADE
 );
-<<<<<<< HEAD
-=======
+
 
 INSERT INTO festival (nom, nombre_total_tables, date_debut, date_fin) 
 VALUES ('Festival du Jeu 2025', 150, '2025-06-15', '2025-06-18');
  
-
->>>>>>> d264fdb66543400347f8b586a7e76d36ac45a671
