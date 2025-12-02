@@ -9,6 +9,20 @@
   box-shadow:
     0 8px 16px rgba(0, 0, 0, 0.05),
     0 2px 8px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, outline 0.15s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 12px 24px rgba(0, 0, 0, 0.08),
+      0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #0097e6;
+    outline-offset: 4px;
+  }
 
   header {
     display: flex;

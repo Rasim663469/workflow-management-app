@@ -13,17 +13,13 @@ import publicRouter from './routes/public.js';
 import festivalRouter from './routes/festival.js'
 import { ensureAdmin } from './db/initAdmin.js';
 import { ensureFestivals } from './db/initFestivals.js';
-<<<<<<< HEAD
 import zoneTarifaireRouter from './routes/zone_tarifaire.js';
 import jeuRouter from './routes/jeu.js';
 import contatcRouter from './routes/contact.js'
-import editeurROuter from './routes/editeur.js'
 import zonePlanRouter from './routes/zone-plan.js'
-=======
 import { ensureEditeurs } from './db/initEditeur.js';
+import { ensureJeux } from './db/initJeu.js';
 
-
->>>>>>> origin/main
 
 // Création de l’application Express
 const app = express();
@@ -79,6 +75,7 @@ https.createServer({ key, cert }, app).listen(4000, () => {
 await ensureAdmin();
 await ensureEditeurs();
 await ensureFestivals();
+await ensureJeux();
 app.use('/api/public', publicRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/users', verifyToken, usersRouter);

@@ -1,4 +1,8 @@
-<article class="editeur-card">
+<article
+  class="editeur-card"
+  tabindex="0"
+  [routerLink]="['/editeurs', editeur.id]"
+>
   <header>
     <h3 class="editeur-name">{{editeur.name}}</h3>
     
