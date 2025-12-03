@@ -40,6 +40,71 @@
 </section>
 
 <section class="card">
+  <header>
+    <p class="eyebrow">Jeux</p>
+    <h2>Créer un jeu</h2>
+    <p class="lead">Associer un jeu à un éditeur existant.</p>
+  </header>
+
+  <form [formGroup]="formJeu" (ngSubmit)="submitJeu()">
+    <div class="grid">
+      <div class="field">
+        <label for="nomJeu">Nom *</label>
+        <input id="nomJeu" type="text" formControlName="nom" placeholder="Nom du jeu" />
+        @if (formJeu.controls.nom.invalid && formJeu.controls.nom.touched) {
+          <p class="error">Le nom du jeu est obligatoire.</p>
+        }
+      </div>
+
+      <div class="field">
+        <label for="editeurId">Éditeur *</label>
+        <select id="editeurId" formControlName="editeur_id">
+          <option [ngValue]="null">Sélectionner</option>
+          @for (editeur of editeurs(); track editeur.id) {
+            <option [ngValue]="editeur.id">{{ editeur.name }}</option>
+          }
+        </select>
+        @if (formJeu.controls.editeur_id.invalid && formJeu.controls.editeur_id.touched) {
+          <p class="error">Choisissez un éditeur.</p>
+        }
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="auteurs">Auteurs</label>
+      <input id="auteurs" type="text" formControlName="auteurs" placeholder="Auteur(s)" />
+    </div>
+
+    <div class="grid">
+      <div class="field">
+        <label for="ageMin">Âge minimum</label>
+        <input id="ageMin" type="number" formControlName="age_min" min="0" />
+      </div>
+      <div class="field">
+        <label for="ageMax">Âge maximum</label>
+        <input id="ageMax" type="number" formControlName="age_max" min="0" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="typeJeu">Type de jeu</label>
+      <input id="typeJeu" type="text" formControlName="type_jeu" placeholder="Familial, expert..." />
+    </div>
+
+    <button type="submit" [disabled]="creatingJeu() || formJeu.invalid">
+      {{ creatingJeu() ? 'Création...' : 'Créer le jeu' }}
+    </button>
+
+    @if (jeuSuccess()) {
+      <p class="success">{{ jeuSuccess() }}</p>
+    }
+    @if (jeuError()) {
+      <p class="error">{{ jeuError() }}</p>
+    }
+  </form>
+</section>
+
+<section class="card">
   <h3>Liste des éditeurs</h3>
   @if (editeurs().length === 0) {
     <p>Aucun éditeur pour le moment.</p>
