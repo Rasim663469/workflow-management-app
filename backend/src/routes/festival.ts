@@ -5,18 +5,18 @@ const router = Router();
 
 // CREATE 
 router.post('/', async (req, res) => {
-    const { nom, location, nombre_total_tables, date_debut, date_fin } = req.body;
+    const { nom, location, nombre_total_tables, date_debut, date_fin, description } = req.body;
 
-    if (!nom || !location || !nombre_total_tables || !date_debut || !date_fin) {
-        return res.status(400).json({ error: 'nom, location, nombre_total_tables, date_debut, date_fin sont requis' });
+    if (!nom || !location || !nombre_total_tables || !date_debut || !date_fin || !description) {
+        return res.status(400).json({ error: 'nom, location, nombre_total_tables, date_debut, date_fin, description sont requis' });
     }
 
     try {
         const { rows } = await pool.query(
-            'INSERT INTO festival (nom, location, nombre_total_tables, date_debut, date_fin) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-            [nom, location, nombre_total_tables, date_debut, date_fin]
+            'INSERT INTO festival (nom, location, nombre_total_tables, date_debut, date_fin, description) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+            [nom, location, nombre_total_tables, date_debut, date_fin, description]
         );
-        
+
         res.status(201).json({
             message: 'Festival créé avec succès',
             festival: rows[0]
@@ -36,7 +36,7 @@ router.post('/', async (req, res) => {
 router.get('/', async (_req, res) => {
     try {
         const { rows } = await pool.query(
-            'SELECT id, nom, location, nombre_total_tables, date_debut, date_fin FROM festival ORDER BY date_debut DESC'
+            'SELECT id, nom, location, nombre_total_tables, date_debut, date_fin, description FROM festival ORDER BY date_debut DESC'
         );
         res.json(rows);
     } catch (err) {
@@ -68,7 +68,7 @@ router.get('/:id', async (req, res) => {
 // UPDATE 
 router.patch('/:id', async (req, res) => {
     const { id } = req.params;
-    const { nom, location, nombre_total_tables, date_debut, date_fin } = req.body;
+    const { nom, location, nombre_total_tables, date_debut, date_fin, description } = req.body;
 
     const updates: string[] = [];
     const values: any[] = [];
@@ -79,6 +79,7 @@ router.patch('/:id', async (req, res) => {
     if (nombre_total_tables !== undefined) { updates.push(`nombre_total_tables = $${paramIndex++}`); values.push(nombre_total_tables); }
     if (date_debut !== undefined) { updates.push(`date_debut = $${paramIndex++}`); values.push(date_debut); }
     if (date_fin !== undefined) { updates.push(`date_fin = $${paramIndex++}`); values.push(date_fin); }
+    if (description !== undefined) { updates.push(`description = $${paramIndex++}`); values.push(description); }
 
     if (updates.length === 0) {
         return res.status(400).json({ error: 'Aucun champ à mettre à jour' });
@@ -120,7 +121,7 @@ router.delete('/:id', async (req, res) => {
     const { id } = req.params;
 
     try {
-      
+
         const { rowCount } = await pool.query(
             'DELETE FROM festival WHERE id = $1',
             [id]

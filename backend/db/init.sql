@@ -28,7 +28,8 @@ CREATE TABLE IF NOT EXISTS festival (
     location VARCHAR(255),
     nombre_total_tables INT NOT NULL,
     date_debut DATE NOT NULL,
-    date_fin DATE NOT NULL
+    date_fin DATE NOT NULL,
+    description TEXT
 );
 
 -- ===========================

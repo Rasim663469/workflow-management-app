@@ -50,7 +50,9 @@ export class FestivalService {
     return {
       name: draft.name.trim(),
       location: draft.location.trim(),
-      date: this.normalizeDate(draft.date),
+      dateDebut: this.normalizeDate(draft.dateDebut),
+      dateFin: this.normalizeDate(draft.dateFin),
+      description: draft.description.trim(),
       tariffZones,
     };
   }
@@ -80,12 +82,14 @@ export class FestivalService {
   }
 
   private mapToCard(dto: FestivalDto): FestivalCard {
-   
+
     const tariffZones = dto.tariffZones ?? [];
     return {
       ...dto,
       tariffZones,
-      displayDate: this.formatDisplayDate(dto.date),
+      displayDate: this.formatDisplayDate(dto.dateDebut),
+      displayDateDebut: this.formatDisplayDate(dto.dateDebut),
+      displayDateFin: this.formatDisplayDate(dto.dateFin),
     };
   }
 
@@ -135,6 +139,6 @@ export class FestivalService {
       });
   }
 
-  
+
 
 }

@@ -9,7 +9,9 @@ export interface FestivalDto {
   id: string;
   name: string;
   location: string;
-  date: string;
+  dateDebut: string;
+  dateFin: string;
+  description: string;
   tariffZones: TariffZoneDto[];
 }
 

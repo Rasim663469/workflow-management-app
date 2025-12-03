@@ -19,6 +19,7 @@ type TariffZoneFormGroup = FormGroup<{
   templateUrl: './festival-form.html',
   styleUrl: './festival-form.scss'
 })
+
 export class FestivalForm {
   private readonly festivalService = inject(FestivalService);
   private readonly http = inject(HttpClient);
@@ -36,7 +37,9 @@ export class FestivalForm {
   readonly form = new FormGroup({
     name: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
     location: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
-    date: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
+    dateDebut: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
+    dateFin: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
+    description: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
     tariffZones: new FormArray<TariffZoneFormGroup>([this.createZoneGroup()]),
   });
 
@@ -62,7 +65,7 @@ export class FestivalForm {
       return;
     }
 
-    const { name, location, date, tariffZones } = this.form.getRawValue();
+    const { name, location, dateDebut, dateFin, description, tariffZones } = this.form.getRawValue();
 
     const normalizedZones = (tariffZones ?? []).map((zone, index) => {
       const pricePerTable = Number(zone.pricePerTable) || 0;
@@ -82,26 +85,32 @@ export class FestivalForm {
     this.festivalService.addFestival({
       name: name.trim(),
       location: location.trim(),
-      date,
+      dateDebut,
+      dateFin,
+      description,
       tariffZones: normalizedZones,
     });
     this.persistFestival({
       name: name.trim(),
       location: location.trim(),
-      date,
+      dateDebut,
+      dateFin,
+      description,
       totalTables: normalizedZones.reduce((sum, zone) => sum + zone.totalTables, 0),
     });
 
     this.form.reset({
       name: '',
       location: '',
-      date: '',
+      dateDebut: '',
+      dateFin: '',
+      description: '',
     });
     this.tariffZones.clear();
     this.tariffZones.push(this.createZoneGroup());
   }
 
-  private persistFestival(payload: { name: string; location: string; date: string; totalTables: number }): void {
+  private persistFestival(payload: { name: string; location: string; dateDebut: string; dateFin: string; description: string; totalTables: number }): void {
     this.http
       .post(
         `${environment.apiUrl}/festivals`,
@@ -109,8 +118,9 @@ export class FestivalForm {
           nom: payload.name,
           location: payload.location,
           nombre_total_tables: payload.totalTables,
-          date_debut: payload.date,
-          date_fin: payload.date,
+          date_debut: payload.dateDebut,
+          date_fin: payload.dateFin,
+          description: payload.description,
         },
         { withCredentials: true }
       )
