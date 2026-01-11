@@ -1,10 +1,12 @@
 import { Router } from 'express';
 import pool from '../db/database.js';
+import { requireAdmin } from '../middleware/auth-admin.js';
 
 const router = Router();
 
 // CREATE 
-router.post('/', async (req, res) => {
+// CREATE 
+router.post('/', requireAdmin, async (req, res) => {
     const { nom, location, nombre_total_tables, date_debut, date_fin, description } = req.body;
 
     if (!nom || !location || !nombre_total_tables || !date_debut || !date_fin || !description) {
@@ -35,8 +37,18 @@ router.post('/', async (req, res) => {
 // READ ALL 
 router.get('/', async (_req, res) => {
     try {
+        // Ajout des alias (AS "nomEnCamelCase")
         const { rows } = await pool.query(
-            'SELECT id, nom, location, nombre_total_tables, date_debut, date_fin, description FROM festival ORDER BY date_debut DESC'
+            `SELECT 
+                id, 
+                nom, 
+                location, 
+                nombre_total_tables AS "totalTables", 
+                date_debut AS "dateDebut", 
+                date_fin AS "dateFin", 
+                description 
+             FROM festival 
+             ORDER BY date_debut DESC`
         );
         res.json(rows);
     } catch (err) {
@@ -66,7 +78,8 @@ router.get('/:id', async (req, res) => {
 });
 
 // UPDATE 
-router.patch('/:id', async (req, res) => {
+// UPDATE 
+router.patch('/:id', requireAdmin, async (req, res) => {
     const { id } = req.params;
     const { nom, location, nombre_total_tables, date_debut, date_fin, description } = req.body;
 
@@ -117,7 +130,8 @@ router.patch('/:id', async (req, res) => {
 });
 
 // DELETE 
-router.delete('/:id', async (req, res) => {
+// DELETE 
+router.delete('/:id', requireAdmin, async (req, res) => {
     const { id } = req.params;
 
     try {

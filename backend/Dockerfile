@@ -20,6 +20,8 @@ FROM node:22-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 
+RUN apk add --no-cache python3 build-base
+
 COPY --from=build /app/dist ./dist
 COPY package*.json ./
 

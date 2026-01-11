@@ -13,13 +13,15 @@ import { EditeurDetailComponent } from './editeur/editeur-detail/editeur-detail'
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'home', component: HomeComponent, canActivate: [authGuard] },
-  { path: 'editeurs/:id',component: EditeurDetailComponent,canActivate: [authGuard],
+  {
+    path: 'editeurs/:id', component: EditeurDetailComponent, canActivate: [authGuard],
     children: [
       { path: 'jeux', component: EditeurJeuxComponent }
     ]
   },
   { path: 'editeurs', component: EditeurComponent, canActivate: [authGuard] },
   { path: 'festivals/new', component: FestivalForm, canActivate: [authGuard] },
+  { path: 'festivals/edit/:id', component: FestivalForm, canActivate: [authGuard] },
   { path: 'admin', component: AdminComponent, canActivate: [authGuard, adminGuard] },
   { path: '', pathMatch: 'full', redirectTo: 'home' },
   { path: '**', redirectTo: 'home' },
