@@ -5,7 +5,6 @@ import { requireAdmin } from '../middleware/auth-admin.js';
 const router = Router();
 
 // CREATE 
-// CREATE 
 router.post('/', requireAdmin, async (req, res) => {
     const { nom, location, nombre_total_tables, date_debut, date_fin, description } = req.body;
 
@@ -78,7 +77,6 @@ router.get('/:id', async (req, res) => {
 });
 
 // UPDATE 
-// UPDATE 
 router.patch('/:id', requireAdmin, async (req, res) => {
     const { id } = req.params;
     const { nom, location, nombre_total_tables, date_debut, date_fin, description } = req.body;
@@ -129,7 +127,6 @@ router.patch('/:id', requireAdmin, async (req, res) => {
     }
 });
 
-// DELETE 
 // DELETE 
 router.delete('/:id', requireAdmin, async (req, res) => {
     const { id } = req.params;

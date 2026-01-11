@@ -87,3 +87,9 @@ app.use('/jeux', jeuRouter, verifyToken, requireAdmin);
 app.use('/contacts', contatcRouter, verifyToken, requireAdmin);
 app.use('/zone-plans', zonePlanRouter, verifyToken, requireAdmin);
 app.use('/api/festivals', verifyToken, festivalRouter);
+app.use('/api/editeurs', verifyToken, (await import('./routes/editeurs.js')).default);
+app.use('/jeu_festival', jeuFestivalRoutes, verifyToken, requireAdmin);
+app.use('/contact_editeur', contactRoutes, verifyToken, requireAdmin);
+app.use('/api/admin', verifyToken, requireAdmin, (req, res) => {
+  res.json({ message: 'Welcome admin' });
+});

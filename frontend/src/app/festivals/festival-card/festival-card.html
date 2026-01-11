@@ -27,6 +27,8 @@
     </ul>
     }
   </div>
+  @if (isAdmin()) {
   <button type="button" class="secondary" routerLink="/festivals/edit/{{ festival.id }}">Modifier</button>
   <button type="button" class="secondary" (click)="deleteFestival()">Supprimer</button>
+  }
 </article>

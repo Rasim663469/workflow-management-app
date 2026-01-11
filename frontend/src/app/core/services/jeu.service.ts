@@ -1,6 +1,6 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { catchError, finalize, of } from 'rxjs';
+import { catchError, finalize, of, tap } from 'rxjs';
 import { environment } from '@env/environment';
 import { JeuDto } from '../../jeux/jeu/jeu.dto';
 
@@ -26,6 +26,28 @@ export class JeuService {
       ageMax: dto.ageMax ?? dto.age_max ?? null,
       type: dto.type ?? dto.type_jeu ?? null,
     };
+  }
+
+  create(payload: {
+    nom: string;
+    editeur_id: number;
+    auteurs?: string | null;
+    age_min?: number | null;
+    age_max?: number | null;
+    type_jeu?: string | null;
+  }) {
+    this._error.set(null);
+    return this.http
+      .post(`${environment.apiUrl}/jeux`, payload, { withCredentials: true })
+      .pipe(
+        tap(() => this.loadByEditeur(payload.editeur_id)),
+        catchError(err => {
+          const message =
+            err instanceof Error ? err.message : 'Erreur lors de la création du jeu';
+          this._error.set(message);
+          return of(null);
+        })
+      );
   }
 
   loadByEditeur(editeurId: string | number): void {
