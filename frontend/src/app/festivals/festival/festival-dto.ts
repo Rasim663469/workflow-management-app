@@ -11,7 +11,9 @@ export interface FestivalDto {
   name: string;
   totalTables?: number;
   location?: string;
-  date?: string;
+  dateDebut?: string;
+  dateFin?: string;
+  description?: string;
   tariffZones: TariffZoneDto[];
 }
 

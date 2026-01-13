@@ -14,7 +14,8 @@ describe('FestivalService', () => {
     const card = service.addFestival({
       name: 'Montpellier Vibrations',
       location: 'Montpellier',
-      date: '2024-05-01',
+      dateDebut: '2024-05-01',
+      dateFin: '2024-05-03',
       tariffZones: [
         {
           name: 'Zone A',
@@ -37,7 +38,8 @@ describe('FestivalService', () => {
         id: 'festival-a',
         name: 'Jazz à Sète',
         location: 'Sète',
-        date: '2024-07-12',
+        dateDebut: '2024-07-12',
+        dateFin: '2024-07-14',
         tariffZones: [
           { name: 'Zone B', totalTables: 12, pricePerTable: 90, pricePerM2: 20 },
         ],

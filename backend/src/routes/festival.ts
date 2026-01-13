@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import pool from '../db/database.js';
 import { requireAdmin } from '../middleware/auth-admin.js';
+import { verifyToken } from '../middleware/token-management.js';
 
 const router = Router();
 
 // CREATE + zones tarifaires
-router.post('/', async (req, res) => {
-  const { nom, location, nombre_total_tables, date_debut, date_fin, zones } = req.body;
+router.post('/', verifyToken, requireAdmin, async (req, res) => {
+  const { nom, location, nombre_total_tables, date_debut, date_fin, description, zones } = req.body;
 
   if (!nom || !location || !nombre_total_tables || !date_debut || !date_fin) {
     return res
@@ -20,8 +21,8 @@ router.post('/', async (req, res) => {
     await client.query('BEGIN');
 
     const { rows } = await client.query(
-      'INSERT INTO festival (nom, location, nombre_total_tables, date_debut, date_fin) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [nom, location, nombre_total_tables, date_debut, date_fin]
+      'INSERT INTO festival (nom, location, nombre_total_tables, date_debut, date_fin, description) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [nom, location, nombre_total_tables, date_debut, date_fin, description ?? null]
     );
     const festival = rows[0];
 
@@ -68,7 +69,9 @@ router.get('/', async (_req, res) => {
         f.id,
         f.nom AS name,
         f.location,
-        f.date_debut AS date,
+        f.date_debut AS "dateDebut",
+        f.date_fin AS "dateFin",
+        f.description,
         f.nombre_total_tables AS "totalTables",
         COALESCE(json_agg(
           json_build_object(
@@ -102,7 +105,9 @@ router.get('/:id', async (req, res) => {
         f.id,
         f.nom AS name,
         f.location,
-        f.date_debut AS date,
+        f.date_debut AS "dateDebut",
+        f.date_fin AS "dateFin",
+        f.description,
         f.nombre_total_tables AS "totalTables",
         COALESCE(json_agg(
           json_build_object(
@@ -133,7 +138,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // UPDATE 
-router.patch('/:id', requireAdmin, async (req, res) => {
+router.patch('/:id', verifyToken, requireAdmin, async (req, res) => {
     const { id } = req.params;
     const { nom, location, nombre_total_tables, date_debut, date_fin, description } = req.body;
 
@@ -184,7 +189,7 @@ router.patch('/:id', requireAdmin, async (req, res) => {
 });
 
 // DELETE 
-router.delete('/:id', requireAdmin, async (req, res) => {
+router.delete('/:id', verifyToken, requireAdmin, async (req, res) => {
     const { id } = req.params;
 
     try {

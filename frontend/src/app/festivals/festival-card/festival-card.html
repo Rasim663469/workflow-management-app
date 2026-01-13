@@ -4,7 +4,9 @@
     <p class="festival-location">{{ festival.location }}</p>
     <p class="festival-datedebut">Date de début : {{ festival.displayDateDebut }}</p>
     <p class="festival-datefin">Date de fin : {{ festival.displayDateFin }}</p>
-    <p class="festival-description">{{ festival.description }}</p>
+    @if (festival.description) {
+      <p class="festival-description">{{ festival.description }}</p>
+    }
   </header>
 
   <div class="festival-body">

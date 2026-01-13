@@ -2,9 +2,8 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { FestivalCard } from '../../festivals/festival/festival';
 import { CreateFestivalDto, FestivalDto, TariffZoneDto } from '../../festivals/festival/festival-dto';
 import { HttpClient } from '@angular/common/http';
-import { catchError, of } from 'rxjs';
+import { catchError, map, Observable, of } from 'rxjs';
 import { environment } from '@env/environment';
-import { Observable, map, tap } from 'rxjs';
 
 
 
@@ -61,15 +60,15 @@ export class FestivalService {
     });
   }
 
-  getFestival(id: string): Observable<any> {
+  getFestival(id: string): Observable<Partial<FestivalDto>> {
     return this.http.get<any>(`${environment.apiUrl}/festivals/${id}`, { withCredentials: true }).pipe(
       map((data: any) => ({
-        name: data.nom,
-        location: data.location,
-        dateDebut: data.date_debut ? data.date_debut.split('T')[0] : '',
-        dateFin: data.date_fin ? data.date_fin.split('T')[0] : '',
-        description: data.description,
-        tariffZones: []
+        name: data.name ?? data.nom ?? '',
+        location: data.location ?? '',
+        dateDebut: this.extractDateInput(data.dateDebut ?? data.date_debut ?? data.date ?? ''),
+        dateFin: this.extractDateInput(data.dateFin ?? data.date_fin ?? data.date ?? ''),
+        description: data.description ?? '',
+        tariffZones: data.tariffZones ?? [],
       }))
     );
   }
@@ -80,7 +79,9 @@ export class FestivalService {
     return {
       name: draft.name.trim(),
       location: (draft.location ?? '').trim(),
-      date: this.normalizeDate(draft.date ?? ''),
+      dateDebut: this.normalizeDate(draft.dateDebut ?? ''),
+      dateFin: this.normalizeDate(draft.dateFin ?? ''),
+      description: (draft.description ?? '').trim(),
       tariffZones,
     };
   }
@@ -115,11 +116,15 @@ export class FestivalService {
     const totalTables =
       dto.totalTables ??
       tariffZones.reduce((sum, zone) => sum + (Number(zone.totalTables) || 0), 0);
+    const dateDebut = dto.dateDebut ?? '';
+    const dateFin = dto.dateFin ?? dto.dateDebut ?? '';
     return {
       ...dto,
       tariffZones,
       totalTables,
-      displayDate: this.formatDisplayDate(dto.date ?? ''),
+      displayDate: this.formatDisplayDate(dateDebut),
+      displayDateDebut: this.formatDisplayDate(dateDebut),
+      displayDateFin: this.formatDisplayDate(dateFin),
     };
   }
 
@@ -135,6 +140,11 @@ export class FestivalService {
       month: 'short',
       year: 'numeric',
     });
+  }
+
+  private extractDateInput(value: string): string {
+    if (!value) return '';
+    return value.includes('T') ? value.split('T')[0] : value;
   }
 
   private createId(source: string): string {

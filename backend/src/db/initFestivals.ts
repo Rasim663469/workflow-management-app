@@ -27,7 +27,8 @@ export async function ensureFestivals(): Promise<void> {
       location TEXT,
       nombre_total_tables INTEGER NOT NULL,
       date_debut DATE NOT NULL,
-      date_fin DATE NOT NULL
+      date_fin DATE NOT NULL,
+      description TEXT
     )
   `);
 
