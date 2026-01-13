@@ -1,7 +1,9 @@
 # --- Step 1: Build TypeScript ---
 FROM node:22-alpine AS build
-
 WORKDIR /app
+
+# Installer les dépendances de compilation pour better-sqlite3
+RUN apk add --no-cache python3 make g++
 
 COPY package*.json ./
 RUN npm ci
@@ -13,11 +15,13 @@ RUN npx tsc -p tsconfig.json --pretty false --noEmitOnError false && \
     echo "👍  TypeScript compilation completed" && \
     ls -la dist
 
-
 # --- Step 2: Production runtime ---
 FROM node:22-alpine AS runtime
-
 WORKDIR /app
+
+# Installer les dépendances de compilation pour better-sqlite3 (aussi nécessaire ici)
+RUN apk add --no-cache python3 make g++
+
 ENV NODE_ENV=production
 
 RUN apk add --no-cache python3 build-base

@@ -1,0 +1,29 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Réservations</p>
+      <h1>Gestion des réservations</h1>
+    </div>
+    <div class="selector">
+      <label for="festival">Festival</label>
+      <select id="festival" [value]="selectedFestivalId()" (change)="onFestivalChange($event)">
+        @for (festival of festivals(); track festival.id) {
+          <option [value]="festival.id">{{ festival.name }}</option>
+        }
+      </select>
+    </div>
+  </header>
+
+  @if (loadingFestivals()) {
+    <p>Chargement des festivals...</p>
+  }
+
+  @if (selectedFestivalId()) {
+    <div class="grid">
+      <app-reservations-list [festivalId]="selectedFestivalId()!" />
+      <app-reservation-form [festivalId]="selectedFestivalId()!" (created)="handleCreated()" />
+    </div>
+  } @else {
+    <p>Aucun festival disponible.</p>
+  }
+</section>

@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { FestivalCard } from '../festival-card/festival-card';
 import { AuthService } from '@shared/auth/auth.service';
 import { FestivalService } from '@services/festival.service';
+import { AuthService } from '@shared/auth/auth.service';
 
 import { JsonPipe } from '@angular/common';
 
@@ -14,13 +15,12 @@ import { JsonPipe } from '@angular/common';
   styleUrl: './festivals-list.scss'
 })
 export class FestivalsList {
-  readonly festivalService = inject(FestivalService);
-  readonly authService = inject(AuthService);
-
+  private readonly festivalService = inject(FestivalService);
+  private readonly auth = inject(AuthService);
   readonly festivals = this.festivalService.festivals;
   readonly loading = this.festivalService.loading;
   readonly error = this.festivalService.error;
-  readonly isAdmin = this.authService.isAdmin;
+  readonly isAdmin = this.auth.isAdmin;
 
 
   constructor() {

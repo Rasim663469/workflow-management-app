@@ -9,26 +9,40 @@
 
   <div class="festival-body">
     <p class="festival-description">
-      Zones tarifaires : {{ festival.tariffZones?.length ?? 0 }}
+      Zones tarifaires : {{ festival.tariffZones.length }}
     </p>
 
-    @if (festival.tariffZones?.length) {
-    <ul class="tariff-zones">
-      @for (zone of festival.tariffZones; track zone.name) {
-      <li class="tariff-zone">
-        <div class="zone-name">{{ zone.name }}</div>
-        <div class="zone-details">
-          <span>{{ zone.totalTables }} tables</span>
-          <span>Table : {{ zone.pricePerTable | currency : 'EUR' : 'symbol' : '1.0-0' }}</span>
-          <span>m² : {{ zone.pricePerM2 | currency : 'EUR' : 'symbol' : '1.0-2' }}</span>
-        </div>
-      </li>
-      }
-    </ul>
+    @if (festival.tariffZones.length) {
+      <ul class="tariff-zones">
+        @for (zone of festival.tariffZones; track zone.name) {
+          <li class="tariff-zone">
+            <div class="zone-name">{{ zone.name }}</div>
+            <div class="zone-details">
+              <span>{{ zone.totalTables }} tables</span>
+              <span>Table : {{ zone.pricePerTable | currency : 'EUR' : 'symbol' : '1.0-0' }}</span>
+              <span>m² : {{ zone.pricePerM2 | currency : 'EUR' : 'symbol' : '1.0-2' }}</span>
+            </div>
+          </li>
+        }
+      </ul>
     }
   </div>
-  @if (isAdmin()) {
-  <button type="button" class="secondary" routerLink="/festivals/edit/{{ festival.id }}">Modifier</button>
-  <button type="button" class="secondary" (click)="deleteFestival()">Supprimer</button>
+
+  @if (auth.isAdmin()) {
+    <footer class="actions">
+      <a
+        class="primary-button"
+        [routerLink]="['/reservations']"
+        [queryParams]="{ festivalId: festival.id }"
+      >
+        Gérer les réservations
+      </a>
+      <a
+        class="secondary-button"
+        [routerLink]="['/festivals', festival.id, 'edit']"
+      >
+        Modifier
+      </a>
+    </footer>
   }
 </article>

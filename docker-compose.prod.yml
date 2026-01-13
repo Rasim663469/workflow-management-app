@@ -1,87 +1,75 @@
 services:
-  # --------------------------------------------------------------------
-  # Base de données PostgreSQL
-  # --------------------------------------------------------------------
   db:
-    image: postgres:16-alpine      # image légère et officielle de PostgreSQL
-    container_name: secureapp_db_prod # nom explicite du conteneur
-    restart: unless-stopped        # redémarrage automatique en cas de crash
-    environment:                   # variables d’environnement pour init.
+    image: postgres:16-alpine
+    container_name: secureapp_db_prod
+    restart: no
+    environment:
       POSTGRES_USER: secureapp
       POSTGRES_PASSWORD: secureapp
       POSTGRES_DB: secureapp
-    volumes:                       # persistance et initialisation de la base
-      - db_data:/var/lib/postgresql/data # volume persistant pour les données
-      - ./backend/db/init.sql:/docker-entrypoint-initdb.d/init.sql  # script
-                                            # SQL exécuté au 1er démarrage
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./backend/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U secureapp -d secureapp -h 127.0.0.1"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+      start_period: 5s
     networks:
-      - secure_net  # réseau privé partagé avec backend et frontend
+      - secure_net
 
-  # --------------------------------------------------------------------
-  # Backend Node.js (API Express + JWT + HTTPS)
-  # --------------------------------------------------------------------
   backend:
-    build:                  # Build du backend via le Dockerfile dédié
-      context: ./backend    # répertoire racine du projet pour accéder à ./certs
-      dockerfile: Dockerfile # fichier Dockerfile à utiliser
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: secureapp_backend_prod
-    restart: unless-stopped
-    depends_on:             # s’assure que la base est prête avant le backend
-      - db
-    environment:            # variables d’environnement injectées au runtime
+    restart: no
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://secureapp:secureapp@db:5432/secureapp
       JWT_SECRET: "mon_secret_jwt_super_long_et_complexe"
       JWT_EXPIRATION: "15m"
       REFRESH_EXPIRATION: "7d"
       FRONTEND_URL: http://localhost:8080
-    volumes:           # accès en lecture seule aux certificats SSL (mkcert)
+    volumes:
       - ./backend/certs:/app/certs:ro
     ports:
-      - "4000:4000"    # expose le port HTTPS du backend sur la machine hôte
+      - "4000:4000"
     networks:
-      - secure_net     # même réseau Docker que les autres services
+      - secure_net
 
-  # --------------------------------------------------------------------
-  # Frontend Angular (servi via Nginx)
-  # --------------------------------------------------------------------
   frontend:
-    build:                            # Build du front Angular + Nginx
-      context: ./frontend             # répertoire racine du frontend
-      dockerfile: Dockerfile          # Dockerfile pour le front (multi-stage avec Nginx)
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     container_name: secureapp_frontend_prod
-    restart: unless-stopped
+    restart: no
     depends_on:
-      - backend                       # le backend doit être prêt avant le front
+      - backend
     ports:
-      - "8080:80"                     # le front est accessible sur http://localhost:8080
+      - "8080:80"
     networks:
-      - secure_net                    # partage du réseau avec backend et db
+      - secure_net
 
-  # =========================================================
-  # Adminer (interface web de gestion PostgreSQL)
-  # =========================================================
   adminer:
     image: adminer:latest
     container_name: secureapp_adminer_prod
-    restart: unless-stopped
+    restart: no
     depends_on:
       - db
     ports:
-      - "8082:8080"   # http://localhost:8082
+      - "8082:8080"
     environment:
       - ADMINER_DEFAULT_SERVER=db
     networks:
       - secure_net
 
-# ----------------------------------------------------------------------
-# Volume persistant pour PostgreSQL
-# ----------------------------------------------------------------------
 volumes:
-  db_data:                            # stocke les données de la base entre les redémarrages
+  db_data:
 
-# ----------------------------------------------------------------------
-# Réseau interne privé
-# ----------------------------------------------------------------------
 networks:
-  secure_net:                         # réseau isolé : aucun service n’est exposé publiquement sauf le front
+  secure_net:

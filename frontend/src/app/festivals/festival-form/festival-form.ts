@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormGroup, FormControl, ReactiveFormsModule, Validators, FormArray } from '@angular/forms';
 import { FestivalService } from '@services/festival.service';
 import { TariffZoneDto } from '../festival/festival-dto';
@@ -25,8 +25,11 @@ export class FestivalForm implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-
-  currentId: string | null = null;
+  readonly festivals = this.festivalService.festivals;
+  readonly editing = signal(false);
+  private festivalId: string | null = null;
+  readonly submitError = signal<string | null>(null);
+  readonly submitSuccess = signal<string | null>(null);
 
   private createZoneGroup(initial?: Partial<TariffZoneDto>): TariffZoneFormGroup {
     return new FormGroup({
@@ -73,8 +76,12 @@ export class FestivalForm implements OnInit {
   }
 
   onSubmit() {
+    this.submitError.set(null);
+    this.submitSuccess.set(null);
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      this.submitError.set(`Champs à corriger : ${this.invalidFields().join(', ')}`);
       return;
     }
 
@@ -86,37 +93,154 @@ export class FestivalForm implements OnInit {
       pricePerM2: zone.pricePerM2 ?? (Number(zone.pricePerTable) / 4.5)
     }));
 
-    const payload = {
-      name: rawValue.name.trim(),
-      location: rawValue.location.trim(),
-      dateDebut: rawValue.dateDebut,
-      dateFin: rawValue.dateFin,
-      description: rawValue.description,
-      totalTables: normalizedZones.reduce((sum, zone) => sum + zone.totalTables, 0),
-    };
+    const normalizedZones = (tariffZones ?? []).map((zone, index) => {
+      const pricePerTable = Number(zone.pricePerTable) || 0;
+      const pricePerM2 =
+        zone.pricePerM2 === null || zone.pricePerM2 === undefined
+          ? pricePerTable / 4.5
+          : Number(zone.pricePerM2);
+
+      return {
+        name: zone.name.trim() || `Zone ${index + 1}`,
+        totalTables: Number(zone.totalTables) || 0,
+        pricePerTable,
+        pricePerM2,
+      };
+    });
+
+    if (this.editing() && this.festivalId) {
+      this.updateFestival({
+        id: this.festivalId,
+        name: name.trim(),
+        location: location.trim(),
+        date,
+        totalTables: normalizedZones.reduce((sum, zone) => sum + zone.totalTables, 0),
+      });
+    } else {
+      // Persiste en base puis recharge la liste pour récupérer l'ID et les données réelles
+      this.persistFestival({
+        name: name.trim(),
+        location: location.trim(),
+        date,
+        totalTables: normalizedZones.reduce((sum, zone) => sum + zone.totalTables, 0),
+        tariffZones: normalizedZones,
+      });
+    }
 
     this.saveFestival(payload);
   }
 
-  private saveFestival(payload: any): void {
-    const backendPayload = {
-      nom: payload.name,
-      location: payload.location,
-      nombre_total_tables: payload.totalTables,
-      date_debut: payload.dateDebut,
-      date_fin: payload.dateFin,
-      description: payload.description,
-    };
+  private persistFestival(payload: {
+    name: string;
+    location: string;
+    date: string;
+    totalTables: number;
+    tariffZones: TariffZoneDto[];
+  }): void {
+    this.http
+      .post(
+        `${environment.apiUrl}/festivals`,
+        {
+          nom: payload.name,
+          location: payload.location,
+          nombre_total_tables: payload.totalTables,
+          date_debut: payload.date,
+          date_fin: payload.date,
+          zones: payload.tariffZones.map(zone => ({
+            nom: zone.name,
+            nombre_tables: zone.totalTables,
+            prix_table: zone.pricePerTable,
+            prix_m2: zone.pricePerM2,
+          })),
+        },
+        { withCredentials: true }
+      )
+      .subscribe({
+        next: () => this.festivalService.loadAll(), // Rafraîchir pour récupérer l'ID réel et les zones
+        error: err => console.error('Erreur lors de la création du festival', err),
+      });
+  }
 
-    const request$ = this.currentId
-      ? this.http.patch(`${environment.apiUrl}/festivals/${this.currentId}`, backendPayload, { withCredentials: true })
-      : this.http.post(`${environment.apiUrl}/festivals`, backendPayload, { withCredentials: true });
+  private updateFestival(payload: {
+    id: string;
+    name: string;
+    location: string;
+    date: string;
+    totalTables: number;
+  }): void {
+    this.http
+      .patch(
+        `${environment.apiUrl}/festivals/${payload.id}`,
+        {
+          nom: payload.name,
+          location: payload.location,
+          nombre_total_tables: payload.totalTables,
+          date_debut: payload.date,
+          date_fin: payload.date,
+        },
+        { withCredentials: true }
+      )
+      .subscribe({
+        next: () => {
+          this.festivalService.loadAll();
+          this.submitSuccess.set('Festival mis à jour.');
+          this.router.navigate(['/home']);
+        },
+        error: err => {
+          console.error('Erreur lors de la mise à jour du festival', err);
+          this.submitError.set('Erreur lors de la mise à jour du festival.');
+        },
+      });
+  }
 
-    request$.subscribe({
-      next: () => {
-        this.router.navigate(['/festivals']);
-      },
-      error: err => console.error('Erreur', err),
+  ngOnInit(): void {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      this.editing.set(true);
+      this.festivalId = id;
+      this.loadFestival(id);
+    }
+  }
+
+  private loadFestival(id: string): void {
+    this.http
+      .get<any>(`${environment.apiUrl}/festivals/${id}`, { withCredentials: true })
+      .subscribe({
+        next: data => {
+          if (!data) return;
+          const dateValue = data.date
+            ? new Date(data.date).toISOString().slice(0, 10)
+            : '';
+          this.form.patchValue({
+            name: data.name ?? '',
+            location: data.location ?? '',
+            date: dateValue,
+          });
+          this.tariffZones.clear();
+          const zones = (data.tariffZones ?? []) as TariffZoneDto[];
+          if (zones.length === 0) {
+            this.tariffZones.push(this.createZoneGroup());
+          } else {
+            zones.forEach(z => this.tariffZones.push(this.createZoneGroup(z)));
+          }
+        },
+        error: err => console.error('Erreur lors du chargement du festival', err),
+      });
+  }
+
+  private invalidFields(): string[] {
+    const fields: string[] = [];
+    const controls = this.form.controls;
+    if (controls.name.invalid) fields.push('nom');
+    if (controls.location.invalid) fields.push('lieu');
+    if (controls.date.invalid) fields.push('date');
+    this.tariffZones.controls.forEach((zone, idx) => {
+      const z = zone.controls;
+      if (z.name.invalid) fields.push(`zone ${idx + 1} nom`);
+      if (z.totalTables.invalid) fields.push(`zone ${idx + 1} tables`);
+      if (z.pricePerTable.invalid) fields.push(`zone ${idx + 1} prix table`);
+      if (z.pricePerM2.invalid) fields.push(`zone ${idx + 1} prix m²`);
     });
+    return fields;
   }
 }

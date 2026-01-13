@@ -1,4 +1,4 @@
-import { inject, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { FestivalCard } from '../../festivals/festival/festival';
 import { CreateFestivalDto, FestivalDto, TariffZoneDto } from '../../festivals/festival/festival-dto';
 import { HttpClient } from '@angular/common/http';
@@ -12,8 +12,13 @@ import { Observable, map, tap } from 'rxjs';
 export class FestivalService {
   private readonly http = inject(HttpClient);
   private readonly _festivalCards = signal<FestivalCard[]>([]);
+  private readonly _currentFestivalId = signal<string | null>(null);
 
   readonly festivals = this._festivalCards.asReadonly();
+  readonly currentFestivalId = this._currentFestivalId.asReadonly();
+  readonly currentFestival = computed(() =>
+    this._festivalCards().find(f => f.id === this._currentFestivalId()) ?? null
+  );
 
   private readonly _festivals = signal<FestivalDto[]>([]);
   private readonly _loading = signal(false);
@@ -38,6 +43,11 @@ export class FestivalService {
 
   hydrateFromDtos(dtos: FestivalDto[]): void {
     this._festivalCards.set(dtos.map(dto => this.mapToCard(dto)));
+
+    // Sélectionner par défaut le premier festival si aucun courant
+    if (!this._currentFestivalId() && dtos.length > 0) {
+      this._currentFestivalId.set(dtos[0].id);
+    }
   }
 
   clear(): void {
@@ -69,10 +79,8 @@ export class FestivalService {
 
     return {
       name: draft.name.trim(),
-      location: draft.location.trim(),
-      dateDebut: this.normalizeDate(draft.dateDebut),
-      dateFin: this.normalizeDate(draft.dateFin),
-      description: draft.description.trim(),
+      location: (draft.location ?? '').trim(),
+      date: this.normalizeDate(draft.date ?? ''),
       tariffZones,
     };
   }
@@ -102,14 +110,16 @@ export class FestivalService {
   }
 
   private mapToCard(dto: FestivalDto): FestivalCard {
-
-    const tariffZones = dto.tariffZones ?? [];
+    // tolère tariffZones ou tariffzones selon l'API
+    const tariffZones = (dto.tariffZones ?? (dto as any).tariffzones ?? []) as TariffZoneDto[];
+    const totalTables =
+      dto.totalTables ??
+      tariffZones.reduce((sum, zone) => sum + (Number(zone.totalTables) || 0), 0);
     return {
       ...dto,
       tariffZones,
-      displayDate: this.formatDisplayDate(dto.dateDebut),
-      displayDateDebut: this.formatDisplayDate(dto.dateDebut),
-      displayDateFin: this.formatDisplayDate(dto.dateFin),
+      totalTables,
+      displayDate: this.formatDisplayDate(dto.date ?? ''),
     };
   }
 
@@ -159,6 +169,13 @@ export class FestivalService {
       });
   }
 
-
+  setCurrentFestival(id: string | number | null): void {
+    if (!id) {
+      this._currentFestivalId.set(null);
+      return;
+    }
+    this._currentFestivalId.set(String(id));
+  }
+  
 
 }

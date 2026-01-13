@@ -1,0 +1,25 @@
+<section class="card">
+  <header>
+    <div>
+      <p class="eyebrow">Réservations</p>
+      <h2>Festival courant</h2>
+    </div>
+    @if (loading()) {
+      <span class="pill">Chargement...</span>
+    }
+  </header>
+
+  @if (error()) {
+    <p class="error">{{ error() }}</p>
+  }
+
+  @if (!loading() && reservations().length === 0) {
+    <p>Aucune réservation pour ce festival.</p>
+  }
+
+  <div class="reservations-grid">
+    @for (reservation of reservations(); track reservation.id) {
+      <app-reservation-card [reservation]="reservation" />
+    }
+  </div>
+</section>

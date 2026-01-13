@@ -1,0 +1,94 @@
+<section class="card">
+  <header>
+    <div>
+      <p class="eyebrow">Nouvelle réservation</p>
+      <h2>Associer un éditeur</h2>
+    </div>
+    @if (loadingZones()) {
+      <span class="pill">Chargement zones...</span>
+    }
+  </header>
+
+  @if (errorZones()) {
+    <p class="error">{{ errorZones() }}</p>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()">
+      <div class="field">
+        <label for="editeur">Éditeur *</label>
+        <select id="editeur" formControlName="editeur_id">
+          <option value="">Sélectionner</option>
+          @for (editeur of editeurs(); track editeur.id) {
+            <option [value]="editeur.id">{{ editeur.name }}</option>
+          }
+        </select>
+      </div>
+
+    <div class="lines">
+      @for (line of lignes(); track $index) {
+        <div class="line">
+          <div class="field">
+            <label>Zone tarifaire *</label>
+            <select
+              [value]="line.zone_tarifaire_id ?? ''"
+              (change)="updateLine($index, { zone_tarifaire_id: $any($event.target).value ? toNumber($any($event.target).value) : null })"
+            >
+              <option value="">Choisir une zone</option>
+              @for (zone of zones(); track zone.id) {
+                <option [value]="zone.id">
+                  {{ zone.nom }} — {{ zone.prix_table | currency : 'EUR' : 'symbol' : '1.0-0' }} ({{ zone.nombre_tables_disponibles }} dispo)
+                </option>
+              }
+            </select>
+            @if (zoneErrors()[line.zone_tarifaire_id ?? -1]) {
+              <p class="error">{{ zoneErrors()[line.zone_tarifaire_id ?? -1] }}</p>
+            }
+          </div>
+
+          <div class="field small">
+            <label>Tables</label>
+            <input
+              type="number"
+              min="1"
+              [value]="line.nombre_tables"
+              (input)="updateLine($index, { nombre_tables: toNumber($any($event.target).value) })"
+            />
+          </div>
+
+          <button type="button" class="ghost" (click)="removeLine($index)" [disabled]="lignes().length === 1">
+            Retirer
+          </button>
+        </div>
+      }
+    </div>
+
+    <button type="button" class="ghost" (click)="addLine()">Ajouter une zone</button>
+
+    <div class="grid">
+      <div class="field">
+        <label for="remiseTables">Remise en tables</label>
+        <input id="remiseTables" type="number" min="0" formControlName="remise_tables_offertes" />
+      </div>
+      <div class="field">
+        <label for="remiseArgent">Remise en montant</label>
+        <input id="remiseArgent" type="number" min="0" formControlName="remise_argent" />
+      </div>
+    </div>
+
+    <div class="total">
+      <p>Total estimé : <strong>{{ totalEstimate() | currency : 'EUR' : 'symbol' : '1.0-0' }}</strong></p>
+    </div>
+
+    <footer class="actions">
+      <button type="submit" [disabled]="submitting()">
+        {{ submitting() ? 'Création...' : 'Créer la réservation' }}
+      </button>
+      @if (submitSuccess()) {
+        <span class="success">{{ submitSuccess() }}</span>
+      }
+      @if (submitError()) {
+        <span class="error">{{ submitError() }}</span>
+      }
+    </footer>
+  </form>
+</section>

@@ -6,8 +6,9 @@ export const authGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
 
+  // Si non connecté, on laisse passer vers home (ne pas bloquer les invités)
   if (!auth.isLoggedIn()) {
-    router.navigate(['/login']);
+    router.navigate(['/home']);
     return false;
   }
   return true;

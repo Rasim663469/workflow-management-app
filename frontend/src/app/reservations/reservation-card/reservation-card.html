@@ -1,0 +1,58 @@
+<article class="reservation-card">
+  <header>
+    <div>
+      <p class="eyebrow">Éditeur</p>
+      <h3>{{ reservation.editeur }}</h3>
+    </div>
+    <span class="badge" [attr.data-status]="reservation.statut">{{ reservation.statut }}</span>
+  </header>
+
+  <div class="meta">
+    <div>
+      <p class="label">Tables</p>
+      <p class="value">{{ reservation.tables }}</p>
+    </div>
+    <div>
+      <p class="label">Total</p>
+      <p class="value">{{ reservation.prixTotal | currency : 'EUR' : 'symbol' : '1.0-0' }}</p>
+    </div>
+    <div>
+      <p class="label">À payer</p>
+      <p class="value strong">{{ reservation.prixFinal | currency : 'EUR' : 'symbol' : '1.0-0' }}</p>
+    </div>
+  </div>
+
+  <ul class="zones" *ngIf="reservation.lignes.length">
+    <li *ngFor="let line of reservation.lignes">
+      <strong>{{ line.zone_nom ?? 'Zone' }}</strong>
+      <span>{{ line.nombre_tables }} table(s)</span>
+      <span class="price" *ngIf="line.prix_table !== undefined && line.prix_table !== null">
+        @ {{ line.prix_table | currency : 'EUR' : 'symbol' : '1.0-0' }}
+      </span>
+    </li>
+  </ul>
+
+  @if (lastContact) {
+    <p class="contact">Dernier contact : {{ lastContact | date }}</p>
+  }
+
+  <div class="workflow">
+    <label for="statut">Workflow</label>
+    <select
+      id="statut"
+      [value]="reservation.statut"
+      (change)="updateStatus($any($event.target).value)"
+      [disabled]="saving()"
+    >
+      @for (status of statuses; track status.value) {
+        <option [value]="status.value">{{ status.label }}</option>
+      }
+    </select>
+    @if (saving()) {
+      <span class="pill">Mise à jour...</span>
+    }
+    @if (error()) {
+      <span class="error">{{ error() }}</span>
+    }
+  </div>
+</article>
