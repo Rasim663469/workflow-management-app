@@ -24,6 +24,8 @@ RUN apk add --no-cache python3 make g++
 
 ENV NODE_ENV=production
 
+RUN apk add --no-cache python3 build-base
+
 COPY --from=build /app/dist ./dist
 COPY package*.json ./
 

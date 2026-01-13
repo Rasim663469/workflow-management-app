@@ -4,7 +4,7 @@ import { CreateFestivalDto, FestivalDto, TariffZoneDto } from '../../festivals/f
 import { HttpClient } from '@angular/common/http';
 import { catchError, of } from 'rxjs';
 import { environment } from '@env/environment';
-
+import { Observable, map, tap } from 'rxjs';
 
 
 
@@ -52,6 +52,26 @@ export class FestivalService {
 
   clear(): void {
     this._festivalCards.set([]);
+  }
+
+  deleteFestival(id: string): void {
+    this.http.delete(`${environment.apiUrl}/festivals/${id}`, { withCredentials: true }).subscribe(() => {
+      this._festivalCards.update(cards => cards.filter(card => card.id !== id));
+      this._festivals.update(dtos => dtos.filter(dto => dto.id !== id));
+    });
+  }
+
+  getFestival(id: string): Observable<any> {
+    return this.http.get<any>(`${environment.apiUrl}/festivals/${id}`, { withCredentials: true }).pipe(
+      map((data: any) => ({
+        name: data.nom,
+        location: data.location,
+        dateDebut: data.date_debut ? data.date_debut.split('T')[0] : '',
+        dateFin: data.date_fin ? data.date_fin.split('T')[0] : '',
+        description: data.description,
+        tariffZones: []
+      }))
+    );
   }
 
   private normalizeDraft(draft: CreateFestivalDto): CreateFestivalDto {

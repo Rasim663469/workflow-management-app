@@ -1,13 +1,16 @@
 import { Component, effect, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FestivalCard } from '../festival-card/festival-card';
+import { AuthService } from '@shared/auth/auth.service';
 import { FestivalService } from '@services/festival.service';
 import { AuthService } from '@shared/auth/auth.service';
+
+import { JsonPipe } from '@angular/common';
 
 @Component({
   selector: 'app-festivals-list',
   standalone: true,
-  imports: [FestivalCard, RouterLink],
+  imports: [FestivalCard, RouterLink, JsonPipe],
   templateUrl: './festivals-list.html',
   styleUrl: './festivals-list.scss'
 })

@@ -10,19 +10,19 @@
   </header>
 
   @if (loading()) {
-    <p class="status">Chargement des festivals...</p>
+  <p class="status">Chargement des festivals...</p>
   }
   @else if (error()) {
-    <p class="status error">Erreur : {{ error() }}</p>
+  <p class="status error">Erreur : {{ error() }}</p>
   }
   @else if (festivals().length === 0) {
-    <p class="status">Aucun festival disponible pour le moment.</p>
+  <p class="status">Aucun festival disponible pour le moment.</p>
   }
   @else {
-    <div class="festival-grid">
-      @for (festival of festivals(); track festival.id) {
-        <app-festival-card [festival]="festival" />
-      }
-    </div>
+  <div class="festival-grid">
+    @for (festival of festivals(); track festival.id) {
+    <app-festival-card [festival]="festival" />
+    }
+  </div>
   }
 </section>

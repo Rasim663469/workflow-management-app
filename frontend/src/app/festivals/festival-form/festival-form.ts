@@ -20,7 +20,7 @@ type TariffZoneFormGroup = FormGroup<{
   templateUrl: './festival-form.html',
   styleUrl: './festival-form.scss'
 })
-export class FestivalForm {
+export class FestivalForm implements OnInit {
   private readonly festivalService = inject(FestivalService);
   private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
@@ -43,7 +43,9 @@ export class FestivalForm {
   readonly form = new FormGroup({
     name: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
     location: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
-    date: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
+    dateDebut: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
+    dateFin: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
+    description: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
     tariffZones: new FormArray<TariffZoneFormGroup>([this.createZoneGroup()]),
   });
 
@@ -51,16 +53,26 @@ export class FestivalForm {
     return this.form.controls.tariffZones;
   }
 
-  addZone(): void {
-    this.tariffZones.push(this.createZoneGroup());
+  // charge les données si il y a un id dans l'url
+  ngOnInit(): void {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      this.currentId = id;
+      this.festivalService.getFestival(id).subscribe((data: any) => {
+        this.form.patchValue(data);
+
+        if (data.tariffZones?.length) {
+          this.tariffZones.clear();
+          data.tariffZones.forEach((z: any) => this.tariffZones.push(this.createZoneGroup(z)));
+        }
+      });
+    }
   }
 
-  removeZone(index: number): void {
-    if (this.tariffZones.length <= 1) {
-      return;
-    }
+  addZone(): void { this.tariffZones.push(this.createZoneGroup()); }
 
-    this.tariffZones.removeAt(index);
+  removeZone(index: number): void {
+    if (this.tariffZones.length > 1) this.tariffZones.removeAt(index);
   }
 
   onSubmit() {
@@ -73,7 +85,13 @@ export class FestivalForm {
       return;
     }
 
-    const { name, location, date, tariffZones } = this.form.getRawValue();
+    const rawValue = this.form.getRawValue();
+    const normalizedZones = (rawValue.tariffZones ?? []).map((zone, index) => ({
+      name: zone.name.trim() || `Zone ${index + 1}`,
+      totalTables: Number(zone.totalTables) || 0,
+      pricePerTable: Number(zone.pricePerTable) || 0,
+      pricePerM2: zone.pricePerM2 ?? (Number(zone.pricePerTable) / 4.5)
+    }));
 
     const normalizedZones = (tariffZones ?? []).map((zone, index) => {
       const pricePerTable = Number(zone.pricePerTable) || 0;
@@ -109,13 +127,7 @@ export class FestivalForm {
       });
     }
 
-    this.form.reset({
-      name: '',
-      location: '',
-      date: '',
-    });
-    this.tariffZones.clear();
-    this.tariffZones.push(this.createZoneGroup());
+    this.saveFestival(payload);
   }
 
   private persistFestival(payload: {

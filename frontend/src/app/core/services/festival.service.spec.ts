@@ -28,7 +28,7 @@ describe('FestivalService', () => {
     expect(service.festivals().length).toBe(1);
     expect(service.festivals()[0]).toEqual(card);
     expect(card.id).toMatch(/^festival-/);
-    expect(card.displayDate).toBeTruthy();
+    expect(card.displayDateDebut).toBeTruthy();
   });
 
   it('hydrates the signal from a DTO list', () => {
@@ -45,6 +45,6 @@ describe('FestivalService', () => {
     ]);
 
     expect(service.festivals().length).toBe(1);
-    expect(service.festivals()[0].displayDate).toContain('2024');
+    expect(service.festivals()[0].displayDateDebut).toContain('2024');
   });
 });

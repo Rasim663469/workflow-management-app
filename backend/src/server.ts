@@ -79,7 +79,6 @@ app.use('/api/users', verifyToken, usersRouter);
 app.use('/zones-tarifaires', zoneTarifaireRouter, verifyToken, requireAdmin);
 app.use('/api/zones-tarifaires', verifyToken, requireAdmin, zoneTarifaireRouter);
 app.use('/jeux', jeuRouter, verifyToken, requireAdmin);
-app.use('/api/jeux', verifyToken, requireAdmin, jeuRouter);
 app.use('/contacts', contatcRouter, verifyToken, requireAdmin);
 app.use('/zone-plans', zonePlanRouter, verifyToken, requireAdmin);
 app.use('api/festival', festivalRouter, verifyToken, requireAdmin);
