@@ -4,7 +4,9 @@
       <p class="eyebrow">Festivals</p>
       <h2>Découvrez les prochains festivals</h2>
     </div>
-    <button class="primary" routerLink="/festivals/new">Ajouter un festival</button>
+    @if (isAdmin()) {
+      <button class="primary" routerLink="/festivals/new">Ajouter un festival</button>
+    }
   </header>
 
   @if (loading()) {

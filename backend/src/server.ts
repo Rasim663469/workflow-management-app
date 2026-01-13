@@ -13,6 +13,7 @@ import publicRouter from './routes/public.js';
 import festivalRouter from './routes/festival.js'
 import { ensureAdmin } from './db/initAdmin.js';
 import { ensureFestivals } from './db/initFestivals.js';
+import { waitForDatabase } from './db/database.js';
 
 import zoneTarifaireRouter from './routes/zone_tarifaire.js';
 import jeuRouter from './routes/jeu.js';
@@ -23,6 +24,7 @@ import jeuFestivalRoutes from './routes/jeu_festival.js';
 import contactRoutes from './routes/contact.js';
 import { ensureJeux } from './db/initJeu.js';
 import editeurRouter from './routes/editeur.js';
+import reservationRouter from './routes/reservation.js';
 
 
 // Création de l’application Express
@@ -71,28 +73,38 @@ app.use(cors({
 const key = fs.readFileSync('./certs/localhost-key.pem');
 const cert = fs.readFileSync('./certs/localhost.pem');
 
-// Lancement du serveur HTTPS
-https.createServer({ key, cert }, app).listen(4000, () => {
-  console.log('👍 Serveur API démarré sur https://localhost:4000');
-});
-
-await ensureAdmin();
-await ensureEditeurs();
-await ensureFestivals();
-await ensureJeux();
 app.use('/api/public', publicRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/users', verifyToken, usersRouter);
 app.use('/zones-tarifaires', zoneTarifaireRouter, verifyToken, requireAdmin);
+app.use('/api/zones-tarifaires', verifyToken, requireAdmin, zoneTarifaireRouter);
 app.use('/jeux', jeuRouter, verifyToken, requireAdmin);
 app.use('/api/jeux', verifyToken, requireAdmin, jeuRouter);
 app.use('/contacts', contatcRouter, verifyToken, requireAdmin);
 app.use('/zone-plans', zonePlanRouter, verifyToken, requireAdmin);
 app.use('api/festival', festivalRouter, verifyToken, requireAdmin);
 app.use('/api/editeurs', verifyToken, editeurRouter);
+app.use('/api/reservations', verifyToken, requireAdmin, reservationRouter);
 app.use('/jeu_festival', jeuFestivalRoutes, verifyToken, requireAdmin);
 app.use('/contact_editeur', contactRoutes, verifyToken, requireAdmin);
 app.use('/api/admin', verifyToken, requireAdmin, (req, res) => {
   res.json({ message: 'Welcome admin' });
 });
-app.use('/api/festivals', verifyToken, (await import('./routes/festival.js')).default);
+// Festivals : lecture publique, écriture protégée par verifyToken en amont si nécessaire
+app.use('/api/festivals', festivalRouter);
+
+// Lancement du serveur HTTPS
+https.createServer({ key, cert }, app).listen(4000, () => {
+  console.log('👍 Serveur API démarré sur https://localhost:4000');
+});
+
+void (async () => {
+  await waitForDatabase();
+  await ensureAdmin();
+  await ensureEditeurs();
+  await ensureFestivals();
+  await ensureJeux();
+  console.log('👍 Initialisation DB terminée');
+})().catch(err => {
+  console.error('Erreur pendant l\'initialisation DB', err);
+});

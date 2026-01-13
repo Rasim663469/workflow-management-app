@@ -3,66 +3,132 @@ import pool from '../db/database.js';
 
 const router = Router();
 
-// CREATE 
+// CREATE + zones tarifaires
 router.post('/', async (req, res) => {
-    const { nom, location, nombre_total_tables, date_debut, date_fin } = req.body;
+  const { nom, location, nombre_total_tables, date_debut, date_fin, zones } = req.body;
 
-    if (!nom || !location || !nombre_total_tables || !date_debut || !date_fin) {
-        return res.status(400).json({ error: 'nom, location, nombre_total_tables, date_debut, date_fin sont requis' });
-    }
+  if (!nom || !location || !nombre_total_tables || !date_debut || !date_fin) {
+    return res
+      .status(400)
+      .json({ error: 'nom, location, nombre_total_tables, date_debut, date_fin sont requis' });
+  }
 
-    try {
-        const { rows } = await pool.query(
-            'INSERT INTO festival (nom, location, nombre_total_tables, date_debut, date_fin) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-            [nom, location, nombre_total_tables, date_debut, date_fin]
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    const { rows } = await client.query(
+      'INSERT INTO festival (nom, location, nombre_total_tables, date_debut, date_fin) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [nom, location, nombre_total_tables, date_debut, date_fin]
+    );
+    const festival = rows[0];
+
+    if (Array.isArray(zones)) {
+      for (const zone of zones) {
+        const nomZone = zone.nom ?? zone.name ?? 'Zone';
+        const nbTables = Number(zone.nombre_tables ?? zone.totalTables ?? 0);
+        const prixTable = Number(zone.prix_table ?? zone.pricePerTable ?? 0);
+        const prixM2 = Number(zone.prix_m2 ?? zone.pricePerM2 ?? prixTable / 4.5);
+
+        await client.query(
+          `INSERT INTO zone_tarifaire (festival_id, nom, nombre_tables_total, nombre_tables_disponibles, prix_table, prix_m2)
+           VALUES ($1, $2, $3, $3, $4, $5)`,
+          [festival.id, nomZone, nbTables, prixTable, prixM2]
         );
-        
-        res.status(201).json({
-            message: 'Festival créé avec succès',
-            festival: rows[0]
-        });
-
-    } catch (err: any) {
-        if (err.code === '23505') {
-            res.status(409).json({ error: 'Nom de festival déjà existant' });
-        } else {
-            console.error(err);
-            res.status(500).json({ error: 'Erreur serveur' });
-        }
+      }
     }
+
+    await client.query('COMMIT');
+
+    res.status(201).json({
+      message: 'Festival créé avec succès',
+      festival,
+    });
+  } catch (err: any) {
+    await client.query('ROLLBACK');
+    if (err.code === '23505') {
+      res.status(409).json({ error: 'Nom de festival déjà existant' });
+    } else {
+      console.error(err);
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  } finally {
+    client.release();
+  }
 });
 
-// READ ALL 
+// READ ALL avec zones agrégées pour l’affichage (champs essentiels)
 router.get('/', async (_req, res) => {
-    try {
-        const { rows } = await pool.query(
-            'SELECT id, nom, location, nombre_total_tables, date_debut, date_fin FROM festival ORDER BY date_debut DESC'
-        );
-        res.json(rows);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Erreur serveur' });
-    }
+  try {
+    const { rows } = await pool.query(
+      `
+      SELECT 
+        f.id,
+        f.nom AS name,
+        f.location,
+        f.date_debut AS date,
+        f.nombre_total_tables AS "totalTables",
+        COALESCE(json_agg(
+          json_build_object(
+            'name', zt.nom,
+            'totalTables', zt.nombre_tables_total,
+            'availableTables', zt.nombre_tables_disponibles,
+            'pricePerTable', zt.prix_table,
+            'pricePerM2', zt.prix_m2
+          )
+        ) FILTER (WHERE zt.id IS NOT NULL), '[]') AS "tariffZones"
+      FROM festival f
+      LEFT JOIN zone_tarifaire zt ON zt.festival_id = f.id
+      GROUP BY f.id
+      ORDER BY f.date_debut DESC
+      `
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
 });
 
-// READ ONE 
+// READ ONE avec zones
 router.get('/:id', async (req, res) => {
-    const { id } = req.params;
-    try {
-        const { rows } = await pool.query(
-            'SELECT * FROM festival WHERE id = $1',
-            [id]
-        );
+  const { id } = req.params;
+  try {
+    const { rows } = await pool.query(
+      `
+      SELECT 
+        f.id,
+        f.nom AS name,
+        f.location,
+        f.date_debut AS date,
+        f.nombre_total_tables AS "totalTables",
+        COALESCE(json_agg(
+          json_build_object(
+            'name', zt.nom,
+            'totalTables', zt.nombre_tables_total,
+            'availableTables', zt.nombre_tables_disponibles,
+            'pricePerTable', zt.prix_table,
+            'pricePerM2', zt.prix_m2
+          )
+        ) FILTER (WHERE zt.id IS NOT NULL), '[]') AS "tariffZones"
+      FROM festival f
+      LEFT JOIN zone_tarifaire zt ON zt.festival_id = f.id
+      WHERE f.id = $1
+      GROUP BY f.id
+      `,
+      [id]
+    );
 
-        if (rows.length === 0) {
-            return res.status(404).json({ error: 'Festival non trouvé' });
-        }
-
-        res.json(rows[0]);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Erreur serveur' });
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Festival non trouvé' });
     }
+
+    res.json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
 });
 
 // UPDATE 

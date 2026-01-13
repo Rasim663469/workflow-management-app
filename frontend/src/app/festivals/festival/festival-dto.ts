@@ -1,6 +1,7 @@
 export interface TariffZoneDto {
   name: string;
   totalTables: number;
+  availableTables?: number;
   pricePerTable: number;
   pricePerM2: number;
 }
@@ -8,8 +9,9 @@ export interface TariffZoneDto {
 export interface FestivalDto {
   id: string;
   name: string;
-  location: string;
-  date: string;
+  totalTables?: number;
+  location?: string;
+  date?: string;
   tariffZones: TariffZoneDto[];
 }
 

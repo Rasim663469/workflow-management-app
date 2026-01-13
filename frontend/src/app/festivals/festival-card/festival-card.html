@@ -7,10 +7,10 @@
 
   <div class="festival-body">
     <p class="festival-description">
-      Zones tarifaires : {{ festival.tariffZones?.length ?? 0 }}
+      Zones tarifaires : {{ festival.tariffZones.length }}
     </p>
 
-    @if (festival.tariffZones?.length) {
+    @if (festival.tariffZones.length) {
       <ul class="tariff-zones">
         @for (zone of festival.tariffZones; track zone.name) {
           <li class="tariff-zone">
@@ -25,4 +25,22 @@
       </ul>
     }
   </div>
+
+  @if (auth.isAdmin()) {
+    <footer class="actions">
+      <a
+        class="primary-button"
+        [routerLink]="['/reservations']"
+        [queryParams]="{ festivalId: festival.id }"
+      >
+        Gérer les réservations
+      </a>
+      <a
+        class="secondary-button"
+        [routerLink]="['/festivals', festival.id, 'edit']"
+      >
+        Modifier
+      </a>
+    </footer>
+  }
 </article>
