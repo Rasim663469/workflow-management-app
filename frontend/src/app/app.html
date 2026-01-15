@@ -1,6 +1,7 @@
 <nav class="app-header">
   <div class="nav-inner">
     <a routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
+    <a routerLink="/jeux" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Jeux</a>
     <a routerLink="/editeurs" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Editeurs</a>
     @if(auth.isAdmin()) {
       <a routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Admin</a>

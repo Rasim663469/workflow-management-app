@@ -4,7 +4,14 @@
       <p class="eyebrow">Editeurs</p>
       <h2>Découvrez les editeurs</h2>
     </div>
-    <button class="primary" routerLink="/admin">Ajouter un editeur</button>
+    <div class="search-field">
+      <input
+        type="search"
+        placeholder="Rechercher un éditeur..."
+        [value]="searchQuery()"
+        (input)="onSearch($any($event.target).value)"
+      />
+    </div>
   </header>
 
   @if (loading()) {
@@ -17,8 +24,21 @@
     <p class="status">Aucun editeur disponible pour le moment.</p>
   }
   @else {
+    <div class="letter-tabs">
+      @for (tab of tabs(); track tab) {
+        <button
+          type="button"
+          class="tab"
+          [class.active]="tab === activeTab()"
+          (click)="selectTab(tab)"
+        >
+          {{ tab }}
+        </button>
+      }
+    </div>
+
     <div class="editeur-grid">
-      @for (editeur of editeurs(); track editeur.id) {
+      @for (editeur of filteredEditeurs(); track editeur.id) {
         <app-editeur-card [editeur]="editeur" />
       }
     </div>

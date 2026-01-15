@@ -1,10 +1,11 @@
 import { Router } from 'express';
 import pool from '../db/database.js';
+import { requireAdmin } from '../middleware/auth-admin.js';
 
 const router = Router();
 
 // CRÉATION 
-router.post('/', async (req, res) => {
+router.post('/', requireAdmin, async (req, res) => {
     const { editeur_id, nom, auteurs, age_min, age_max, type_jeu } = req.body;
 
     // Seuls editeur_id et nom sont  obligatoires
@@ -37,18 +38,73 @@ router.post('/', async (req, res) => {
 
 // GET ALL  ou UN EDITEUR 
 router.get('/', async (req, res) => {
-    const { editeur_id } = req.query;
-    
-    try {
-        let query = 'SELECT * FROM jeu';
-        const values = [];
-        //Si on veut un éditeur précis
-        if (editeur_id) {
-            query += ' WHERE editeur_id = $1';
-            values.push(editeur_id);
-        }
+    const { editeur_id, q, type, mecanisme, sort } = req.query;
+    const values: any[] = [];
+    const where: string[] = [];
+    let paramIndex = 1;
 
-        query += ' ORDER BY nom';
+    if (editeur_id) {
+        where.push(`j.editeur_id = $${paramIndex++}`);
+        values.push(editeur_id);
+    }
+
+    if (q) {
+        where.push(`(j.nom ILIKE $${paramIndex} OR j.auteurs ILIKE $${paramIndex})`);
+        values.push(`%${q}%`);
+        paramIndex++;
+    }
+
+    if (type) {
+        where.push(`j.type_jeu ILIKE $${paramIndex++}`);
+        values.push(type);
+    }
+
+    if (mecanisme) {
+        const mecanismeValue = `${mecanisme}`;
+        if (/^\d+$/.test(mecanismeValue)) {
+            where.push(`EXISTS (
+                SELECT 1 FROM jeu_mecanisme jm2
+                WHERE jm2.jeu_id = j.id AND jm2.mecanisme_id = $${paramIndex++}
+            )`);
+            values.push(Number(mecanismeValue));
+        } else {
+            where.push(`EXISTS (
+                SELECT 1
+                FROM jeu_mecanisme jm2
+                JOIN mecanisme m2 ON m2.id = jm2.mecanisme_id
+                WHERE jm2.jeu_id = j.id AND m2.nom ILIKE $${paramIndex++}
+            )`);
+            values.push(mecanismeValue);
+        }
+    }
+
+    const orderBy =
+        sort === 'editeur'
+            ? 'editeur_name'
+            : sort === 'type'
+              ? 'j.type_jeu'
+              : 'j.nom';
+
+    try {
+        const query = `
+            SELECT
+                j.id,
+                j.editeur_id,
+                j.nom,
+                j.auteurs,
+                j.age_min,
+                j.age_max,
+                j.type_jeu,
+                e.nom AS editeur_name,
+                COALESCE(array_agg(DISTINCT m.nom) FILTER (WHERE m.nom IS NOT NULL), '{}') AS mecanismes
+            FROM jeu j
+            LEFT JOIN editeur e ON e.id = j.editeur_id
+            LEFT JOIN jeu_mecanisme jm ON jm.jeu_id = j.id
+            LEFT JOIN mecanisme m ON m.id = jm.mecanisme_id
+            ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+            GROUP BY j.id, e.nom
+            ORDER BY ${orderBy} NULLS LAST
+        `;
 
         const { rows } = await pool.query(query, values);
         res.json(rows);
@@ -72,7 +128,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // MISE À JOUR 
-router.put('/:id', async (req, res) => {
+router.put('/:id', requireAdmin, async (req, res) => {
     const { id } = req.params;
     const { nom, auteurs, age_min, age_max, type_jeu } = req.body;
 
@@ -104,7 +160,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // SUPPRESSION 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireAdmin, async (req, res) => {
     const { id } = req.params;
     try {
         const { rowCount } = await pool.query('DELETE FROM jeu WHERE id = $1', [id]);

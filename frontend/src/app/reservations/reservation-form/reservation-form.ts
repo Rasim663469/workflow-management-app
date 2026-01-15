@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output, effect, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CurrencyPipe } from '@angular/common';
-import { ReservationService } from '@services/reservation.service';
+import { ReservationCard, ReservationService } from '@services/reservation.service';
 import { EditeurService } from '@services/editeur.service';
 import { ZoneTarifaireDto, ZoneTarifaireService } from '@services/zone-tarifaire.service';
 
@@ -23,7 +23,10 @@ export class ReservationFormComponent {
   private readonly zoneTarifaireService = inject(ZoneTarifaireService);
 
   @Input({ required: true }) festivalId!: number | string;
+  @Input() reservationToEdit: ReservationCard | null = null;
   @Output() created = new EventEmitter<void>();
+  @Output() updated = new EventEmitter<void>();
+  @Output() cancelled = new EventEmitter<void>();
 
   readonly editeurs = this.editeurService.editeurs;
   readonly editeursLoading = this.editeurService.loading;
@@ -37,6 +40,7 @@ export class ReservationFormComponent {
   readonly submitting = signal(false);
   readonly submitError = signal<string | null>(null);
   readonly submitSuccess = signal<string | null>(null);
+  readonly editingId = signal<string | null>(null);
 
   readonly form = new FormGroup({
     editeur_id: new FormControl<number | null>(null, { validators: [Validators.required] }),
@@ -52,6 +56,11 @@ export class ReservationFormComponent {
 
   ngOnChanges(): void {
     this.loadZones();
+    if (this.reservationToEdit) {
+      this.applyEditState(this.reservationToEdit);
+    } else if (this.editingId()) {
+      this.resetForm();
+    }
   }
 
   private loadZones(): void {
@@ -137,28 +146,51 @@ export class ReservationFormComponent {
     }
 
     this.submitting.set(true);
+
+    const remise_tables_offertes = Number(this.form.value.remise_tables_offertes ?? 0);
+    const remise_argent = Number(this.form.value.remise_argent ?? 0);
+
+    if (this.editingId()) {
+      this.reservationService
+        .update(this.editingId()!, {
+          lignes: lignesPayload,
+          remise_tables_offertes,
+          remise_argent,
+        })
+        .subscribe({
+          next: () => {
+            this.submitting.set(false);
+            this.submitSuccess.set('Réservation mise à jour.');
+            this.updated.emit();
+            this.resetForm();
+          },
+          error: err => {
+            const message =
+              err?.error?.error ??
+              (err instanceof Error ? err.message : 'Erreur lors de la mise à jour');
+            this.submitError.set(message);
+            this.submitting.set(false);
+          },
+        });
+      return;
+    }
+
     this.reservationService
       .create({
         editeur_id: Number(editeurId),
         festival_id: Number(this.festivalId),
         lignes: lignesPayload,
-        remise_tables_offertes: Number(this.form.value.remise_tables_offertes ?? 0),
-        remise_argent: Number(this.form.value.remise_argent ?? 0),
-        statut_workflow: 'brouillon',
+        remise_tables_offertes,
+        remise_argent,
+        statut_workflow: 'pas_de_contact',
       })
       .subscribe({
         next: () => {
           this.submitting.set(false);
-        this.submitSuccess.set('Réservation créée.');
-        this.created.emit();
-        this.form.reset({
-          editeur_id: null,
-          remise_tables_offertes: 0,
-          remise_argent: 0,
-        });
-        this.lignes.set([{ zone_tarifaire_id: null, nombre_tables: 1 }]);
-        this.recomputeTotal();
-      },
+          this.submitSuccess.set('Réservation créée.');
+          this.created.emit();
+          this.resetForm();
+        },
         error: err => {
           const message =
             err?.error?.error ??
@@ -183,5 +215,43 @@ export class ReservationFormComponent {
       return sum + qty * price;
     }, 0);
     this.totalEstimate.set(total);
+  }
+
+  cancelEdit(): void {
+    this.resetForm();
+    this.cancelled.emit();
+  }
+
+  private applyEditState(reservation: ReservationCard): void {
+    this.editingId.set(reservation.id);
+    this.submitSuccess.set(null);
+    this.submitError.set(null);
+
+    this.form.patchValue({
+      editeur_id: reservation.editeurId ?? null,
+      remise_tables_offertes: Number(reservation.remiseTablesOffertes ?? 0),
+      remise_argent: Number(reservation.remiseArgent ?? 0),
+    });
+
+    const lines = reservation.lignes?.length
+      ? reservation.lignes.map(line => ({
+          zone_tarifaire_id: line.zone_tarifaire_id ?? null,
+          nombre_tables: line.nombre_tables ?? 1,
+        }))
+      : [{ zone_tarifaire_id: null, nombre_tables: 1 }];
+
+    this.lignes.set(lines);
+    this.recomputeTotal();
+  }
+
+  private resetForm(): void {
+    this.editingId.set(null);
+    this.form.reset({
+      editeur_id: null,
+      remise_tables_offertes: 0,
+      remise_argent: 0,
+    });
+    this.lignes.set([{ zone_tarifaire_id: null, nombre_tables: 1 }]);
+    this.recomputeTotal();
   }
 }

@@ -4,9 +4,13 @@
   [routerLink]="['/editeurs', editeur.id]"
 >
   <header>
-    <h3 class="editeur-name">{{editeur.name}}</h3>
-    
-    <p class="editeur-description">Description : {{ editeur.description }}</p>
+    <div class="editeur-top">
+      <div>
+        <h3 class="editeur-name">{{ editeur.name }}</h3>
+        <p class="editeur-subtitle">Catalogue éditeur</p>
+      </div>
+    </div>
+    <p class="editeur-description">{{ editeur.description }}</p>
   </header>
 
 </article>

@@ -12,11 +12,16 @@ router.post('/', async (req, res) => {
     return res.status(403).json({ error: 'Accès réservé aux admins' });
   }
 
-  const { nom, description } = req.body;
+  const { nom, login, description } = req.body;
   const normalizedName = typeof nom === 'string' ? nom.trim() : '';
+  const normalizedLogin = typeof login === 'string' ? login.trim() : '';
 
-  if (!normalizedName) {
-    return res.status(400).json({ error: 'Le nom est requis.' });
+  if (!normalizedName || !normalizedLogin) {
+    return res.status(400).json({ error: 'Le nom et le login sont requis.' });
+  }
+
+  if (normalizedName === normalizedLogin) {
+    return res.status(400).json({ error: 'Le login doit être différent du nom.' });
   }
 
   try {
@@ -28,12 +33,12 @@ router.post('/', async (req, res) => {
        VALUES ($1, $2, 'editeur')
        ON CONFLICT (login) DO NOTHING
        RETURNING id, login`,
-      [normalizedName, passwordHash]
+      [normalizedLogin, passwordHash]
     );
 
     const user = userInsert.rows[0];
     if (!user) {
-      return res.status(409).json({ error: 'Un éditeur avec ce nom existe déjà.' });
+      return res.status(409).json({ error: 'Un éditeur avec ce login existe déjà.' });
     }
 
     // Crée/associe la fiche éditeur avec le même id
@@ -41,7 +46,7 @@ router.post('/', async (req, res) => {
       `INSERT INTO editeur (id, nom, login, password_hash, description)
        VALUES ($1, $2, $3, $4, $5)
        ON CONFLICT (id) DO NOTHING`,
-      [user.id, normalizedName, normalizedName, passwordHash, description?.trim() || null]
+      [user.id, normalizedName, normalizedLogin, passwordHash, description?.trim() || null]
     );
 
     res.status(201).json({
@@ -116,10 +121,24 @@ router.get('/:id/jeux', async (req, res) => {
 
   try {
     const { rows } = await pool.query(
-      `SELECT id, editeur_id, nom, auteurs, age_min, age_max, type_jeu
-         FROM jeu
-        WHERE editeur_id = $1
-        ORDER BY nom`,
+      `SELECT 
+         j.id,
+         j.editeur_id,
+         j.nom,
+         j.auteurs,
+         j.age_min,
+         j.age_max,
+         j.type_jeu,
+         COALESCE(
+           json_agg(DISTINCT m.nom) FILTER (WHERE m.id IS NOT NULL),
+           '[]'
+         ) AS mecanismes
+       FROM jeu j
+       LEFT JOIN jeu_mecanisme jm ON jm.jeu_id = j.id
+       LEFT JOIN mecanisme m ON m.id = jm.mecanisme_id
+       WHERE j.editeur_id = $1
+       GROUP BY j.id
+       ORDER BY j.nom`,
       [editeurId]
     );
 
@@ -131,6 +150,7 @@ router.get('/:id/jeux', async (req, res) => {
       ageMin: row.age_min,
       ageMax: row.age_max,
       type: row.type_jeu,
+      mecanismes: row.mecanismes ?? [],
     }));
 
     res.json(mapped);
@@ -147,15 +167,39 @@ router.put('/:id', async (req, res) => {
   }
 
   const { id } = req.params;
-  const { nom, description } = req.body;
+  const { nom, login, description } = req.body;
 
   const updates: string[] = [];
   const values: any[] = [];
   let paramIndex = 1;
 
-  if (nom !== undefined) {
+  const normalizedName = typeof nom === 'string' ? nom.trim() : undefined;
+  const normalizedLogin = typeof login === 'string' ? login.trim() : undefined;
+
+  const current = await pool.query('SELECT nom, login FROM editeur WHERE id = $1', [id]);
+  if (current.rows.length === 0) {
+    return res.status(404).json({ error: 'Éditeur non trouvé.' });
+  }
+  const currentName = current.rows[0].nom as string;
+  const currentLogin = current.rows[0].login as string;
+
+  if (normalizedName !== undefined) {
+    const candidateLogin = normalizedLogin ?? currentLogin;
+    if (normalizedName === candidateLogin) {
+      return res.status(400).json({ error: 'Le login doit être différent du nom.' });
+    }
     updates.push(`nom = $${paramIndex}`);
-    values.push(nom);
+    values.push(normalizedName);
+    paramIndex++;
+  }
+
+  if (normalizedLogin !== undefined) {
+    const candidateName = normalizedName ?? currentName;
+    if (normalizedLogin === candidateName) {
+      return res.status(400).json({ error: 'Le login doit être différent du nom.' });
+    }
+    updates.push(`login = $${paramIndex}`);
+    values.push(normalizedLogin);
     paramIndex++;
   }
 
@@ -178,14 +222,23 @@ router.put('/:id', async (req, res) => {
         RETURNING id, nom, login, description
     `;
 
+  const client = await pool.connect();
   try {
-    const { rows } = await pool.query(query, values);
+    await client.query('BEGIN');
+    const { rows } = await client.query(query, values);
 
     if (rows.length === 0) {
+      await client.query('ROLLBACK');
+      client.release();
       return res.status(404).json({ error: 'Éditeur non trouvé.' });
     }
 
     const editeur = rows[0];
+    if (normalizedLogin !== undefined) {
+      await client.query('UPDATE users SET login = $1 WHERE id = $2', [normalizedLogin, id]);
+    }
+    await client.query('COMMIT');
+    client.release();
     res.json({
       message: 'Éditeur mis à jour avec succès',
       editeur: {
@@ -197,6 +250,13 @@ router.put('/:id', async (req, res) => {
     });
   } catch (err) {
     console.error(err);
+    try {
+      await client.query('ROLLBACK');
+    } catch {
+      // ignore rollback errors
+    } finally {
+      client.release();
+    }
     res.status(500).json({ error: 'Erreur serveur lors de la mise à jour.' });
   }
 });
@@ -209,15 +269,24 @@ router.delete('/:id', async (req, res) => {
 
   const { id } = req.params;
 
+  const client = await pool.connect();
   try {
-    const { rowCount } = await pool.query('DELETE FROM editeur WHERE id = $1', [id]);
+    await client.query('BEGIN');
+    const { rowCount } = await client.query('DELETE FROM editeur WHERE id = $1', [id]);
 
     if (rowCount === 0) {
+      await client.query('ROLLBACK');
+      client.release();
       return res.status(404).json({ error: 'Éditeur non trouvé.' });
     }
 
+    await client.query('DELETE FROM users WHERE id = $1 AND role = $2', [id, 'editeur']);
+    await client.query('COMMIT');
+    client.release();
     res.json({ message: 'Éditeur supprimé avec succès.' });
   } catch (err) {
+    await client.query('ROLLBACK');
+    client.release();
     console.error(err);
     res.status(500).json({ error: 'Erreur serveur lors de la suppression.' });
   }

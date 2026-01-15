@@ -108,6 +108,27 @@ h3 {
     background: #fff;
     color: #0f172a;
   }
+  .secondary {
+    background: #fff;
+    color: #273c75;
+    border: 1px solid #dcdde1;
+    padding: 0.45rem 0.8rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .secondary:hover {
+    background: #f1f2f6;
+    transform: translateY(-1px);
+  }
+  .secondary:active {
+    transform: translateY(0);
+  }
+  .secondary:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+  }
 }
 
 .pill {

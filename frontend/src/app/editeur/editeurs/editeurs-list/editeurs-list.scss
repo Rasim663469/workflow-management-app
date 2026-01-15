@@ -1,7 +1,9 @@
 .editeurs-section {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.5rem;
+  position: relative;
+  z-index: 1;
 }
 
 .section-header {
@@ -10,35 +12,95 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 0.75rem;
+  background: linear-gradient(135deg, rgba(39, 60, 117, 0.95), rgba(15, 23, 42, 0.95));
+  color: #f8fafc;
+  border-radius: 16px;
+  padding: 1.1rem 1.4rem;
+  box-shadow: 0 18px 35px rgba(15, 23, 42, 0.18);
 
   h2 {
     margin: 0;
-    font-size: 1.3rem;
-    color: #0f172a;
+    font-size: 1.4rem;
+    color: inherit;
   }
 
   .eyebrow {
     margin: 0;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.18em;
     font-size: 0.75rem;
-    color: #6b7280;
+    color: rgba(248, 250, 252, 0.7);
     font-weight: 700;
+  }
+
+  .search-field {
+    display: flex;
+    align-items: center;
+
+    input {
+      padding: 0.5rem 0.9rem;
+      border-radius: 999px;
+      border: none;
+      min-width: 220px;
+      background: rgba(248, 250, 252, 0.95);
+      color: #0f172a;
+      font-weight: 600;
+      outline: none;
+    }
   }
 }
 
 .editeur-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 0.85rem;
+  gap: 1.1rem;
+}
+
+.letter-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0.4rem;
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 12px 25px rgba(15, 23, 42, 0.08);
+}
+
+.tab {
+  border: none;
+  background: transparent;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  color: #1f2937;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+
+  &:hover {
+    background: rgba(39, 60, 117, 0.1);
+    transform: translateY(-1px);
+  }
+
+  &.active {
+    background: #273c75;
+    color: #ffffff;
+  }
 }
 
 .status {
   margin: 0;
-  color: #334155;
+  color: #1f2937;
   font-weight: 500;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
 
   &.error {
     color: #b91c1c;
+    background: #fff2f2;
+    border-color: #ffcdd2;
   }
 }

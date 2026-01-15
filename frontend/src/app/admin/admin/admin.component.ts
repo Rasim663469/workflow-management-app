@@ -20,12 +20,17 @@ export class AdminComponent {
   private readonly jeuService = inject(JeuService);
   readonly users = this.userService.users;
   readonly editeurs = this.editeurService.editeurs;
+  readonly types = this.jeuService.types;
 
   readonly creating = signal(false);
   readonly success = signal<string | null>(null);
   readonly error = signal<string | null>(null);
 
   readonly form = new FormGroup({
+    login: new FormControl<string>('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(2)],
+    }),
     nom: new FormControl<string>('', {
       nonNullable: true,
       validators: [Validators.required, Validators.minLength(2)],
@@ -52,6 +57,7 @@ export class AdminComponent {
   constructor() {
     effect(() => this.userService.loadAll());
     effect(() => this.editeurService.loadAll());
+    this.jeuService.loadTypes();
   }
 
   submit(): void {
@@ -63,20 +69,20 @@ export class AdminComponent {
       return;
     }
 
-    const { nom, description } = this.form.getRawValue();
+    const { nom, login, description } = this.form.getRawValue();
     this.creating.set(true);
 
     this.http
       .post(
         `${environment.apiUrl}/editeurs`,
-        { nom: nom.trim(), description: description.trim() || null },
+        { nom: nom.trim(), login: login.trim(), description: description.trim() || null },
         { withCredentials: true }
       )
       .subscribe({
         next: () => {
           this.success.set('Éditeur créé avec succès.');
           this.creating.set(false);
-          this.form.reset({ nom: '', description: '' });
+          this.form.reset({ nom: '', login: '', description: '' });
           this.editeurService.loadAll();
         },
         error: err => {

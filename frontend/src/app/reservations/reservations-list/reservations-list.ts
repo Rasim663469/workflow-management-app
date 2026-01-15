@@ -1,6 +1,6 @@
-import { Component, effect, inject, Input, signal } from '@angular/core';
+import { Component, EventEmitter, Output, effect, inject, Input, signal } from '@angular/core';
 import { ReservationCardComponent } from '../reservation-card/reservation-card';
-import { ReservationService } from '@services/reservation.service';
+import { ReservationCard, ReservationService } from '@services/reservation.service';
 
 @Component({
   selector: 'app-reservations-list',
@@ -13,6 +13,7 @@ export class ReservationsListComponent {
   private readonly reservationService = inject(ReservationService);
 
   @Input({ required: true }) festivalId!: number | string;
+  @Output() editRequested = new EventEmitter<ReservationCard>();
 
   readonly reservations = this.reservationService.reservations;
   readonly loading = this.reservationService.loading;
@@ -33,5 +34,9 @@ export class ReservationsListComponent {
     if (this.festivalId !== this.currentFestival()) {
       this.currentFestival.set(this.festivalId);
     }
+  }
+
+  handleEditRequest(reservation: ReservationCard): void {
+    this.editRequested.emit(reservation);
   }
 }

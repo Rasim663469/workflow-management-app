@@ -18,6 +18,14 @@
 
   <form [formGroup]="form" (ngSubmit)="submit()">
     <div class="field">
+      <label for="login">Login *</label>
+      <input id="login" type="text" formControlName="login" placeholder="Login de l’éditeur" />
+      @if (form.controls.login.invalid && form.controls.login.touched) {
+        <p class="error">Le login est obligatoire (2 caractères mini).</p>
+      }
+    </div>
+
+    <div class="field">
       <label for="nom">Nom *</label>
       <input id="nom" type="text" formControlName="nom" placeholder="Nom de l’éditeur" />
       @if (form.controls.nom.invalid && form.controls.nom.touched) {
@@ -97,7 +105,12 @@
 
     <div class="field">
       <label for="typeJeu">Type de jeu</label>
-      <input id="typeJeu" type="text" formControlName="type_jeu" placeholder="Familial, expert..." />
+      <select id="typeJeu" formControlName="type_jeu">
+        <option [ngValue]="''">Type non spécifié</option>
+        @for (type of types(); track type.id) {
+          <option [ngValue]="type.libelle">{{ type.libelle }}</option>
+        }
+      </select>
     </div>
 
     <button type="submit" [disabled]="creatingJeu() || formJeu.invalid">

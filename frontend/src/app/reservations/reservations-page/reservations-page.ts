@@ -1,8 +1,8 @@
-import { Component, effect, inject } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import { ReservationsListComponent } from '../reservations-list/reservations-list';
 import { ReservationFormComponent } from '../reservation-form/reservation-form';
 import { FestivalService } from '@services/festival.service';
-import { ReservationService } from '@services/reservation.service';
+import { ReservationCard, ReservationService } from '@services/reservation.service';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -22,6 +22,7 @@ export class ReservationsPageComponent {
   readonly festivals = this.festivalService.remoteFestivals;
   readonly loadingFestivals = this.festivalService.loading;
   readonly selectedFestivalId = this.festivalService.currentFestivalId;
+  readonly editingReservation = signal<ReservationCard | null>(null);
 
   constructor() {
     effect(() => this.festivalService.loadAll());
@@ -48,6 +49,7 @@ export class ReservationsPageComponent {
     const value = target.value;
     this.festivalService.setCurrentFestival(value);
     this.reservationService.loadByFestival(value);
+    this.editingReservation.set(null);
 
     // Mettre à jour la query pour navigation directe depuis les cartes
     this.router.navigate([], {
@@ -62,5 +64,21 @@ export class ReservationsPageComponent {
     if (id) {
       this.reservationService.loadByFestival(id);
     }
+  }
+
+  handleEditRequested(reservation: ReservationCard): void {
+    this.editingReservation.set(reservation);
+  }
+
+  handleCancelled(): void {
+    this.editingReservation.set(null);
+  }
+
+  handleUpdated(): void {
+    const id = this.selectedFestivalId();
+    if (id) {
+      this.reservationService.loadByFestival(id);
+    }
+    this.editingReservation.set(null);
   }
 }

@@ -17,6 +17,12 @@ const seedFestivals = [
   },
 ];
 
+const seedZones = [
+  { nom: 'Zone Premium', nombre_tables_total: 40, prix_table: 120 },
+  { nom: 'Zone Standard', nombre_tables_total: 60, prix_table: 80 },
+  { nom: 'Zone Découverte', nombre_tables_total: 50, prix_table: 60 },
+];
+
 
 
 export async function ensureFestivals(): Promise<void> {
@@ -39,6 +45,21 @@ export async function ensureFestivals(): Promise<void> {
        ON CONFLICT (nom) DO NOTHING`,
       [festival.nom,festival.location, festival.nombre_total_tables, festival.date_debut, festival.date_fin]
     );
+  }
+
+  const { rows } = await pool.query('SELECT id, nom FROM festival');
+  for (const festival of rows) {
+    for (const zone of seedZones) {
+      const prixM2 = zone.prix_table / 4.5;
+      await pool.query(
+        `INSERT INTO zone_tarifaire (festival_id, nom, nombre_tables_total, nombre_tables_disponibles, prix_table, prix_m2)
+         SELECT $1::int, $2::varchar, $3::int, $3::int, $4::numeric, $5::numeric
+         WHERE NOT EXISTS (
+           SELECT 1 FROM zone_tarifaire WHERE festival_id = $1 AND nom = $2::varchar
+         )`,
+        [festival.id, zone.nom, zone.nombre_tables_total, zone.prix_table, prixM2]
+      );
+    }
   }
 
   console.log('👍 Festivals vérifiés ou créés');

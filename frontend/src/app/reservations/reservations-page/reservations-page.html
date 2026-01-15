@@ -20,8 +20,17 @@
 
   @if (selectedFestivalId()) {
     <div class="grid">
-      <app-reservations-list [festivalId]="selectedFestivalId()!" />
-      <app-reservation-form [festivalId]="selectedFestivalId()!" (created)="handleCreated()" />
+      <app-reservations-list
+        [festivalId]="selectedFestivalId()!"
+        (editRequested)="handleEditRequested($event)"
+      />
+      <app-reservation-form
+        [festivalId]="selectedFestivalId()!"
+        [reservationToEdit]="editingReservation()"
+        (created)="handleCreated()"
+        (updated)="handleUpdated()"
+        (cancelled)="handleCancelled()"
+      />
     </div>
   } @else {
     <p>Aucun festival disponible.</p>

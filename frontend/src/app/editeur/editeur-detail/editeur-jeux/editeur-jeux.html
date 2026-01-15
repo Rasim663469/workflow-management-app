@@ -28,6 +28,9 @@
             </div>
             <p class="jeu-authors">Auteur(s) : {{ jeu.authors || 'Non renseigné' }}</p>
             <p class="jeu-age">{{ ageRange(jeu) }}</p>
+            @if (jeu.mecanismes?.length) {
+              <p class="jeu-mecanismes">Mécanismes : {{ (jeu.mecanismes ?? []).join(', ') }}</p>
+            }
           </article>
         }
       </div>
