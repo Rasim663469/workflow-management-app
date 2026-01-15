@@ -10,6 +10,13 @@ export type ReservationLineDto = {
   prix_table?: number | null;
 };
 
+export type ReservationContactDto = {
+  id: number;
+  editeur_id: number;
+  festival_id: number;
+  date_contact: string;
+  notes?: string | null;
+};
 export type ReservationDto = {
   id: number;
   editeur_id: number;
@@ -17,9 +24,13 @@ export type ReservationDto = {
   festival_id: number;
   prix_total: number;
   prix_final: number;
+  remise_tables_offertes?: number | null;
+  remise_argent?: number | null;
+  editeur_presente_jeux?: boolean | null;
   statut_workflow: string;
   tables_totales?: number;
   lignes?: ReservationLineDto[];
+  last_contact?: string | null;
 };
 
 export type CreateReservationDto = {
@@ -40,9 +51,27 @@ export type ReservationCard = {
   prixFinal: number;
   tables: number;
   lignes: ReservationLineDto[];
+  editeurId: number;
+  festivalId: number;
+  remiseTablesOffertes?: number | null;
+  remiseArgent?: number | null;
+  editeurPresenteJeux?: boolean | null;
+  lastContact?: string | null;
 };
 
-export type ReservationStatus = 'brouillon' | 'envoyée' | 'validée' | 'annulée';
+export type ReservationStatus =
+  | 'brouillon'
+  | 'pas_de_contact'
+  | 'contact_pris'
+  | 'discussion_en_cours'
+  | 'sera_absent'
+  | 'considere_absent'
+  | 'present'
+  | 'facture'
+  | 'facture_payee'
+  | 'envoyée'
+  | 'validée'
+  | 'annulée';
 
 @Injectable({ providedIn: 'root' })
 export class ReservationService {
@@ -61,11 +90,17 @@ export class ReservationService {
     return {
       id: String(dto.id),
       editeur: dto.editeur_nom ?? `Éditeur ${dto.editeur_id}`,
-      statut: dto.statut_workflow ?? 'PAS_DE_CONTACT',
+      statut: this.normalizeStatus(dto.statut_workflow),
       prixTotal: dto.prix_total ?? 0,
       prixFinal: dto.prix_final ?? dto.prix_total ?? 0,
       tables: dto.tables_totales ?? lignes.reduce((sum, line) => sum + (line.nombre_tables ?? 0), 0),
       lignes,
+      editeurId: dto.editeur_id,
+      festivalId: dto.festival_id,
+      remiseTablesOffertes: dto.remise_tables_offertes ?? 0,
+      remiseArgent: dto.remise_argent ?? 0,
+      editeurPresenteJeux: dto.editeur_presente_jeux ?? false,
+      lastContact: dto.last_contact ?? null,
     };
   }
 
@@ -102,11 +137,40 @@ export class ReservationService {
     return this.http.post(`${environment.apiUrl}/reservations`, payload, { withCredentials: true });
   }
 
+  update(id: string | number, payload: Partial<CreateReservationDto>) {
+    return this.http.put(`${environment.apiUrl}/reservations/${id}`, payload, {
+      withCredentials: true,
+    });
+  }
+
   updateStatus(id: string | number, statut_workflow: ReservationStatus) {
     return this.http.put(
       `${environment.apiUrl}/reservations/${id}`,
       { statut_workflow },
       { withCredentials: true }
     );
+  }
+
+  addContact(id: string | number, notes?: string) {
+    return this.http.post(
+      `${environment.apiUrl}/reservations/${id}/contacts`,
+      { notes },
+      { withCredentials: true }
+    );
+  }
+
+  loadContacts(id: string | number) {
+    return this.http.get<ReservationContactDto[]>(
+      `${environment.apiUrl}/reservations/${id}/contacts`,
+      { withCredentials: true }
+    );
+  }
+
+  private normalizeStatus(value?: string | null): string {
+    if (!value) return 'pas_de_contact';
+    if (value === 'brouillon') return 'pas_de_contact';
+    if (value === 'envoyée') return 'discussion_en_cours';
+    if (value === 'validée') return 'present';
+    return value;
   }
 }

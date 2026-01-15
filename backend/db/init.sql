@@ -109,8 +109,21 @@ CREATE TABLE IF NOT EXISTS reservation (
     prix_total DECIMAL(10,2),
     prix_final DECIMAL(10,2),
     editeur_presente_jeux BOOLEAN DEFAULT FALSE,
-    statut_workflow VARCHAR(20) NOT NULL DEFAULT 'brouillon',
-    CONSTRAINT chk_statut_workflow CHECK (statut_workflow IN ('brouillon','envoyée','validée','annulée')),
+    statut_workflow VARCHAR(30) NOT NULL DEFAULT 'pas_de_contact',
+    CONSTRAINT chk_statut_workflow CHECK (statut_workflow IN (
+      'brouillon',
+      'pas_de_contact',
+      'contact_pris',
+      'discussion_en_cours',
+      'sera_absent',
+      'considere_absent',
+      'present',
+      'facture',
+      'facture_payee',
+      'envoyée',
+      'validée',
+      'annulée'
+    )),
     CONSTRAINT fk_reservation_editeur
         FOREIGN KEY (editeur_id) REFERENCES editeur(id)
         ON DELETE CASCADE,
@@ -176,5 +189,4 @@ CREATE TABLE IF NOT EXISTS jeu_festival (
         FOREIGN KEY (zone_plan_id) REFERENCES zone_plan(id)
         ON DELETE CASCADE
 );
-
 

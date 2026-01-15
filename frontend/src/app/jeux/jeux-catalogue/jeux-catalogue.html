@@ -1,0 +1,110 @@
+<section class="catalogue">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Jeux</p>
+      <h1>Catalogue des jeux</h1>
+      <p class="lead">Explorez tous les jeux importés avec filtres par type et mécanisme.</p>
+    </div>
+  </header>
+
+  <form class="filters" [formGroup]="filterForm" (ngSubmit)="applyFilters()">
+    <div class="field">
+      <label for="q">Recherche</label>
+      <input id="q" type="search" formControlName="q" placeholder="Nom, auteur..." />
+    </div>
+
+    <div class="field">
+      <label for="type">Type</label>
+      <select id="type" formControlName="type">
+        <option value="">Tous les types</option>
+        @for (type of types(); track type.id) {
+          <option [value]="type.libelle">{{ type.libelle }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="mecanisme">Mécanisme</label>
+      <select id="mecanisme" formControlName="mecanisme">
+        <option value="">Tous les mécanismes</option>
+        @for (meca of mecanismes(); track meca.id) {
+          <option [value]="meca.id">{{ meca.nom }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="editeur">Éditeur</label>
+      <select id="editeur" formControlName="editeurId">
+        <option value="">Tous les éditeurs</option>
+        @for (editeur of editeurs(); track editeur.id) {
+          <option [value]="editeur.id">{{ editeur.name }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="sort">Tri</label>
+      <select id="sort" formControlName="sort">
+        <option value="nom">Nom</option>
+        <option value="editeur">Éditeur</option>
+        <option value="type">Type</option>
+      </select>
+    </div>
+
+    <div class="actions">
+      <button type="submit" class="primary">Appliquer</button>
+    </div>
+  </form>
+
+  @if (loading()) {
+    <p class="status">Chargement du catalogue...</p>
+  }
+  @else if (error()) {
+    <p class="status error">Erreur : {{ error() }}</p>
+  }
+  @else {
+    <div class="letter-tabs">
+      @for (tab of tabs(); track tab) {
+        <button
+          type="button"
+          class="tab"
+          [class.active]="tab === activeTab()"
+          (click)="selectTab(tab)"
+        >
+          {{ tab }}
+        </button>
+      }
+    </div>
+
+    <p class="result-count">{{ filteredCatalogue().length }} jeux trouvés</p>
+    @if (filteredCatalogue().length === 0) {
+      <div class="empty-state">
+        <p>Aucun jeu ne correspond à vos critères.</p>
+      </div>
+    }
+    @else {
+      <div class="jeux-grid">
+        @for (jeu of filteredCatalogue(); track jeu.id) {
+          <article class="jeu-card">
+            <div class="jeu-head">
+              <h3>{{ jeu.name }}</h3>
+              @if (jeu.type) {
+                <span class="jeu-type">{{ jeu.type }}</span>
+              }
+            </div>
+            <p class="jeu-editeur">
+              Éditeur :
+              <a [routerLink]="['/editeurs', jeu.editeurId]">{{ jeu.editeurName || 'Non renseigné' }}</a>
+            </p>
+            <p class="jeu-authors">Auteur(s) : {{ jeu.authors || 'Non renseigné' }}</p>
+            <p class="jeu-age">{{ ageRange(jeu) }}</p>
+            @if (jeu.mecanismes?.length) {
+              <p class="jeu-mecanismes">Mécanismes : {{ (jeu.mecanismes ?? []).join(', ') }}</p>
+            }
+          </article>
+        }
+      </div>
+    }
+  }
+</section>

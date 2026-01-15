@@ -3,16 +3,19 @@ import pool from './database.js';
 
 type SeedEditeur = {
   login: string;
+  name: string;
   password: string;
 };
 
 const seedEditeurs: SeedEditeur[] = [
   {
     login: 'editeur1',
+    name: 'Editeur 1',
     password: 'editeur123',
   },
   {
     login: 'editeur2',
+    name: 'Editeur 2',
     password: 'editeur123',
   },
 ];
@@ -56,7 +59,7 @@ export async function ensureEditeurs(): Promise<void> {
         `INSERT INTO editeur (id, nom, login, password_hash, description)
          VALUES ($1, $2, $3, $4, $5)
          ON CONFLICT (id) DO NOTHING`,
-        [userId, editeur.login, editeur.login, hash, 'Compte éditeur initial']
+        [userId, editeur.name, editeur.login, hash, 'Compte éditeur initial']
       );
     }
   }

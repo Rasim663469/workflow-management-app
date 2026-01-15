@@ -6,4 +6,6 @@ export interface JeuDto {
   ageMin: number | null;
   ageMax: number | null;
   type: string | null;
+  mecanismes?: string[];
+  editeurName?: string | null;
 }

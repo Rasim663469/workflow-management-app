@@ -4,7 +4,9 @@
       <p class="eyebrow">Éditeur</p>
       <h3>{{ reservation.editeur }}</h3>
     </div>
-    <span class="badge" [attr.data-status]="reservation.statut">{{ reservation.statut }}</span>
+    <span class="badge" [attr.data-status]="reservation.statut">
+      {{ labelForStatus(reservation.statut) }}
+    </span>
   </header>
 
   <div class="meta">
@@ -35,6 +37,9 @@
   @if (lastContact) {
     <p class="contact">Dernier contact : {{ lastContact | date }}</p>
   }
+  @else {
+    <p class="contact">Dernier contact : aucun</p>
+  }
 
   <div class="workflow">
     <label for="statut">Workflow</label>
@@ -55,4 +60,35 @@
       <span class="error">{{ error() }}</span>
     }
   </div>
+
+  <div class="workflow">
+    <button type="button" class="secondary" (click)="addContactNow()" [disabled]="saving()">
+      Ajouter un contact
+    </button>
+    <button type="button" class="secondary" (click)="toggleContacts()" [disabled]="loadingContacts()">
+      @if (showContacts()) { Masquer l'historique } @else { Voir l'historique }
+    </button>
+    <button type="button" class="secondary" (click)="requestEdit()">
+      Modifier
+    </button>
+    @if (loadingContacts()) {
+      <span class="pill">Chargement...</span>
+    }
+  </div>
+
+  @if (showContacts()) {
+    <ul class="zones">
+      @for (contact of contacts(); track contact.id) {
+        <li>
+          <strong>{{ contact.date_contact | date : 'short' }}</strong>
+          @if (contact.notes) {
+            <span>{{ contact.notes }}</span>
+          }
+        </li>
+      }
+      @if (contacts().length === 0) {
+        <li><span>Aucun contact enregistré.</span></li>
+      }
+    </ul>
+  }
 </article>

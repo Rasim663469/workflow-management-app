@@ -19,7 +19,11 @@
 
   <div class="reservations-grid">
     @for (reservation of reservations(); track reservation.id) {
-      <app-reservation-card [reservation]="reservation" />
+      <app-reservation-card
+        [reservation]="reservation"
+        [lastContact]="reservation.lastContact"
+        (editRequested)="handleEditRequest($event)"
+      />
     }
   </div>
 </section>

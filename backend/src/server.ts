@@ -14,17 +14,18 @@ import festivalRouter from './routes/festival.js'
 import { ensureAdmin } from './db/initAdmin.js';
 import { ensureFestivals } from './db/initFestivals.js';
 import { waitForDatabase } from './db/database.js';
+import { ensureReservationWorkflow } from './db/initReservation.js';
 
 import zoneTarifaireRouter from './routes/zone_tarifaire.js';
 import jeuRouter from './routes/jeu.js';
 import contatcRouter from './routes/contact.js'
 import zonePlanRouter from './routes/zone-plan.js'
-import { ensureEditeurs } from './db/initEditeur.js';
 import jeuFestivalRoutes from './routes/jeu_festival.js';
 import contactRoutes from './routes/contact.js';
-import { ensureJeux } from './db/initJeu.js';
 import editeurRouter from './routes/editeur.js';
 import reservationRouter from './routes/reservation.js';
+import mecanismeRouter from './routes/mecanisme.js';
+import typeJeuRouter from './routes/type_jeu.js';
 
 
 // Création de l’application Express
@@ -79,11 +80,14 @@ app.use('/api/users', verifyToken, usersRouter);
 app.use('/zones-tarifaires', zoneTarifaireRouter, verifyToken, requireAdmin);
 app.use('/api/zones-tarifaires', verifyToken, requireAdmin, zoneTarifaireRouter);
 app.use('/jeux', jeuRouter, verifyToken, requireAdmin);
+app.use('/api/jeux', verifyToken, jeuRouter);
 app.use('/contacts', contatcRouter, verifyToken, requireAdmin);
 app.use('/zone-plans', zonePlanRouter, verifyToken, requireAdmin);
 app.use('api/festival', festivalRouter, verifyToken, requireAdmin);
 app.use('/api/editeurs', verifyToken, editeurRouter);
 app.use('/api/reservations', verifyToken, requireAdmin, reservationRouter);
+app.use('/api/mecanismes', verifyToken, mecanismeRouter);
+app.use('/api/types-jeu', verifyToken, typeJeuRouter);
 app.use('/jeu_festival', jeuFestivalRoutes, verifyToken, requireAdmin);
 app.use('/contact_editeur', contactRoutes, verifyToken, requireAdmin);
 app.use('/api/admin', verifyToken, requireAdmin, (req, res) => {
@@ -99,10 +103,9 @@ https.createServer({ key, cert }, app).listen(4000, () => {
 
 void (async () => {
   await waitForDatabase();
+  await ensureReservationWorkflow();
   await ensureAdmin();
-  await ensureEditeurs();
   await ensureFestivals();
-  await ensureJeux();
   console.log('👍 Initialisation DB terminée');
 })().catch(err => {
   console.error('Erreur pendant l\'initialisation DB', err);

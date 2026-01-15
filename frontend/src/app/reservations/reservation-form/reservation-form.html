@@ -1,8 +1,13 @@
 <section class="card">
   <header>
     <div>
-      <p class="eyebrow">Nouvelle réservation</p>
-      <h2>Associer un éditeur</h2>
+      @if (editingId()) {
+        <p class="eyebrow">Modification</p>
+        <h2>Mettre à jour la réservation</h2>
+      } @else {
+        <p class="eyebrow">Nouvelle réservation</p>
+        <h2>Associer un éditeur</h2>
+      }
     </div>
     @if (loadingZones()) {
       <span class="pill">Chargement zones...</span>
@@ -16,7 +21,7 @@
   <form [formGroup]="form" (ngSubmit)="submit()">
       <div class="field">
         <label for="editeur">Éditeur *</label>
-        <select id="editeur" formControlName="editeur_id">
+        <select id="editeur" formControlName="editeur_id" [disabled]="!!editingId()">
           <option value="">Sélectionner</option>
           @for (editeur of editeurs(); track editeur.id) {
             <option [value]="editeur.id">{{ editeur.name }}</option>
@@ -81,8 +86,15 @@
 
     <footer class="actions">
       <button type="submit" [disabled]="submitting()">
-        {{ submitting() ? 'Création...' : 'Créer la réservation' }}
+        @if (editingId()) {
+          {{ submitting() ? 'Mise à jour...' : 'Mettre à jour' }}
+        } @else {
+          {{ submitting() ? 'Création...' : 'Créer la réservation' }}
+        }
       </button>
+      @if (editingId()) {
+        <button type="button" class="ghost" (click)="cancelEdit()">Annuler</button>
+      }
       @if (submitSuccess()) {
         <span class="success">{{ submitSuccess() }}</span>
       }
