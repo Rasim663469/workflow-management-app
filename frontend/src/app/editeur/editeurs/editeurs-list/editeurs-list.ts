@@ -2,15 +2,20 @@ import { Component, computed, effect, inject, signal } from '@angular/core';
 import { EditeurCard } from '../editeur-card/editeur-card';
 import { EditeurService } from '@services/editeur.service';
 
+import { RouterLink } from '@angular/router';
+
+import { AuthService } from '@shared/auth/auth.service';
+
 @Component({
   selector: 'app-editeurs-list',
   standalone: true,
-  imports: [EditeurCard],
+  imports: [EditeurCard, RouterLink],
   templateUrl: './editeurs-list.html',
   styleUrl: './editeurs-list.scss'
 })
 export class EditeursList {
   private readonly editeurService = inject(EditeurService);
+  readonly authService = inject(AuthService); // Public for template access
   readonly editeurs = this.editeurService.editeurs;
   readonly loading = this.editeurService.loading;
   readonly error = this.editeurService.error;

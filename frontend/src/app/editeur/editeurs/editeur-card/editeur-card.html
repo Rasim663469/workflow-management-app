@@ -1,16 +1,40 @@
-<article
-  class="editeur-card"
-  tabindex="0"
-  [routerLink]="['/editeurs', editeur.id]"
->
-  <header>
-    <div class="editeur-top">
-      <div>
-        <h3 class="editeur-name">{{ editeur.name }}</h3>
-        <p class="editeur-subtitle">Catalogue éditeur</p>
+<article class="editeur-card">
+  <div class="editeur-content" tabindex="0" [routerLink]="['/editeurs', editeur().id]">
+    <header>
+      <div class="editeur-top">
+        <h3>{{ editeur().name }}</h3>
+        <p class="editeur-subtitle">ID: {{ editeur().id }}</p>
       </div>
-    </div>
-    <p class="editeur-description">{{ editeur.description }}</p>
-  </header>
+      <p class="editeur-description">{{ editeur().description }}</p>
+    </header>
+  </div>
 
+  <div class="card-actions">
+    @if (authService.isAdmin()) {
+    <button type="button" class="btn-action" (click)="onCreateContact($event)">
+      {{ showForm() ? 'Fermer' : 'Ajouter un contact' }}
+    </button>
+
+
+    <button type="button" class="btn-action" (click)="onShowContact($event)">
+      {{ showContacts() ? 'Cacher' : 'Voir les contacts' }}
+    </button>
+    }
+  </div>
+
+  @if (showForm()) {
+  <div class="form-container" (click)="$event.stopPropagation()">
+    <app-contact-form (add)="handleContactAdd($event)" />
+  </div>
+  }
+
+  @if (showContacts()) {
+  <div class="contacts-list" (click)="$event.stopPropagation()">
+    @for (c of associatedContacts(); track c.id) {
+    <app-contact [contact]="c" (remove)="handleDeleteContact($event)" />
+    } @empty {
+    <p class="empty-msg">Aucun contact trouvé pour cet éditeur.</p>
+    }
+  </div>
+  }
 </article>

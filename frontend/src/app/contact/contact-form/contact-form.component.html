@@ -1,0 +1,26 @@
+<form [formGroup]="contactForm" (ngSubmit)="submitContact()">
+    <div class="field">
+        <label>Nom du contact *</label>
+        <input type="text" formControlName="name" />
+        @if (contactForm.controls.name.invalid && contactForm.controls.name.touched) {
+        <small class="error">Le nom est requis.</small>
+        }
+    </div>
+
+    <div class="field">
+        <label>Email *</label>
+        <input type="email" formControlName="email" />
+    </div>
+
+    <div class="field">
+        <label>Téléphone</label>
+        <input type="tel" formControlName="phone" />
+    </div>
+
+    <div class="field">
+        <label>Rôle</label>
+        <input type="text" formControlName="role" placeholder="Ex: Commercial, Gérant..." />
+    </div>
+
+    <button type="submit" [disabled]="contactForm.invalid">Ajouter ce contact</button>
+</form>

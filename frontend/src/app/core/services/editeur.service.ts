@@ -1,20 +1,22 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { catchError, finalize, of } from 'rxjs';
+import { catchError, finalize, of, Observable, tap, map } from 'rxjs';
 import { environment } from '@env/environment';
 import { EditeurDto } from '../../editeur/editeurs/editeur/editeurDTO';
+import { ContactDto, CreateContactDto } from '../../contact/contactDTO';
 
 @Injectable({ providedIn: 'root' })
 export class EditeurService {
   private readonly http = inject(HttpClient);
 
-  private readonly _editeurs  = signal<EditeurDto[]>([]);
+  private readonly _editeurs = signal<EditeurDto[]>([]);
   private readonly _loading = signal(false);
-  private readonly _error   = signal<string | null>(null);
-
-  readonly editeurs   = this._editeurs.asReadonly();
+  private readonly _error = signal<string | null>(null);
+  private readonly _contacts = signal<ContactDto[]>([]);
+  readonly editeurs = this._editeurs.asReadonly();
   readonly loading = this._loading.asReadonly();
-  readonly error   = this._error.asReadonly();
+  readonly error = this._error.asReadonly();
+  readonly contacts = this._contacts.asReadonly();
 
   private normalizeEditeur(dto: EditeurDto): EditeurDto {
     const login = dto.login?.trim() || 'editeur';
@@ -46,4 +48,98 @@ export class EditeurService {
       });
 
   }
+
+  //charge les contacts d'un éditeur spécifique
+  loadContactsForEditeur(editeurId: string): void {
+    // We do NOT clear contacts here to avoid flashing empty for other editors
+    this.http.get<any[]>(`${environment.apiUrl}/contacts?editeur_id=${editeurId}`)
+      .pipe(
+        map(rows => rows.map(row => ({
+          id: row.id,
+          editeurId: String(row.editeur_id), // Ensure string for consistency
+          name: `${row.prenom || ''} ${row.nom || ''}`.trim() || 'Sans nom',
+          email: row.email,
+          phone: row.telephone,
+          role: row.role
+        }))),
+        catchError(() => {
+          this._error.set('Erreur lors du chargement des contacts');
+          return of([]);
+        })
+      )
+      .subscribe((newContacts: ContactDto[]) => {
+        this._contacts.update(currentContacts => {
+          // Remove existing contacts for this editor to avoid duplicates
+          const otherContacts = currentContacts.filter(c => String(c.editeurId) !== String(editeurId));
+          // Append new contacts
+          return [...otherContacts, ...newContacts];
+        });
+      });
+  }
+
+  create(editeur: { nom: string; login: string; description: string | null }): Observable<any> {
+    return this.http.post(`${environment.apiUrl}/editeurs`, editeur, { withCredentials: true }).pipe(
+      tap(() => this.loadAll()) // Reload list after creation
+    );
+  }
+
+
+  //ajouter un contact a un editeur
+  addContact(contact: CreateContactDto): void {
+
+    // Simple name splitting logic
+    const nameParts = (contact.name || '').trim().split(/\s+/);
+    const prenom = nameParts.length > 1 ? nameParts[0] : (nameParts[0] || 'Unknown');
+    const nom = nameParts.length > 1 ? nameParts.slice(1).join(' ') : (nameParts[0] || 'Unknown');
+
+    const payload = {
+      editeur_id: contact.editeurId,
+      prenom: prenom,
+      nom: nom,
+      email: contact.email,
+      telephone: contact.phone,
+      role: contact.role
+    };
+
+    this.http.post<ContactDto>(`${environment.apiUrl}/contacts`, payload)
+      .pipe(
+        tap((createdContact: any) => {
+          const newContactDto: ContactDto = {
+            id: createdContact.contact.id,
+            editeurId: createdContact.contact.editeur_id,
+            name: `${createdContact.contact.prenom} ${createdContact.contact.nom}`,
+            email: createdContact.contact.email,
+            phone: createdContact.contact.telephone,
+            role: createdContact.contact.role
+          };
+
+          this._contacts.update((list: ContactDto[]) => [...list, newContactDto]);
+        }),
+        catchError(err => {
+          console.error('Error creating contact:', err);
+          this._error.set("Erreur lors de l'ajout du contact");
+          return of(null);
+        })
+      )
+      .subscribe();
+  }
+
+  //Supprime un contact
+  deleteContact(contactId: string): void {
+    this.http.delete(`${environment.apiUrl}/contacts/${contactId}`)
+      .pipe(
+        tap(() => {
+          this._contacts.update((list: ContactDto[]) => list.filter(c => c.id !== contactId));
+        }),
+        catchError(() => {
+          this._error.set('Erreur lors de la suppression du contact');
+          return of(null);
+        })
+      )
+      .subscribe();
+  }
+
+
+
+
 }

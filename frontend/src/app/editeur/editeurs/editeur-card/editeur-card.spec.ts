@@ -10,7 +10,7 @@ describe('EditeurCard', () => {
     await TestBed.configureTestingModule({
       imports: [EditeurCard]
     })
-    .compileComponents();
+      .compileComponents();
 
     fixture = TestBed.createComponent(EditeurCard);
     component = fixture.componentInstance;
@@ -20,4 +20,6 @@ describe('EditeurCard', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+
 });

@@ -1,0 +1,16 @@
+<div class="contact-card">
+    <div class="contact-info">
+        <strong>{{ contact().name }}</strong>
+        @if (contact().role) {
+        <span class="role-badge">({{ contact().role }})</span>
+        }
+        <p class="email">{{ contact().email }}</p>
+        @if (contact().phone) {
+        <p class="phone">{{ contact().phone }}</p>
+        }
+    </div>
+
+    <button type="button" class="delete-btn" (click)="onDelete()">
+        Supprimer
+    </button>
+</div>

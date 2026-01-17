@@ -1,0 +1,41 @@
+<section class="editeur-form-section">
+    <header>
+        <p class="eyebrow">Éditeurs</p>
+        <h2>Créer un éditeur</h2>
+        <p class="lead">Remplissez le formulaire ci-dessous pour ajouter un nouvel éditeur.</p>
+    </header>
+
+    <form [formGroup]="form" (ngSubmit)="submit()">
+        <div class="field">
+            <label for="login">Login *</label>
+            <input id="login" type="text" formControlName="login" placeholder="Login de l’éditeur" />
+            @if (form.controls.login.invalid && form.controls.login.touched) {
+            <p class="error">Le login est obligatoire (2 caractères mini).</p>
+            }
+        </div>
+
+        <div class="field">
+            <label for="nom">Nom *</label>
+            <input id="nom" type="text" formControlName="nom" placeholder="Nom de l’éditeur" />
+            @if (form.controls.nom.invalid && form.controls.nom.touched) {
+            <p class="error">Le nom est obligatoire (2 caractères mini).</p>
+            }
+        </div>
+
+        <div class="field">
+            <label for="description">Description</label>
+            <textarea id="description" rows="4" formControlName="description"
+                placeholder="Courte présentation de l'éditeur (optionnel)"></textarea>
+        </div>
+
+        <div class="actions">
+            <button type="button" class="secondary" (click)="cancel()">Annuler</button>
+            <button type="submit" [disabled]="creating() || form.invalid">
+                {{ creating() ? 'Création...' : 'Créer l\'éditeur' }}
+            </button>
+        </div>
+        @if (error()) {
+        <p class="error global-error">{{ error() }}</p>
+        }
+    </form>
+</section>

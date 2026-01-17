@@ -22,22 +22,6 @@ export class AdminComponent {
   readonly editeurs = this.editeurService.editeurs;
   readonly types = this.jeuService.types;
 
-  readonly creating = signal(false);
-  readonly success = signal<string | null>(null);
-  readonly error = signal<string | null>(null);
-
-  readonly form = new FormGroup({
-    login: new FormControl<string>('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(2)],
-    }),
-    nom: new FormControl<string>('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(2)],
-    }),
-    description: new FormControl<string>('', { nonNullable: true }),
-  });
-
   readonly creatingJeu = signal(false);
   readonly jeuSuccess = signal<string | null>(null);
   readonly jeuError = signal<string | null>(null);
@@ -58,41 +42,6 @@ export class AdminComponent {
     effect(() => this.userService.loadAll());
     effect(() => this.editeurService.loadAll());
     this.jeuService.loadTypes();
-  }
-
-  submit(): void {
-    this.success.set(null);
-    this.error.set(null);
-
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-
-    const { nom, login, description } = this.form.getRawValue();
-    this.creating.set(true);
-
-    this.http
-      .post(
-        `${environment.apiUrl}/editeurs`,
-        { nom: nom.trim(), login: login.trim(), description: description.trim() || null },
-        { withCredentials: true }
-      )
-      .subscribe({
-        next: () => {
-          this.success.set('Éditeur créé avec succès.');
-          this.creating.set(false);
-          this.form.reset({ nom: '', login: '', description: '' });
-          this.editeurService.loadAll();
-        },
-        error: err => {
-          const message =
-            err?.error?.error ??
-            (err instanceof Error ? err.message : 'Erreur lors de la création');
-          this.error.set(message);
-          this.creating.set(false);
-        },
-      });
   }
 
   submitJeu(): void {

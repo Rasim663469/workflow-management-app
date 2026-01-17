@@ -9,7 +9,7 @@
   box-shadow:
     0 20px 30px rgba(15, 23, 42, 0.08),
     0 6px 16px rgba(15, 23, 42, 0.06);
-  cursor: pointer;
+  cursor: default;
   transition: transform 0.2s ease, box-shadow 0.2s ease, outline 0.2s ease;
   position: relative;
   overflow: hidden;
@@ -20,9 +20,31 @@
     inset: 0;
     background: linear-gradient(120deg, rgba(39, 60, 117, 0.08), transparent 60%);
     opacity: 1;
+    pointer-events: none;
   }
 
-  &:hover {
+  .editeur-content {
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    /* Take available space */
+
+    &:hover {
+      /* Apply hover effect to parent card slightly or just indicated text? 
+         Actually, let's keep it simple. */
+    }
+
+    &:focus-visible {
+      outline: 2px solid #0097e6;
+      border-radius: 4px;
+    }
+  }
+
+  /* Move hover effect to when content is hovered? Or remove card hover?
+     Let's keep the card elegant but semantic. */
+
+  &:has(.editeur-content:hover) {
     transform: translateY(-2px);
     box-shadow:
       0 12px 24px rgba(0, 0, 0, 0.08),
@@ -68,4 +90,28 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
+}
+
+.contacts-list {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #f9f9f9;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border: 1px solid #ddd;
+
+  .empty-msg {
+    color: #666;
+    font-style: italic;
+    text-align: center;
+  }
+}
+
+// Style pour les boutons d'action
+.card-actions {
+  display: flex;
+  gap: 10px;
+  margin: 10px 0;
 }

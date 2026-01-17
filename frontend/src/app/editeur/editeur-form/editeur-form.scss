@@ -1,0 +1,119 @@
+.editeur-form-section {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+  header {
+    margin-bottom: 2rem;
+    text-align: center;
+
+    .eyebrow {
+      text-transform: uppercase;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #666;
+      margin-bottom: 0.5rem;
+    }
+
+    h2 {
+      font-size: 2rem;
+      margin: 0;
+      color: #333;
+    }
+
+    .lead {
+      color: #666;
+      margin-top: 0.5rem;
+    }
+  }
+
+  .field {
+    margin-bottom: 1.5rem;
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: #333;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1rem;
+      transition: border-color 0.2s;
+
+      &:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+      }
+    }
+
+    textarea {
+      resize: vertical;
+    }
+
+    .error {
+      color: #dc3545;
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+    }
+  }
+
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+
+    button {
+      padding: 0.75rem 1.5rem;
+      border-radius: 4px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+
+      &[type="submit"] {
+        background-color: #007bff;
+        color: white;
+
+        &:hover:not(:disabled) {
+          background-color: #0056b3;
+        }
+
+        &:disabled {
+          background-color: #ccc;
+          cursor: not-allowed;
+        }
+      }
+
+      &.secondary {
+        background-color: transparent;
+        color: #666;
+        border: 1px solid #ddd;
+
+        &:hover {
+          background-color: #f8f9fa;
+          border-color: #ccc;
+          color: #333;
+        }
+      }
+    }
+  }
+
+  .global-error {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: #f8d7da;
+    color: #721c24;
+    border-radius: 4px;
+    text-align: center;
+  }
+}

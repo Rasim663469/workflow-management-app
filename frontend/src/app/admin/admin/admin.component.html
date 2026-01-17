@@ -12,48 +12,13 @@
 <section class="card">
   <header>
     <p class="eyebrow">Éditeurs</p>
-    <h2>Créer un éditeur</h2>
-    <p class="lead">Formulaire simple connecté à l’API.</p>
+    <h2>Gérer les éditeurs</h2>
+    <p class="lead">Accéder à la liste des éditeurs pour en ajouter de nouveaux.</p>
   </header>
-
-  <form [formGroup]="form" (ngSubmit)="submit()">
-    <div class="field">
-      <label for="login">Login *</label>
-      <input id="login" type="text" formControlName="login" placeholder="Login de l’éditeur" />
-      @if (form.controls.login.invalid && form.controls.login.touched) {
-        <p class="error">Le login est obligatoire (2 caractères mini).</p>
-      }
-    </div>
-
-    <div class="field">
-      <label for="nom">Nom *</label>
-      <input id="nom" type="text" formControlName="nom" placeholder="Nom de l’éditeur" />
-      @if (form.controls.nom.invalid && form.controls.nom.touched) {
-        <p class="error">Le nom est obligatoire (2 caractères mini).</p>
-      }
-    </div>
-
-    <div class="field">
-      <label for="description">Description</label>
-      <textarea
-        id="description"
-        rows="2"
-        formControlName="description"
-        placeholder="Optionnel"
-      ></textarea>
-    </div>
-
-    <button type="submit" [disabled]="creating() || form.invalid">
-      {{ creating() ? 'Création...' : 'Créer' }}
-    </button>
-
-    @if (success()) {
-      <p class="success">{{ success() }}</p>
-    }
-    @if (error()) {
-      <p class="error">{{ error() }}</p>
-    }
-  </form>
+  <div class="actions">
+    <a routerLink="/editeurs" class="button-link">Gérer les éditeurs</a>
+    <a routerLink="/editeurs/new" class="button-link secondary">Ajouter un éditeur</a>
+  </div>
 </section>
 
 <section class="card">
@@ -69,7 +34,7 @@
         <label for="nomJeu">Nom *</label>
         <input id="nomJeu" type="text" formControlName="nom" placeholder="Nom du jeu" />
         @if (formJeu.controls.nom.invalid && formJeu.controls.nom.touched) {
-          <p class="error">Le nom du jeu est obligatoire.</p>
+        <p class="error">Le nom du jeu est obligatoire.</p>
         }
       </div>
 
@@ -78,11 +43,11 @@
         <select id="editeurId" formControlName="editeur_id">
           <option [ngValue]="null">Sélectionner</option>
           @for (editeur of editeurs(); track editeur.id) {
-            <option [ngValue]="editeur.id">{{ editeur.name }}</option>
+          <option [ngValue]="editeur.id">{{ editeur.name }}</option>
           }
         </select>
         @if (formJeu.controls.editeur_id.invalid && formJeu.controls.editeur_id.touched) {
-          <p class="error">Choisissez un éditeur.</p>
+        <p class="error">Choisissez un éditeur.</p>
         }
       </div>
     </div>
@@ -108,7 +73,7 @@
       <select id="typeJeu" formControlName="type_jeu">
         <option [ngValue]="''">Type non spécifié</option>
         @for (type of types(); track type.id) {
-          <option [ngValue]="type.libelle">{{ type.libelle }}</option>
+        <option [ngValue]="type.libelle">{{ type.libelle }}</option>
         }
       </select>
     </div>
@@ -118,10 +83,10 @@
     </button>
 
     @if (jeuSuccess()) {
-      <p class="success">{{ jeuSuccess() }}</p>
+    <p class="success">{{ jeuSuccess() }}</p>
     }
     @if (jeuError()) {
-      <p class="error">{{ jeuError() }}</p>
+    <p class="error">{{ jeuError() }}</p>
     }
   </form>
 </section>
@@ -129,23 +94,23 @@
 <section class="card">
   <h3>Liste des éditeurs</h3>
   @if (editeurs().length === 0) {
-    <p>Aucun éditeur pour le moment.</p>
+  <p>Aucun éditeur pour le moment.</p>
   } @else {
-    <ul class="editeur-list">
-      @for (editeur of editeurs(); track editeur.id) {
-        <li>
-          <strong>{{ editeur.name }}</strong>
-          <small>{{ editeur.description }}</small>
-        </li>
-      }
-    </ul>
+  <ul class="editeur-list">
+    @for (editeur of editeurs(); track editeur.id) {
+    <li>
+      <strong>{{ editeur.name }}</strong>
+      <small>{{ editeur.description }}</small>
+    </li>
+    }
+  </ul>
   }
 </section>
 
 <p>Utilisateurs :</p>
 @for (user of users(); track user.login) {
-  <div class="user-card">
-    <h3>{{user.login}}</h3>
-    <p>Role: {{user.role}}</p>
-  </div>
+<div class="user-card">
+  <h3>{{user.login}}</h3>
+  <p>Role: {{user.role}}</p>
+</div>
 }

@@ -3,44 +3,40 @@
     <div>
       <p class="eyebrow">Editeurs</p>
       <h2>Découvrez les editeurs</h2>
+
+      @if (authService.isAdmin()) {
+      <a routerLink="/editeurs/new" class="button" style="color: white;">Ajouter un
+        éditeur</a>
+      }
     </div>
     <div class="search-field">
-      <input
-        type="search"
-        placeholder="Rechercher un éditeur..."
-        [value]="searchQuery()"
-        (input)="onSearch($any($event.target).value)"
-      />
+      <input type="search" placeholder="Rechercher un éditeur..." [value]="searchQuery()"
+        (input)="onSearch($any($event.target).value)" />
     </div>
   </header>
 
   @if (loading()) {
-    <p class="status">Chargement des editeurs...</p>
+  <p class="status">Chargement des editeurs...</p>
   }
   @else if (error()) {
-    <p class="status error">Erreur : {{ error() }}</p>
+  <p class="status error">Erreur : {{ error() }}</p>
   }
   @else if (editeurs().length === 0) {
-    <p class="status">Aucun editeur disponible pour le moment.</p>
+  <p class="status">Aucun editeur disponible pour le moment.</p>
   }
   @else {
-    <div class="letter-tabs">
-      @for (tab of tabs(); track tab) {
-        <button
-          type="button"
-          class="tab"
-          [class.active]="tab === activeTab()"
-          (click)="selectTab(tab)"
-        >
-          {{ tab }}
-        </button>
-      }
-    </div>
+  <div class="letter-tabs">
+    @for (tab of tabs(); track tab) {
+    <button type="button" class="tab" [class.active]="tab === activeTab()" (click)="selectTab(tab)">
+      {{ tab }}
+    </button>
+    }
+  </div>
 
-    <div class="editeur-grid">
-      @for (editeur of filteredEditeurs(); track editeur.id) {
-        <app-editeur-card [editeur]="editeur" />
-      }
-    </div>
+  <div class="editeur-grid">
+    @for (editeur of filteredEditeurs(); track editeur.id) {
+    <app-editeur-card [editeur]="editeur" />
+    }
+  </div>
   }
 </section>

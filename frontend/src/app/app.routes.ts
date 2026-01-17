@@ -10,13 +10,16 @@ import { EditeurJeuxComponent } from './editeur/editeur-detail/editeur-jeux/edit
 import { EditeurDetailComponent } from './editeur/editeur-detail/editeur-detail';
 import { ReservationsPageComponent } from './reservations/reservations-page/reservations-page';
 import { JeuxCatalogueComponent } from './jeux/jeux-catalogue/jeux-catalogue';
+import { EditeurFormComponent } from './editeur/editeur-form/editeur-form';
 
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'home', component: HomeComponent },
   { path: 'jeux', component: JeuxCatalogueComponent },
-  { path: 'editeurs/:id',component: EditeurDetailComponent,
+  { path: 'editeurs/new', component: EditeurFormComponent, canActivate: [adminGuard] }, // Place before :id
+  {
+    path: 'editeurs/:id', component: EditeurDetailComponent,
     children: [
       { path: 'jeux', component: EditeurJeuxComponent }
     ]
