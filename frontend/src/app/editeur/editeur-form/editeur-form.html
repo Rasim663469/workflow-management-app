@@ -28,6 +28,22 @@
                 placeholder="Courte présentation de l'éditeur (optionnel)"></textarea>
         </div>
 
+        <div class="field">
+            <label for="type_reservant">Type de réservant</label>
+            <select id="type_reservant" formControlName="type_reservant">
+                @for (type of reservantTypes; track type.value) {
+                <option [value]="type.value">{{ type.label }}</option>
+                }
+            </select>
+        </div>
+
+        <div class="field checkbox">
+            <label>
+                <input type="checkbox" formControlName="est_reservant" />
+                Peut réserver un espace
+            </label>
+        </div>
+
         <div class="actions">
             <button type="button" class="secondary" (click)="cancel()">Annuler</button>
             <button type="submit" [disabled]="creating() || form.invalid">

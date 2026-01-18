@@ -26,6 +26,8 @@ export class EditeurService {
       login,
       name: dto.name?.trim() || login,
       description: dto.description?.trim() || 'Aucune description fournie.',
+      type_reservant: dto.type_reservant ?? null,
+      est_reservant: dto.est_reservant ?? null,
     };
   }
 
@@ -77,7 +79,13 @@ export class EditeurService {
       });
   }
 
-  create(editeur: { nom: string; login: string; description: string | null }): Observable<any> {
+  create(editeur: {
+    nom: string;
+    login: string;
+    description: string | null;
+    type_reservant?: string | null;
+    est_reservant?: boolean;
+  }): Observable<any> {
     return this.http.post(`${environment.apiUrl}/editeurs`, editeur, { withCredentials: true }).pipe(
       tap(() => this.loadAll()) // Reload list after creation
     );

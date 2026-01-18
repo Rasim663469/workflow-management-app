@@ -68,6 +68,10 @@ export class FestivalService {
         dateDebut: this.extractDateInput(data.dateDebut ?? data.date_debut ?? data.date ?? ''),
         dateFin: this.extractDateInput(data.dateFin ?? data.date_fin ?? data.date ?? ''),
         description: data.description ?? '',
+        stockTablesStandard: Number(data.stockTablesStandard ?? data.stock_tables_standard ?? 0),
+        stockTablesGrandes: Number(data.stockTablesGrandes ?? data.stock_tables_grandes ?? 0),
+        stockTablesMairie: Number(data.stockTablesMairie ?? data.stock_tables_mairie ?? 0),
+        stockChaises: Number(data.stockChaises ?? data.stock_chaises ?? 0),
         tariffZones: data.tariffZones ?? [],
       }))
     );
@@ -82,6 +86,10 @@ export class FestivalService {
       dateDebut: this.normalizeDate(draft.dateDebut ?? ''),
       dateFin: this.normalizeDate(draft.dateFin ?? ''),
       description: (draft.description ?? '').trim(),
+      stockTablesStandard: Number(draft.stockTablesStandard ?? 0),
+      stockTablesGrandes: Number(draft.stockTablesGrandes ?? 0),
+      stockTablesMairie: Number(draft.stockTablesMairie ?? 0),
+      stockChaises: Number(draft.stockChaises ?? 0),
       tariffZones,
     };
   }
@@ -89,7 +97,7 @@ export class FestivalService {
   private normalizeZone(zone: TariffZoneDto): TariffZoneDto {
     const pricePerTable = Number(zone.pricePerTable) || 0;
     const totalTables = Math.max(0, Math.trunc(Number(zone.totalTables)));
-    const fallbackPricePerM2 = pricePerTable > 0 ? pricePerTable / 4.5 : 0;
+    const fallbackPricePerM2 = pricePerTable > 0 ? pricePerTable / 4 : 0;
     const pricePerM2Input =
       zone.pricePerM2 === null || zone.pricePerM2 === undefined ? NaN : Number(zone.pricePerM2);
 

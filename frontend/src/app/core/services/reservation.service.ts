@@ -6,8 +6,10 @@ import { environment } from '@env/environment';
 export type ReservationLineDto = {
   zone_tarifaire_id: number;
   nombre_tables: number;
+  surface_m2?: number | null;
   zone_nom?: string | null;
   prix_table?: number | null;
+  prix_m2?: number | null;
 };
 
 export type ReservationContactDto = {
@@ -27,6 +29,12 @@ export type ReservationDto = {
   remise_tables_offertes?: number | null;
   remise_argent?: number | null;
   editeur_presente_jeux?: boolean | null;
+  besoin_animateur?: boolean | null;
+  prises_electriques?: number | null;
+  notes?: string | null;
+  souhait_grandes_tables?: number | null;
+  date_facturation?: string | null;
+  date_paiement?: string | null;
   statut_workflow: string;
   tables_totales?: number;
   lignes?: ReservationLineDto[];
@@ -40,6 +48,10 @@ export type CreateReservationDto = {
   remise_tables_offertes?: number;
   remise_argent?: number;
   editeur_presente_jeux?: boolean;
+  besoin_animateur?: boolean;
+  prises_electriques?: number;
+  notes?: string | null;
+  souhait_grandes_tables?: number;
   statut_workflow?: string;
 };
 
@@ -56,6 +68,12 @@ export type ReservationCard = {
   remiseTablesOffertes?: number | null;
   remiseArgent?: number | null;
   editeurPresenteJeux?: boolean | null;
+  besoinAnimateur?: boolean | null;
+  prisesElectriques?: number | null;
+  notes?: string | null;
+  souhaitGrandesTables?: number | null;
+  dateFacturation?: string | null;
+  datePaiement?: string | null;
   lastContact?: string | null;
 };
 
@@ -85,6 +103,12 @@ export class ReservationService {
   readonly loading = this._loading.asReadonly();
   readonly error = this._error.asReadonly();
 
+  private tablesFromArea(surfaceM2?: number | null): number {
+    const value = Number(surfaceM2 ?? 0);
+    if (!value || value <= 0) return 0;
+    return Math.ceil(value / 4);
+  }
+
   private mapToCard(dto: ReservationDto): ReservationCard {
     const lignes = dto.lignes ?? [];
     return {
@@ -93,13 +117,25 @@ export class ReservationService {
       statut: this.normalizeStatus(dto.statut_workflow),
       prixTotal: dto.prix_total ?? 0,
       prixFinal: dto.prix_final ?? dto.prix_total ?? 0,
-      tables: dto.tables_totales ?? lignes.reduce((sum, line) => sum + (line.nombre_tables ?? 0), 0),
+      tables:
+        dto.tables_totales ??
+        lignes.reduce(
+          (sum, line) =>
+            sum + (line.nombre_tables ?? 0) + this.tablesFromArea(line.surface_m2),
+          0
+        ),
       lignes,
       editeurId: dto.editeur_id,
       festivalId: dto.festival_id,
       remiseTablesOffertes: dto.remise_tables_offertes ?? 0,
       remiseArgent: dto.remise_argent ?? 0,
       editeurPresenteJeux: dto.editeur_presente_jeux ?? false,
+      besoinAnimateur: dto.besoin_animateur ?? false,
+      prisesElectriques: dto.prises_electriques ?? 0,
+      notes: dto.notes ?? null,
+      souhaitGrandesTables: dto.souhait_grandes_tables ?? 0,
+      dateFacturation: dto.date_facturation ?? null,
+      datePaiement: dto.date_paiement ?? null,
       lastContact: dto.last_contact ?? null,
     };
   }

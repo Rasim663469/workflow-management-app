@@ -54,9 +54,20 @@
             <label>Tables</label>
             <input
               type="number"
-              min="1"
+              min="0"
               [value]="line.nombre_tables"
               (input)="updateLine($index, { nombre_tables: toNumber($any($event.target).value) })"
+            />
+          </div>
+
+          <div class="field small">
+            <label>Surface (m²)</label>
+            <input
+              type="number"
+              min="0"
+              step="0.5"
+              [value]="line.surface_m2"
+              (input)="updateLine($index, { surface_m2: toNumber($any($event.target).value) })"
             />
           </div>
 
@@ -72,12 +83,43 @@
     <div class="grid">
       <div class="field">
         <label for="remiseTables">Remise en tables</label>
-        <input id="remiseTables" type="number" min="0" formControlName="remise_tables_offertes" />
+        <input id="remiseTables" type="number" min="0" formControlName="remise_tables_offertes" (input)="recomputeTotal()" />
       </div>
       <div class="field">
         <label for="remiseArgent">Remise en montant</label>
-        <input id="remiseArgent" type="number" min="0" formControlName="remise_argent" />
+        <input id="remiseArgent" type="number" min="0" formControlName="remise_argent" (input)="recomputeTotal()" />
       </div>
+    </div>
+
+    <div class="grid">
+      <div class="field">
+        <label for="prisesElectriques">Prises électriques</label>
+        <input id="prisesElectriques" type="number" min="0" formControlName="prises_electriques" (input)="recomputeTotal()" />
+      </div>
+      <div class="field">
+        <label for="souhaitGrandesTables">Souhait grandes tables</label>
+        <input id="souhaitGrandesTables" type="number" min="0" formControlName="souhait_grandes_tables" />
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="field">
+        <label>
+          <input type="checkbox" formControlName="editeur_presente_jeux" />
+          L’éditeur présente ses jeux
+        </label>
+      </div>
+      <div class="field">
+        <label>
+          <input type="checkbox" formControlName="besoin_animateur" />
+          Besoin d’animateur
+        </label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="notesReservation">Notes</label>
+      <textarea id="notesReservation" rows="3" formControlName="notes" placeholder="Notes internes"></textarea>
     </div>
 
     <div class="total">

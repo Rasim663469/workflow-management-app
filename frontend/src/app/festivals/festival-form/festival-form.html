@@ -22,6 +22,25 @@
     </div>
   </div>
 
+  <div class="grid">
+    <div class="field">
+      <label for="stockTablesStandard">Stock tables standard</label>
+      <input id="stockTablesStandard" formControlName="stockTablesStandard" type="number" min="0" />
+    </div>
+    <div class="field">
+      <label for="stockTablesGrandes">Stock tables grandes</label>
+      <input id="stockTablesGrandes" formControlName="stockTablesGrandes" type="number" min="0" />
+    </div>
+    <div class="field">
+      <label for="stockTablesMairie">Stock tables mairie</label>
+      <input id="stockTablesMairie" formControlName="stockTablesMairie" type="number" min="0" />
+    </div>
+    <div class="field">
+      <label for="stockChaises">Stock chaises</label>
+      <input id="stockChaises" formControlName="stockChaises" type="number" min="0" />
+    </div>
+  </div>
+
   <div class="zones" formArrayName="tariffZones">
     @for (zone of tariffZones.controls; track $index; let i = $index) {
     <fieldset [formGroupName]="i">

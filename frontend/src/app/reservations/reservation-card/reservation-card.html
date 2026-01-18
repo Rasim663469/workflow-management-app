@@ -24,13 +24,38 @@
     </div>
   </div>
 
+  @if (reservation.prisesElectriques || reservation.besoinAnimateur || reservation.souhaitGrandesTables) {
+    <div class="meta">
+      <div>
+        <p class="label">Prises</p>
+        <p class="value">{{ reservation.prisesElectriques ?? 0 }}</p>
+      </div>
+      <div>
+        <p class="label">Animateur</p>
+        <p class="value">{{ reservation.besoinAnimateur ? 'Oui' : 'Non' }}</p>
+      </div>
+      <div>
+        <p class="label">Grandes tables souhaitées</p>
+        <p class="value">{{ reservation.souhaitGrandesTables ?? 0 }}</p>
+      </div>
+    </div>
+  }
+
   <ul class="zones" *ngIf="reservation.lignes.length">
     <li *ngFor="let line of reservation.lignes">
       <strong>{{ line.zone_nom ?? 'Zone' }}</strong>
       <span>{{ line.nombre_tables }} table(s)</span>
+      @if (line.surface_m2 && line.surface_m2 > 0) {
+        <span>{{ line.surface_m2 }} m²</span>
+      }
       <span class="price" *ngIf="line.prix_table !== undefined && line.prix_table !== null">
         @ {{ line.prix_table | currency : 'EUR' : 'symbol' : '1.0-0' }}
       </span>
+      @if (line.prix_m2 !== undefined && line.prix_m2 !== null && line.surface_m2 && line.surface_m2 > 0) {
+        <span class="price">
+          @ {{ line.prix_m2 | currency : 'EUR' : 'symbol' : '1.0-0' }}/m²
+        </span>
+      }
     </li>
   </ul>
 

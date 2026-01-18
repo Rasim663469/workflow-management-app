@@ -7,7 +7,19 @@ const router = Router();
 
 // CREATE + zones tarifaires
 router.post('/', verifyToken, requireAdmin, async (req, res) => {
-  const { nom, location, nombre_total_tables, date_debut, date_fin, description, zones } = req.body;
+  const {
+    nom,
+    location,
+    nombre_total_tables,
+    date_debut,
+    date_fin,
+    description,
+    zones,
+    stock_tables_standard = 0,
+    stock_tables_grandes = 0,
+    stock_tables_mairie = 0,
+    stock_chaises = 0,
+  } = req.body;
 
   if (!nom || !location || !nombre_total_tables || !date_debut || !date_fin) {
     return res
@@ -21,8 +33,23 @@ router.post('/', verifyToken, requireAdmin, async (req, res) => {
     await client.query('BEGIN');
 
     const { rows } = await client.query(
-      'INSERT INTO festival (nom, location, nombre_total_tables, date_debut, date_fin, description) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [nom, location, nombre_total_tables, date_debut, date_fin, description ?? null]
+      `INSERT INTO festival
+        (nom, location, nombre_total_tables, date_debut, date_fin, description,
+         stock_tables_standard, stock_tables_grandes, stock_tables_mairie, stock_chaises)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       RETURNING *`,
+      [
+        nom,
+        location,
+        nombre_total_tables,
+        date_debut,
+        date_fin,
+        description ?? null,
+        Number(stock_tables_standard) || 0,
+        Number(stock_tables_grandes) || 0,
+        Number(stock_tables_mairie) || 0,
+        Number(stock_chaises) || 0,
+      ]
     );
     const festival = rows[0];
 
@@ -31,7 +58,7 @@ router.post('/', verifyToken, requireAdmin, async (req, res) => {
         const nomZone = zone.nom ?? zone.name ?? 'Zone';
         const nbTables = Number(zone.nombre_tables ?? zone.totalTables ?? 0);
         const prixTable = Number(zone.prix_table ?? zone.pricePerTable ?? 0);
-        const prixM2 = Number(zone.prix_m2 ?? zone.pricePerM2 ?? prixTable / 4.5);
+        const prixM2 = Number(zone.prix_m2 ?? zone.pricePerM2 ?? prixTable / 4);
 
         await client.query(
           `INSERT INTO zone_tarifaire (festival_id, nom, nombre_tables_total, nombre_tables_disponibles, prix_table, prix_m2)
@@ -73,6 +100,10 @@ router.get('/', async (_req, res) => {
         f.date_fin AS "dateFin",
         f.description,
         f.nombre_total_tables AS "totalTables",
+        f.stock_tables_standard AS "stockTablesStandard",
+        f.stock_tables_grandes AS "stockTablesGrandes",
+        f.stock_tables_mairie AS "stockTablesMairie",
+        f.stock_chaises AS "stockChaises",
         COALESCE(json_agg(
           json_build_object(
             'name', zt.nom,
@@ -109,6 +140,10 @@ router.get('/:id', async (req, res) => {
         f.date_fin AS "dateFin",
         f.description,
         f.nombre_total_tables AS "totalTables",
+        f.stock_tables_standard AS "stockTablesStandard",
+        f.stock_tables_grandes AS "stockTablesGrandes",
+        f.stock_tables_mairie AS "stockTablesMairie",
+        f.stock_chaises AS "stockChaises",
         COALESCE(json_agg(
           json_build_object(
             'name', zt.nom,
@@ -140,7 +175,18 @@ router.get('/:id', async (req, res) => {
 // UPDATE 
 router.patch('/:id', verifyToken, requireAdmin, async (req, res) => {
     const { id } = req.params;
-    const { nom, location, nombre_total_tables, date_debut, date_fin, description } = req.body;
+    const {
+      nom,
+      location,
+      nombre_total_tables,
+      date_debut,
+      date_fin,
+      description,
+      stock_tables_standard,
+      stock_tables_grandes,
+      stock_tables_mairie,
+      stock_chaises,
+    } = req.body;
 
     const updates: string[] = [];
     const values: any[] = [];
@@ -152,6 +198,10 @@ router.patch('/:id', verifyToken, requireAdmin, async (req, res) => {
     if (date_debut !== undefined) { updates.push(`date_debut = $${paramIndex++}`); values.push(date_debut); }
     if (date_fin !== undefined) { updates.push(`date_fin = $${paramIndex++}`); values.push(date_fin); }
     if (description !== undefined) { updates.push(`description = $${paramIndex++}`); values.push(description); }
+    if (stock_tables_standard !== undefined) { updates.push(`stock_tables_standard = $${paramIndex++}`); values.push(stock_tables_standard); }
+    if (stock_tables_grandes !== undefined) { updates.push(`stock_tables_grandes = $${paramIndex++}`); values.push(stock_tables_grandes); }
+    if (stock_tables_mairie !== undefined) { updates.push(`stock_tables_mairie = $${paramIndex++}`); values.push(stock_tables_mairie); }
+    if (stock_chaises !== undefined) { updates.push(`stock_chaises = $${paramIndex++}`); values.push(stock_chaises); }
 
     if (updates.length === 0) {
         return res.status(400).json({ error: 'Aucun champ à mettre à jour' });

@@ -1,0 +1,57 @@
+<section class="crm-card">
+  <header>
+    <div>
+      <p class="eyebrow">CRM</p>
+      <h2>Suivi des contacts</h2>
+    </div>
+    @if (loading()) {
+      <span class="pill">Chargement...</span>
+    }
+  </header>
+
+  @if (error()) {
+    <p class="error">{{ error() }}</p>
+  }
+
+  @if (saveError()) {
+    <p class="error">{{ saveError() }}</p>
+  }
+
+  @if (!loading() && rows().length === 0) {
+    <p class="empty">Aucun éditeur.</p>
+  }
+
+  @if (rows().length > 0) {
+    <div class="crm-grid">
+      @for (row of rows(); track row.editeur_id) {
+        <article class="crm-row">
+          <div class="info">
+            <p class="name">{{ row.editeur_nom }}</p>
+            <p class="meta">
+              {{ row.type_reservant || 'editeur' }}
+              @if (row.est_reservant === false) { · non réservant }
+            </p>
+          </div>
+          <div class="stats">
+            <span>Contacts: {{ row.total_contacts ?? 0 }}</span>
+            <span>
+              Dernier: {{ row.last_contact ? (row.last_contact | date:'shortDate') : '—' }}
+            </span>
+          </div>
+          <div class="actions">
+            <label class="sr-only">Statut CRM</label>
+            <select
+              [value]="row.statut ?? 'pas_de_contact'"
+              (change)="updateStatus(row.editeur_id, $any($event.target).value)"
+              [disabled]="saving()"
+            >
+              @for (status of statuses; track status.value) {
+                <option [value]="status.value">{{ status.label }}</option>
+              }
+            </select>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</section>

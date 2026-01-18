@@ -4,6 +4,7 @@ import pool from '../db/database.js';
 type ReservationLineInput = {
   zone_tarifaire_id: number;
   nombre_tables: number;
+  surface_m2?: number;
 };
 
 const router = Router();
@@ -23,6 +24,8 @@ const ALLOWED_WORKFLOWS = [
   'annulée',
 ] as const;
 const DEFAULT_WORKFLOW = 'pas_de_contact';
+const TABLE_AREA_M2 = 4;
+const PRICE_PER_OUTLET = 250;
 
 const WORKFLOW_TRANSITIONS: Record<string, string[]> = {
   brouillon: ['pas_de_contact', 'contact_pris', 'discussion_en_cours', 'present', 'annulée'],
@@ -49,26 +52,47 @@ function isTransitionAllowed(current: string, next: string): boolean {
   return allowed.includes(next);
 }
 
-type ZoneInfo = { prix_table: number; disponibles: number; nom: string | null };
+type ZoneInfo = { prix_table: number; prix_m2: number; disponibles: number; nom: string | null };
 
 function normalizeLines(lignes: ReservationLineInput[]): ReservationLineInput[] {
   return lignes
     .map((line: ReservationLineInput) => ({
       zone_tarifaire_id: Number(line.zone_tarifaire_id),
-      nombre_tables: Math.max(1, Number(line.nombre_tables) || 0),
+      nombre_tables: Math.max(0, Number(line.nombre_tables) || 0),
+      surface_m2: Math.max(0, Number(line.surface_m2) || 0),
     }))
-    .filter(line => Number.isFinite(line.zone_tarifaire_id) && line.nombre_tables > 0);
+    .filter(
+      line =>
+        Number.isFinite(line.zone_tarifaire_id) &&
+        (line.nombre_tables > 0 || (line.surface_m2 ?? 0) > 0)
+    );
+}
+
+function tablesFromArea(surfaceM2: number): number {
+  if (!surfaceM2 || surfaceM2 <= 0) return 0;
+  return Math.ceil(surfaceM2 / TABLE_AREA_M2);
+}
+
+function lineTables(line: ReservationLineInput): number {
+  return (Number(line.nombre_tables) || 0) + tablesFromArea(Number(line.surface_m2) || 0);
 }
 
 function computePrice(
   lines: ReservationLineInput[],
   zoneInfos: Map<number, ZoneInfo>,
   remiseTablesOffertes: number,
-  remiseArgent: number
+  remiseArgent: number,
+  prisesElectriques: number
 ): { base: number; final: number; remise_montant: number; remise_tables: number } {
-  const prixBase = lines.reduce((sum, line) => {
+  const prixBaseSansPrises = lines.reduce((sum, line) => {
     const zone = zoneInfos.get(line.zone_tarifaire_id);
-    return sum + line.nombre_tables * (zone?.prix_table ?? 0);
+    const tables = Number(line.nombre_tables) || 0;
+    const surface = Number(line.surface_m2) || 0;
+    return (
+      sum +
+      tables * (zone?.prix_table ?? 0) +
+      surface * (zone?.prix_m2 ?? 0)
+    );
   }, 0);
 
   let tablesOffertes = Math.max(0, Number(remiseTablesOffertes) || 0);
@@ -77,7 +101,10 @@ function computePrice(
     .map(([zoneId, info]) => ({
       zoneId,
       prix_table: info.prix_table,
-      tables: lines.find(l => l.zone_tarifaire_id === zoneId)?.nombre_tables ?? 0,
+      tables: (() => {
+        const line = lines.find(l => l.zone_tarifaire_id === zoneId);
+        return line ? lineTables(line) : 0;
+      })(),
     }))
     .sort((a, b) => b.prix_table - a.prix_table);
 
@@ -89,6 +116,8 @@ function computePrice(
   }
 
   const remiseMontant = Math.max(0, Number(remiseArgent) || 0);
+  const coutPrises = Math.max(0, Number(prisesElectriques) || 0) * PRICE_PER_OUTLET;
+  const prixBase = prixBaseSansPrises + coutPrises;
   const prixFinal = Math.max(0, prixBase - remiseMontant - remiseMontantTables);
 
   return {
@@ -108,6 +137,10 @@ router.post('/', async (req, res) => {
     remise_tables_offertes = 0,
     remise_argent = 0,
     editeur_presente_jeux = false,
+    besoin_animateur = false,
+    prises_electriques = 0,
+    notes = null,
+    souhait_grandes_tables = 0,
     statut_workflow = DEFAULT_WORKFLOW,
   } = req.body;
 
@@ -120,9 +153,10 @@ router.post('/', async (req, res) => {
   const normalizedLines: ReservationLineInput[] = normalizeLines(lignes);
 
   if (normalizedLines.length === 0) {
-    return res
-      .status(400)
-      .json({ error: 'Chaque ligne doit contenir un zone_tarifaire_id et un nombre_tables > 0.' });
+    return res.status(400).json({
+      error:
+        'Chaque ligne doit contenir un zone_tarifaire_id et un nombre_tables ou surface_m2 > 0.',
+    });
   }
 
   const client = await pool.connect();
@@ -135,7 +169,7 @@ router.post('/', async (req, res) => {
 
     for (const line of normalizedLines) {
       const zoneRes = await client.query(
-        `SELECT id, festival_id, prix_table, nombre_tables_disponibles, nom 
+        `SELECT id, festival_id, prix_table, prix_m2, nombre_tables_disponibles, nom 
          FROM zone_tarifaire 
          WHERE id = $1`,
         [line.zone_tarifaire_id]
@@ -146,12 +180,14 @@ router.post('/', async (req, res) => {
         throw new Error('ZONE_INVALID');
       }
 
-      if (Number(zone.nombre_tables_disponibles) < line.nombre_tables) {
+      const tablesNeeded = lineTables(line);
+      if (Number(zone.nombre_tables_disponibles) < tablesNeeded) {
         throw new Error('STOCK_INSUFFISANT');
       }
 
       zoneInfos.set(line.zone_tarifaire_id, {
         prix_table: Number(zone.prix_table) || 0,
+        prix_m2: Number(zone.prix_m2) || 0,
         disponibles: Number(zone.nombre_tables_disponibles) || 0,
         nom: zone.nom ?? null,
       });
@@ -161,7 +197,8 @@ router.post('/', async (req, res) => {
       normalizedLines,
       zoneInfos,
       remise_tables_offertes,
-      remise_argent
+      remise_argent,
+      prises_electriques
     );
 
     // Mise à jour du stock pour chaque zone
@@ -170,7 +207,7 @@ router.post('/', async (req, res) => {
         `UPDATE zone_tarifaire 
          SET nombre_tables_disponibles = nombre_tables_disponibles - $1 
          WHERE id = $2`,
-        [line.nombre_tables, line.zone_tarifaire_id]
+        [lineTables(line), line.zone_tarifaire_id]
       );
     }
 
@@ -178,8 +215,9 @@ router.post('/', async (req, res) => {
 
     const insertReservation = await client.query(
       `INSERT INTO reservation 
-       (editeur_id, festival_id, remise_tables_offertes, remise_argent, prix_total, prix_final, editeur_presente_jeux, statut_workflow) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+       (editeur_id, festival_id, remise_tables_offertes, remise_argent, prix_total, prix_final,
+        editeur_presente_jeux, besoin_animateur, prises_electriques, notes, souhait_grandes_tables, statut_workflow) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) 
        RETURNING *`,
       [
         editeur_id,
@@ -189,6 +227,10 @@ router.post('/', async (req, res) => {
         price.base,
         price.final,
         editeur_presente_jeux,
+        besoin_animateur,
+        Number(prises_electriques) || 0,
+        notes,
+        Number(souhait_grandes_tables) || 0,
         workflow,
       ]
     );
@@ -197,9 +239,17 @@ router.post('/', async (req, res) => {
 
     for (const line of normalizedLines) {
       await client.query(
-        `INSERT INTO reservation_detail (reservation_id, zone_tarifaire_id, nombre_tables) 
-         VALUES ($1, $2, $3)`,
-        [reservationId, line.zone_tarifaire_id, line.nombre_tables]
+        `INSERT INTO reservation_detail 
+          (reservation_id, zone_tarifaire_id, nombre_tables, surface_m2, prix_table_snapshot, prix_m2_snapshot) 
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          reservationId,
+          line.zone_tarifaire_id,
+          line.nombre_tables,
+          line.surface_m2 ?? 0,
+          zoneInfos.get(line.zone_tarifaire_id)?.prix_table ?? 0,
+          zoneInfos.get(line.zone_tarifaire_id)?.prix_m2 ?? 0,
+        ]
       );
     }
 
@@ -247,8 +297,10 @@ router.get('/festival/:festivalId', async (req, res) => {
           json_build_object(
             'zone_tarifaire_id', rd.zone_tarifaire_id,
             'nombre_tables', rd.nombre_tables,
+            'surface_m2', rd.surface_m2,
             'zone_nom', zt.nom,
-            'prix_table', zt.prix_table
+            'prix_table', zt.prix_table,
+            'prix_m2', zt.prix_m2
           )
         ) FILTER (WHERE rd.id IS NOT NULL), '[]') AS lignes
       FROM reservation r
@@ -329,8 +381,10 @@ router.get('/:id', async (req, res) => {
           json_build_object(
             'zone_tarifaire_id', rd.zone_tarifaire_id,
             'nombre_tables', rd.nombre_tables,
+            'surface_m2', rd.surface_m2,
             'zone_nom', zt.nom,
-            'prix_table', zt.prix_table
+            'prix_table', zt.prix_table,
+            'prix_m2', zt.prix_m2
           )
         ) FILTER (WHERE rd.id IS NOT NULL), '[]') AS lignes
       FROM reservation r
@@ -359,6 +413,10 @@ router.put('/:id', async (req, res) => {
     remise_argent,
     remise_tables_offertes,
     editeur_presente_jeux,
+    besoin_animateur,
+    prises_electriques,
+    notes,
+    souhait_grandes_tables,
     lignes,
   } = req.body;
 
@@ -390,6 +448,12 @@ router.put('/:id', async (req, res) => {
       }
       updates.push(`statut_workflow = $${paramIndex++}`);
       values.push(statut_workflow);
+      if (statut_workflow === 'facture' && !reservation.date_facturation) {
+        updates.push('date_facturation = NOW()');
+      }
+      if (statut_workflow === 'facture_payee' && !reservation.date_paiement) {
+        updates.push('date_paiement = NOW()');
+      }
     }
 
     if (remise_argent !== undefined) {
@@ -404,9 +468,25 @@ router.put('/:id', async (req, res) => {
       updates.push(`editeur_presente_jeux = $${paramIndex++}`);
       values.push(editeur_presente_jeux);
     }
+    if (besoin_animateur !== undefined) {
+      updates.push(`besoin_animateur = $${paramIndex++}`);
+      values.push(besoin_animateur);
+    }
+    if (prises_electriques !== undefined) {
+      updates.push(`prises_electriques = $${paramIndex++}`);
+      values.push(prises_electriques);
+    }
+    if (notes !== undefined) {
+      updates.push(`notes = $${paramIndex++}`);
+      values.push(notes);
+    }
+    if (souhait_grandes_tables !== undefined) {
+      updates.push(`souhait_grandes_tables = $${paramIndex++}`);
+      values.push(souhait_grandes_tables);
+    }
 
     const existingDetails = await client.query(
-      'SELECT zone_tarifaire_id, nombre_tables FROM reservation_detail WHERE reservation_id = $1',
+      'SELECT zone_tarifaire_id, nombre_tables, surface_m2 FROM reservation_detail WHERE reservation_id = $1',
       [id]
     );
     const existingLines = existingDetails.rows as ReservationLineInput[];
@@ -415,13 +495,16 @@ router.put('/:id', async (req, res) => {
     const normalizedLines = linesProvided ? normalizeLines(lignes) : existingLines;
     if (linesProvided && normalizedLines.length === 0) {
       await client.query('ROLLBACK');
-      return res.status(400).json({ error: 'Chaque ligne doit contenir un zone_tarifaire_id et un nombre_tables > 0.' });
+      return res.status(400).json({
+        error:
+          'Chaque ligne doit contenir un zone_tarifaire_id et un nombre_tables ou surface_m2 > 0.',
+      });
     }
 
     const zoneInfos = new Map<number, ZoneInfo>();
     for (const line of normalizedLines) {
       const zoneRes = await client.query(
-        `SELECT id, festival_id, prix_table, nombre_tables_disponibles, nom 
+        `SELECT id, festival_id, prix_table, prix_m2, nombre_tables_disponibles, nom 
          FROM zone_tarifaire 
          WHERE id = $1`,
         [line.zone_tarifaire_id]
@@ -433,6 +516,7 @@ router.put('/:id', async (req, res) => {
       }
       zoneInfos.set(line.zone_tarifaire_id, {
         prix_table: Number(zone.prix_table) || 0,
+        prix_m2: Number(zone.prix_m2) || 0,
         disponibles: Number(zone.nombre_tables_disponibles) || 0,
         nom: zone.nom ?? null,
       });
@@ -441,11 +525,11 @@ router.put('/:id', async (req, res) => {
     if (linesProvided) {
       const oldMap = new Map<number, number>();
       for (const line of existingLines) {
-        oldMap.set(line.zone_tarifaire_id, Number(line.nombre_tables) || 0);
+        oldMap.set(line.zone_tarifaire_id, lineTables(line));
       }
       const newMap = new Map<number, number>();
       for (const line of normalizedLines) {
-        newMap.set(line.zone_tarifaire_id, Number(line.nombre_tables) || 0);
+        newMap.set(line.zone_tarifaire_id, lineTables(line));
       }
       const zoneIds = new Set<number>([...oldMap.keys(), ...newMap.keys()]);
       for (const zoneId of zoneIds) {
@@ -477,9 +561,17 @@ router.put('/:id', async (req, res) => {
       await client.query('DELETE FROM reservation_detail WHERE reservation_id = $1', [id]);
       for (const line of normalizedLines) {
         await client.query(
-          `INSERT INTO reservation_detail (reservation_id, zone_tarifaire_id, nombre_tables) 
-           VALUES ($1, $2, $3)`,
-          [id, line.zone_tarifaire_id, line.nombre_tables]
+          `INSERT INTO reservation_detail 
+            (reservation_id, zone_tarifaire_id, nombre_tables, surface_m2, prix_table_snapshot, prix_m2_snapshot) 
+           VALUES ($1, $2, $3, $4, $5, $6)`,
+          [
+            id,
+            line.zone_tarifaire_id,
+            line.nombre_tables,
+            line.surface_m2 ?? 0,
+            zoneInfos.get(line.zone_tarifaire_id)?.prix_table ?? 0,
+            zoneInfos.get(line.zone_tarifaire_id)?.prix_m2 ?? 0,
+          ]
         );
       }
     }
@@ -488,7 +580,15 @@ router.put('/:id', async (req, res) => {
       remise_tables_offertes !== undefined ? remise_tables_offertes : reservation.remise_tables_offertes;
     const effectiveRemiseArgent =
       remise_argent !== undefined ? remise_argent : reservation.remise_argent;
-    const price = computePrice(normalizedLines, zoneInfos, effectiveRemiseTables, effectiveRemiseArgent);
+    const effectivePrises =
+      prises_electriques !== undefined ? prises_electriques : reservation.prises_electriques ?? 0;
+    const price = computePrice(
+      normalizedLines,
+      zoneInfos,
+      effectiveRemiseTables,
+      effectiveRemiseArgent,
+      effectivePrises
+    );
 
     updates.push(`prix_total = $${paramIndex++}`);
     values.push(price.base);
@@ -580,7 +680,7 @@ router.delete('/:id', async (req, res) => {
     await client.query('BEGIN');
 
     const detailRes = await client.query(
-      'SELECT zone_tarifaire_id, nombre_tables FROM reservation_detail WHERE reservation_id = $1',
+      'SELECT zone_tarifaire_id, nombre_tables, surface_m2 FROM reservation_detail WHERE reservation_id = $1',
       [id]
     );
 
@@ -598,7 +698,7 @@ router.delete('/:id', async (req, res) => {
           `UPDATE zone_tarifaire 
              SET nombre_tables_disponibles = nombre_tables_disponibles + $1 
            WHERE id = $2`,
-          [row.nombre_tables, row.zone_tarifaire_id]
+          [lineTables(row as ReservationLineInput), row.zone_tarifaire_id]
         );
       }
     }

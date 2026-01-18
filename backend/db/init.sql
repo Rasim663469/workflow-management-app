@@ -16,7 +16,16 @@ CREATE TABLE IF NOT EXISTS editeur (
   nom VARCHAR(255),
   login TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
-  description TEXT
+  description TEXT,
+  type_reservant VARCHAR(20) NOT NULL DEFAULT 'editeur',
+  est_reservant BOOLEAN NOT NULL DEFAULT TRUE,
+  CONSTRAINT chk_type_reservant CHECK (type_reservant IN (
+    'editeur',
+    'prestataire',
+    'boutique',
+    'animation',
+    'association'
+  ))
 );
 
 -- ===========================
@@ -29,7 +38,11 @@ CREATE TABLE IF NOT EXISTS festival (
     nombre_total_tables INT NOT NULL,
     date_debut DATE NOT NULL,
     date_fin DATE NOT NULL,
-    description TEXT
+    description TEXT,
+    stock_tables_standard INT NOT NULL DEFAULT 0,
+    stock_tables_grandes INT NOT NULL DEFAULT 0,
+    stock_tables_mairie INT NOT NULL DEFAULT 0,
+    stock_chaises INT NOT NULL DEFAULT 0
 );
 
 -- ===========================
@@ -109,6 +122,12 @@ CREATE TABLE IF NOT EXISTS reservation (
     prix_total DECIMAL(10,2),
     prix_final DECIMAL(10,2),
     editeur_presente_jeux BOOLEAN DEFAULT FALSE,
+    besoin_animateur BOOLEAN DEFAULT FALSE,
+    prises_electriques INT NOT NULL DEFAULT 0,
+    date_facturation TIMESTAMP,
+    date_paiement TIMESTAMP,
+    notes TEXT,
+    souhait_grandes_tables INT NOT NULL DEFAULT 0,
     statut_workflow VARCHAR(30) NOT NULL DEFAULT 'pas_de_contact',
     CONSTRAINT chk_statut_workflow CHECK (statut_workflow IN (
       'brouillon',
@@ -157,7 +176,10 @@ CREATE TABLE IF NOT EXISTS reservation_detail (
     reservation_id INT NOT NULL,
     zone_tarifaire_id INT NOT NULL,
     nombre_tables INT NOT NULL,
+    surface_m2 DECIMAL(10,2) NOT NULL DEFAULT 0,
     prix_zone DECIMAL(10,2),
+    prix_table_snapshot DECIMAL(10,2),
+    prix_m2_snapshot DECIMAL(10,2),
     CONSTRAINT fk_res_detail_reservation
         FOREIGN KEY (reservation_id) REFERENCES reservation(id)
         ON DELETE CASCADE,
@@ -173,9 +195,11 @@ CREATE TABLE IF NOT EXISTS jeu_festival (
     id SERIAL PRIMARY KEY,
     jeu_id INT NOT NULL,
     reservation_id INT NOT NULL,
-    zone_plan_id INT NOT NULL,
+    zone_plan_id INT,
     quantite INT NOT NULL,
     nombre_tables_allouees DECIMAL(4,2),
+    type_table VARCHAR(20) NOT NULL DEFAULT 'standard',
+    tables_utilisees DECIMAL(4,2) NOT NULL DEFAULT 1,
     liste_demandee BOOLEAN DEFAULT FALSE,
     liste_obtenue BOOLEAN DEFAULT FALSE,
     jeux_recus BOOLEAN DEFAULT FALSE,
@@ -190,3 +214,29 @@ CREATE TABLE IF NOT EXISTS jeu_festival (
         ON DELETE CASCADE
 );
 
+-- ===========================
+-- TABLE : CRM_SUIVI (suivi avant réservation)
+-- ===========================
+CREATE TABLE IF NOT EXISTS crm_suivi (
+    id SERIAL PRIMARY KEY,
+    editeur_id INT NOT NULL,
+    festival_id INT NOT NULL,
+    statut VARCHAR(30) NOT NULL DEFAULT 'pas_de_contact',
+    derniere_relance TIMESTAMP,
+    notes TEXT,
+    CONSTRAINT uq_crm_suivi UNIQUE (editeur_id, festival_id),
+    CONSTRAINT fk_crm_suivi_editeur
+        FOREIGN KEY (editeur_id) REFERENCES editeur(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_crm_suivi_festival
+        FOREIGN KEY (festival_id) REFERENCES festival(id)
+        ON DELETE CASCADE,
+    CONSTRAINT chk_crm_statut CHECK (statut IN (
+      'pas_de_contact',
+      'contact_pris',
+      'discussion_en_cours',
+      'sera_absent',
+      'considere_absent',
+      'present'
+    ))
+);

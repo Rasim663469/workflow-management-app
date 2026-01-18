@@ -8,6 +8,7 @@ import { ZoneTarifaireDto, ZoneTarifaireService } from '@services/zone-tarifaire
 type LineForm = {
   zone_tarifaire_id: number | null;
   nombre_tables: number;
+  surface_m2: number;
 };
 
 @Component({
@@ -46,9 +47,19 @@ export class ReservationFormComponent {
     editeur_id: new FormControl<number | null>(null, { validators: [Validators.required] }),
     remise_tables_offertes: new FormControl<number>(0, { nonNullable: true }),
     remise_argent: new FormControl<number>(0, { nonNullable: true }),
+    editeur_presente_jeux: new FormControl<boolean>(true, { nonNullable: true }),
+    besoin_animateur: new FormControl<boolean>(false, { nonNullable: true }),
+    prises_electriques: new FormControl<number>(0, { nonNullable: true }),
+    souhait_grandes_tables: new FormControl<number>(0, { nonNullable: true }),
+    notes: new FormControl<string>('', { nonNullable: true }),
   });
 
-  readonly lignes = signal<LineForm[]>([{ zone_tarifaire_id: null, nombre_tables: 1 }]);
+  readonly lignes = signal<LineForm[]>([
+    { zone_tarifaire_id: null, nombre_tables: 1, surface_m2: 0 },
+  ]);
+
+  private readonly tableAreaM2 = 4;
+  private readonly pricePerOutlet = 250;
 
   constructor() {
     effect(() => this.editeurService.loadAll());
@@ -88,7 +99,10 @@ export class ReservationFormComponent {
   }
 
   addLine(): void {
-    this.lignes.update(lines => [...lines, { zone_tarifaire_id: null, nombre_tables: 1 }]);
+    this.lignes.update(lines => [
+      ...lines,
+      { zone_tarifaire_id: null, nombre_tables: 1, surface_m2: 0 },
+    ]);
     this.recomputeTotal();
   }
 
@@ -120,10 +134,15 @@ export class ReservationFormComponent {
     }
 
     const lignesPayload = this.lignes()
-      .filter(line => line.zone_tarifaire_id !== null && line.nombre_tables > 0)
+      .filter(
+        line =>
+          line.zone_tarifaire_id !== null &&
+          (line.nombre_tables > 0 || Number(line.surface_m2) > 0)
+      )
       .map(line => ({
         zone_tarifaire_id: Number(line.zone_tarifaire_id),
         nombre_tables: Number(line.nombre_tables),
+        surface_m2: Number(line.surface_m2) || 0,
       }));
 
     if (lignesPayload.length === 0) {
@@ -138,6 +157,13 @@ export class ReservationFormComponent {
       if (zone && line.nombre_tables > zone.nombre_tables_disponibles) {
         errors[line.zone_tarifaire_id] = `Max ${zone.nombre_tables_disponibles} table(s) disponibles`;
       }
+      if (zone) {
+        const tablesFromArea = Math.ceil((line.surface_m2 || 0) / this.tableAreaM2);
+        const totalTables = (line.nombre_tables || 0) + tablesFromArea;
+        if (totalTables > zone.nombre_tables_disponibles) {
+          errors[line.zone_tarifaire_id] = `Max ${zone.nombre_tables_disponibles} table(s) disponibles`;
+        }
+      }
     }
     this.zoneErrors.set(errors);
     if (Object.keys(errors).length > 0) {
@@ -149,6 +175,11 @@ export class ReservationFormComponent {
 
     const remise_tables_offertes = Number(this.form.value.remise_tables_offertes ?? 0);
     const remise_argent = Number(this.form.value.remise_argent ?? 0);
+    const editeur_presente_jeux = Boolean(this.form.value.editeur_presente_jeux);
+    const besoin_animateur = Boolean(this.form.value.besoin_animateur);
+    const prises_electriques = Number(this.form.value.prises_electriques ?? 0);
+    const souhait_grandes_tables = Number(this.form.value.souhait_grandes_tables ?? 0);
+    const notes = (this.form.value.notes ?? '').trim() || null;
 
     if (this.editingId()) {
       this.reservationService
@@ -156,6 +187,11 @@ export class ReservationFormComponent {
           lignes: lignesPayload,
           remise_tables_offertes,
           remise_argent,
+          editeur_presente_jeux,
+          besoin_animateur,
+          prises_electriques,
+          souhait_grandes_tables,
+          notes,
         })
         .subscribe({
           next: () => {
@@ -182,6 +218,11 @@ export class ReservationFormComponent {
         lignes: lignesPayload,
         remise_tables_offertes,
         remise_argent,
+        editeur_presente_jeux,
+        besoin_animateur,
+        prises_electriques,
+        souhait_grandes_tables,
+        notes,
         statut_workflow: 'pas_de_contact',
       })
       .subscribe({
@@ -207,14 +248,33 @@ export class ReservationFormComponent {
     return Number(value ?? 0);
   }
 
-  private recomputeTotal(): void {
-    const zonesMap = new Map(this.zones().map(z => [z.id, z.prix_table]));
-    const total = this.lignes().reduce((sum, line) => {
-      const price = zonesMap.get(line.zone_tarifaire_id ?? -1) ?? 0;
-      const qty = Number(line.nombre_tables) || 0;
-      return sum + qty * price;
+  recomputeTotal(): void {
+    const zonesMap = new Map(this.zones().map(z => [z.id, z]));
+    const base = this.lignes().reduce((sum, line) => {
+      const zone = zonesMap.get(line.zone_tarifaire_id ?? -1);
+      const priceTable = zone?.prix_table ?? 0;
+      const priceM2 = zone?.prix_m2 ?? 0;
+      const qtyTables = Number(line.nombre_tables) || 0;
+      const qtyM2 = Number(line.surface_m2) || 0;
+      return sum + qtyTables * priceTable + qtyM2 * priceM2;
     }, 0);
-    this.totalEstimate.set(total);
+    const prises = Number(this.form.value.prises_electriques ?? 0);
+    const remiseTables = Number(this.form.value.remise_tables_offertes ?? 0);
+    const remiseArgent = Number(this.form.value.remise_argent ?? 0);
+    const avgTablePrice = base > 0 ? base / Math.max(1, this.totalTablesFromLines()) : 0;
+    const total = Math.max(
+      0,
+      base + prises * this.pricePerOutlet - remiseTables * avgTablePrice - remiseArgent
+    );
+    this.totalEstimate.set(Math.max(0, total));
+  }
+
+  private totalTablesFromLines(): number {
+    return this.lignes().reduce((sum, line) => {
+      const tables = Number(line.nombre_tables) || 0;
+      const m2 = Number(line.surface_m2) || 0;
+      return sum + tables + Math.ceil(m2 / this.tableAreaM2);
+    }, 0);
   }
 
   cancelEdit(): void {
@@ -231,14 +291,20 @@ export class ReservationFormComponent {
       editeur_id: reservation.editeurId ?? null,
       remise_tables_offertes: Number(reservation.remiseTablesOffertes ?? 0),
       remise_argent: Number(reservation.remiseArgent ?? 0),
+      editeur_presente_jeux: Boolean(reservation.editeurPresenteJeux),
+      besoin_animateur: Boolean(reservation.besoinAnimateur),
+      prises_electriques: Number(reservation.prisesElectriques ?? 0),
+      souhait_grandes_tables: Number(reservation.souhaitGrandesTables ?? 0),
+      notes: reservation.notes ?? '',
     });
 
     const lines = reservation.lignes?.length
       ? reservation.lignes.map(line => ({
           zone_tarifaire_id: line.zone_tarifaire_id ?? null,
           nombre_tables: line.nombre_tables ?? 1,
+          surface_m2: Number(line.surface_m2 ?? 0),
         }))
-      : [{ zone_tarifaire_id: null, nombre_tables: 1 }];
+      : [{ zone_tarifaire_id: null, nombre_tables: 1, surface_m2: 0 }];
 
     this.lignes.set(lines);
     this.recomputeTotal();
@@ -250,8 +316,13 @@ export class ReservationFormComponent {
       editeur_id: null,
       remise_tables_offertes: 0,
       remise_argent: 0,
+      editeur_presente_jeux: true,
+      besoin_animateur: false,
+      prises_electriques: 0,
+      souhait_grandes_tables: 0,
+      notes: '',
     });
-    this.lignes.set([{ zone_tarifaire_id: null, nombre_tables: 1 }]);
+    this.lignes.set([{ zone_tarifaire_id: null, nombre_tables: 1, surface_m2: 0 }]);
     this.recomputeTotal();
   }
 }
