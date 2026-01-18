@@ -140,6 +140,28 @@ h3 {
   font-size: 0.85rem;
 }
 
+.pill[data-status='facture'] {
+  background: #fef3c7;
+  border-color: #f59e0b;
+  color: #92400e;
+}
+
+.pill[data-status='payee'] {
+  background: #dcfce7;
+  border-color: #22c55e;
+  color: #166534;
+}
+
+.facture-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #f8fafc;
+}
+
 .error {
   color: #b91c1c;
   font-size: 0.85rem;

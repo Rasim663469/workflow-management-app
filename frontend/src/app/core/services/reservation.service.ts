@@ -19,6 +19,16 @@ export type ReservationContactDto = {
   date_contact: string;
   notes?: string | null;
 };
+
+export type FactureDto = {
+  id: number;
+  reservation_id: number;
+  numero: string;
+  montant_ttc: number;
+  statut: 'facture' | 'payee';
+  emise_le: string;
+  payee_le?: string | null;
+};
 export type ReservationDto = {
   id: number;
   editeur_id: number;
@@ -198,6 +208,29 @@ export class ReservationService {
   loadContacts(id: string | number) {
     return this.http.get<ReservationContactDto[]>(
       `${environment.apiUrl}/reservations/${id}/contacts`,
+      { withCredentials: true }
+    );
+  }
+
+  createFacture(reservationId: string | number) {
+    return this.http.post<{ facture: FactureDto }>(
+      `${environment.apiUrl}/reservations/${reservationId}/factures`,
+      {},
+      { withCredentials: true }
+    );
+  }
+
+  markFacturePayee(factureId: string | number) {
+    return this.http.put<{ facture: FactureDto }>(
+      `${environment.apiUrl}/factures/${factureId}/payee`,
+      {},
+      { withCredentials: true }
+    );
+  }
+
+  getFactureByReservation(reservationId: string | number) {
+    return this.http.get<FactureDto>(
+      `${environment.apiUrl}/factures/reservation/${reservationId}`,
       { withCredentials: true }
     );
   }
