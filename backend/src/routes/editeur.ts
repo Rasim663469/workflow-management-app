@@ -5,6 +5,13 @@ import pool from '../db/database.js';
 const router = Router();
 
 const isAdmin = (req: Express.Request) => req.user?.role === 'admin';
+const ALLOWED_TYPES = ['editeur', 'prestataire', 'boutique', 'animation', 'association'] as const;
+
+function normalizeType(value: unknown): string {
+  if (typeof value !== 'string') return 'editeur';
+  const normalized = value.trim().toLowerCase();
+  return ALLOWED_TYPES.includes(normalized as any) ? normalized : 'editeur';
+}
 
 // CRÉER un éditeur (admin uniquement) : crée aussi le compte user associé
 router.post('/', async (req, res) => {
@@ -12,7 +19,7 @@ router.post('/', async (req, res) => {
     return res.status(403).json({ error: 'Accès réservé aux admins' });
   }
 
-  const { nom, login, description } = req.body;
+  const { nom, login, description, type_reservant, est_reservant } = req.body;
   const normalizedName = typeof nom === 'string' ? nom.trim() : '';
   const normalizedLogin = typeof login === 'string' ? login.trim() : '';
 
@@ -43,10 +50,18 @@ router.post('/', async (req, res) => {
 
     // Crée/associe la fiche éditeur avec le même id
     await pool.query(
-      `INSERT INTO editeur (id, nom, login, password_hash, description)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO editeur (id, nom, login, password_hash, description, type_reservant, est_reservant)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        ON CONFLICT (id) DO NOTHING`,
-      [user.id, normalizedName, normalizedLogin, passwordHash, description?.trim() || null]
+      [
+        user.id,
+        normalizedName,
+        normalizedLogin,
+        passwordHash,
+        description?.trim() || null,
+        normalizeType(type_reservant),
+        est_reservant !== undefined ? Boolean(est_reservant) : true,
+      ]
     );
 
     res.status(201).json({
@@ -56,6 +71,8 @@ router.post('/', async (req, res) => {
         name: normalizedName,
         login: user.login,
         description: description?.trim() || null,
+        type_reservant: normalizeType(type_reservant),
+        est_reservant: est_reservant !== undefined ? Boolean(est_reservant) : true,
       },
     });
   } catch (err) {
@@ -68,7 +85,7 @@ router.post('/', async (req, res) => {
 router.get('/', async (_req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT e.id, e.nom, e.login, e.description
+      `SELECT e.id, e.nom, e.login, e.description, e.type_reservant, e.est_reservant
          FROM editeur e
         ORDER BY e.nom`
     );
@@ -78,6 +95,8 @@ router.get('/', async (_req, res) => {
       name: row.nom,
       login: row.login,
       description: row.description,
+      type_reservant: row.type_reservant,
+      est_reservant: row.est_reservant,
     }));
     res.json(mapped);
   } catch (err) {
@@ -91,7 +110,7 @@ router.get('/:id', async (req, res) => {
 
   try {
     const { rows } = await pool.query(
-      'SELECT id, nom, login, description FROM editeur WHERE id = $1',
+      'SELECT id, nom, login, description, type_reservant, est_reservant FROM editeur WHERE id = $1',
       [id]
     );
 
@@ -105,6 +124,8 @@ router.get('/:id', async (req, res) => {
       name: editeur.nom,
       login: editeur.login,
       description: editeur.description,
+      type_reservant: editeur.type_reservant,
+      est_reservant: editeur.est_reservant,
     });
   } catch (err) {
     console.error(err);
@@ -167,7 +188,7 @@ router.put('/:id', async (req, res) => {
   }
 
   const { id } = req.params;
-  const { nom, login, description } = req.body;
+  const { nom, login, description, type_reservant, est_reservant } = req.body;
 
   const updates: string[] = [];
   const values: any[] = [];
@@ -206,6 +227,16 @@ router.put('/:id', async (req, res) => {
   if (description !== undefined) {
     updates.push(`description = $${paramIndex}`);
     values.push(description);
+    paramIndex++;
+  }
+  if (type_reservant !== undefined) {
+    updates.push(`type_reservant = $${paramIndex}`);
+    values.push(normalizeType(type_reservant));
+    paramIndex++;
+  }
+  if (est_reservant !== undefined) {
+    updates.push(`est_reservant = $${paramIndex}`);
+    values.push(Boolean(est_reservant));
     paramIndex++;
   }
 

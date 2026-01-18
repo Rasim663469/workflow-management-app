@@ -7,9 +7,9 @@ const router = Router();
 router.post('/', async (req, res) => {
     const { festival_id, nom, nombre_tables_total, prix_table, prix_m2 } = req.body;
 
-    if (!festival_id || !nom || !nombre_tables_total || prix_table === undefined || prix_m2 === undefined) {
+    if (!festival_id || !nom || !nombre_tables_total || prix_table === undefined) {
         return res.status(400).json({ 
-            error: 'Tous les champs sont requis (festival_id, nom, nombre_tables_total, prix_table, prix_m2).' 
+            error: 'festival_id, nom, nombre_tables_total et prix_table sont requis.' 
         });
     }
 
@@ -20,7 +20,7 @@ router.post('/', async (req, res) => {
             (festival_id, nom, nombre_tables_total, nombre_tables_disponibles, prix_table, prix_m2) 
             VALUES ($1, $2, $3, $3, $4, $5) 
             RETURNING *`,
-            [festival_id, nom, nombre_tables_total, prix_table, prix_m2]
+            [festival_id, nom, nombre_tables_total, prix_table, prix_m2 ?? (prix_table / 4)]
         );
 
         res.status(201).json({

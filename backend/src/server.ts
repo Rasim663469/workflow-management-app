@@ -26,6 +26,7 @@ import editeurRouter from './routes/editeur.js';
 import reservationRouter from './routes/reservation.js';
 import mecanismeRouter from './routes/mecanisme.js';
 import typeJeuRouter from './routes/type_jeu.js';
+import crmSuiviRouter from './routes/crm_suivi.js';
 
 
 // Création de l’application Express
@@ -86,6 +87,7 @@ app.use('/zone-plans', zonePlanRouter, verifyToken, requireAdmin);
 app.use('api/festival', festivalRouter, verifyToken, requireAdmin);
 app.use('/api/editeurs', verifyToken, editeurRouter);
 app.use('/api/reservations', verifyToken, requireAdmin, reservationRouter);
+app.use('/api/crm', verifyToken, requireAdmin, crmSuiviRouter);
 app.use('/api/mecanismes', verifyToken, mecanismeRouter);
 app.use('/api/types-jeu', verifyToken, typeJeuRouter);
 app.use('/jeu_festival', jeuFestivalRoutes, verifyToken, requireAdmin);

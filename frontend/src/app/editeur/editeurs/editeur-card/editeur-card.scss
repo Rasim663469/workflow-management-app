@@ -90,6 +90,30 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
+
+  .editeur-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    background: rgba(37, 99, 235, 0.1);
+    color: #1d4ed8;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: capitalize;
+
+    &.outline {
+      background: transparent;
+      border: 1px solid rgba(15, 23, 42, 0.2);
+      color: #475569;
+    }
+  }
 }
 
 .contacts-list {

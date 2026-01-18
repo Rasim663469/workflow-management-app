@@ -40,6 +40,29 @@
   gap: 1rem;
 }
 
+ .tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+ }
+
+ .tab {
+  padding: 0.55rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.15);
+  background: #ffffff;
+  font-weight: 600;
+  color: #1f2937;
+  cursor: pointer;
+  transition: all 0.2s ease;
+ }
+
+ .tab.active {
+  background: #0b1220;
+  color: #e5e7eb;
+  border-color: #0b1220;
+ }
+
 @media (max-width: 900px) {
   .grid {
     grid-template-columns: 1fr;

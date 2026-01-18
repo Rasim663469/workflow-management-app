@@ -14,6 +14,10 @@ export interface FestivalDto {
   dateDebut?: string;
   dateFin?: string;
   description?: string;
+  stockTablesStandard?: number;
+  stockTablesGrandes?: number;
+  stockTablesMairie?: number;
+  stockChaises?: number;
   tariffZones: TariffZoneDto[];
 }
 

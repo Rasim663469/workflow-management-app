@@ -5,6 +5,14 @@
         <h3>{{ editeur().name }}</h3>
         <p class="editeur-subtitle">ID: {{ editeur().id }}</p>
       </div>
+      <div class="editeur-meta">
+        @if (editeur().type_reservant) {
+          <span class="badge">{{ editeur().type_reservant }}</span>
+        }
+        @if (editeur().est_reservant === false) {
+          <span class="badge outline">Non réservant</span>
+        }
+      </div>
       <p class="editeur-description">{{ editeur().description }}</p>
     </header>
   </div>

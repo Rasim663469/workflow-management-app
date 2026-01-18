@@ -1,6 +1,7 @@
 import { Component, effect, inject, signal } from '@angular/core';
 import { ReservationsListComponent } from '../reservations-list/reservations-list';
 import { ReservationFormComponent } from '../reservation-form/reservation-form';
+import { CrmListComponent } from '../../crm/crm-list/crm-list';
 import { FestivalService } from '@services/festival.service';
 import { ReservationCard, ReservationService } from '@services/reservation.service';
 import { FormsModule } from '@angular/forms';
@@ -9,7 +10,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 @Component({
   selector: 'app-reservations-page',
   standalone: true,
-  imports: [ReservationsListComponent, ReservationFormComponent, FormsModule],
+  imports: [ReservationsListComponent, ReservationFormComponent, CrmListComponent, FormsModule],
   templateUrl: './reservations-page.html',
   styleUrl: './reservations-page.scss',
 })
@@ -23,6 +24,7 @@ export class ReservationsPageComponent {
   readonly loadingFestivals = this.festivalService.loading;
   readonly selectedFestivalId = this.festivalService.currentFestivalId;
   readonly editingReservation = signal<ReservationCard | null>(null);
+  readonly activeTab = signal<'suivi' | 'reservations' | 'nouvelle'>('suivi');
 
   constructor() {
     effect(() => this.festivalService.loadAll());
@@ -68,10 +70,12 @@ export class ReservationsPageComponent {
 
   handleEditRequested(reservation: ReservationCard): void {
     this.editingReservation.set(reservation);
+    this.activeTab.set('nouvelle');
   }
 
   handleCancelled(): void {
     this.editingReservation.set(null);
+    this.activeTab.set('reservations');
   }
 
   handleUpdated(): void {
@@ -80,5 +84,6 @@ export class ReservationsPageComponent {
       this.reservationService.loadByFestival(id);
     }
     this.editingReservation.set(null);
+    this.activeTab.set('reservations');
   }
 }

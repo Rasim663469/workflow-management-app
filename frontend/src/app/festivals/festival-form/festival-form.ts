@@ -46,6 +46,10 @@ export class FestivalForm implements OnInit {
     dateDebut: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
     dateFin: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
     description: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
+    stockTablesStandard: new FormControl<number>(0, { nonNullable: true, validators: [Validators.min(0)] }),
+    stockTablesGrandes: new FormControl<number>(0, { nonNullable: true, validators: [Validators.min(0)] }),
+    stockTablesMairie: new FormControl<number>(0, { nonNullable: true, validators: [Validators.min(0)] }),
+    stockChaises: new FormControl<number>(0, { nonNullable: true, validators: [Validators.min(0)] }),
     tariffZones: new FormArray<TariffZoneFormGroup>([this.createZoneGroup()]),
   });
 
@@ -83,7 +87,7 @@ export class FestivalForm implements OnInit {
       const pricePerTable = Number(zone.pricePerTable) || 0;
       const pricePerM2 =
         zone.pricePerM2 === null || zone.pricePerM2 === undefined
-          ? pricePerTable / 4.5
+          ? pricePerTable / 4
           : Number(zone.pricePerM2);
 
       return {
@@ -101,6 +105,10 @@ export class FestivalForm implements OnInit {
       dateFin: rawValue.dateFin,
       description: rawValue.description.trim(),
       totalTables: normalizedZones.reduce((sum, zone) => sum + zone.totalTables, 0),
+      stockTablesStandard: Number(rawValue.stockTablesStandard ?? 0),
+      stockTablesGrandes: Number(rawValue.stockTablesGrandes ?? 0),
+      stockTablesMairie: Number(rawValue.stockTablesMairie ?? 0),
+      stockChaises: Number(rawValue.stockChaises ?? 0),
       tariffZones: normalizedZones,
     };
 
@@ -113,6 +121,10 @@ export class FestivalForm implements OnInit {
         dateFin: payload.dateFin,
         description: payload.description,
         totalTables: payload.totalTables,
+        stockTablesStandard: payload.stockTablesStandard,
+        stockTablesGrandes: payload.stockTablesGrandes,
+        stockTablesMairie: payload.stockTablesMairie,
+        stockChaises: payload.stockChaises,
       });
     } else {
       // Persiste en base puis recharge la liste pour récupérer l'ID et les données réelles
@@ -127,6 +139,10 @@ export class FestivalForm implements OnInit {
     dateFin: string;
     description: string;
     totalTables: number;
+    stockTablesStandard: number;
+    stockTablesGrandes: number;
+    stockTablesMairie: number;
+    stockChaises: number;
     tariffZones: TariffZoneDto[];
   }): void {
     this.http
@@ -139,6 +155,10 @@ export class FestivalForm implements OnInit {
           date_debut: payload.dateDebut,
           date_fin: payload.dateFin,
           description: payload.description,
+          stock_tables_standard: payload.stockTablesStandard,
+          stock_tables_grandes: payload.stockTablesGrandes,
+          stock_tables_mairie: payload.stockTablesMairie,
+          stock_chaises: payload.stockChaises,
           zones: payload.tariffZones.map(zone => ({
             nom: zone.name,
             nombre_tables: zone.totalTables,
@@ -169,6 +189,10 @@ export class FestivalForm implements OnInit {
     dateFin: string;
     description: string;
     totalTables: number;
+    stockTablesStandard: number;
+    stockTablesGrandes: number;
+    stockTablesMairie: number;
+    stockChaises: number;
   }): void {
     this.http
       .patch(
@@ -180,6 +204,10 @@ export class FestivalForm implements OnInit {
           date_debut: payload.dateDebut,
           date_fin: payload.dateFin,
           description: payload.description,
+          stock_tables_standard: payload.stockTablesStandard,
+          stock_tables_grandes: payload.stockTablesGrandes,
+          stock_tables_mairie: payload.stockTablesMairie,
+          stock_chaises: payload.stockChaises,
         },
         { withCredentials: true }
       )
@@ -206,6 +234,10 @@ export class FestivalForm implements OnInit {
           dateDebut: data.dateDebut ?? '',
           dateFin: data.dateFin ?? '',
           description: data.description ?? '',
+          stockTablesStandard: data.stockTablesStandard ?? 0,
+          stockTablesGrandes: data.stockTablesGrandes ?? 0,
+          stockTablesMairie: data.stockTablesMairie ?? 0,
+          stockChaises: data.stockChaises ?? 0,
         });
         this.tariffZones.clear();
         const zones = (data.tariffZones ?? []) as TariffZoneDto[];
@@ -227,6 +259,10 @@ export class FestivalForm implements OnInit {
     if (controls.dateDebut.invalid) fields.push('date de début');
     if (controls.dateFin.invalid) fields.push('date de fin');
     if (controls.description.invalid) fields.push('description');
+    if (controls.stockTablesStandard.invalid) fields.push('stock tables standard');
+    if (controls.stockTablesGrandes.invalid) fields.push('stock tables grandes');
+    if (controls.stockTablesMairie.invalid) fields.push('stock tables mairie');
+    if (controls.stockChaises.invalid) fields.push('stock chaises');
     this.tariffZones.controls.forEach((zone, idx) => {
       const z = zone.controls;
       if (z.name.invalid) fields.push(`zone ${idx + 1} nom`);

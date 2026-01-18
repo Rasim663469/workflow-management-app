@@ -9,22 +9,32 @@ router.post('/', async (req, res) => {
         reservation_id, 
         zone_plan_id, 
         quantite, 
-        nombre_tables_allouees 
+        nombre_tables_allouees,
+        type_table,
+        tables_utilisees 
     } = req.body;
 
-    if (!jeu_id || !reservation_id || !zone_plan_id || !quantite) {
+    if (!jeu_id || !reservation_id || !quantite) {
         return res.status(400).json({ 
-            error: 'jeu_id, reservation_id, zone_plan_id et quantite sont requis.' 
+            error: 'jeu_id, reservation_id et quantite sont requis.' 
         });
     }
 
     try {
         const { rows } = await pool.query(
             `INSERT INTO jeu_festival 
-            (jeu_id, reservation_id, zone_plan_id, quantite, nombre_tables_allouees) 
-            VALUES ($1, $2, $3, $4, $5) 
+            (jeu_id, reservation_id, zone_plan_id, quantite, nombre_tables_allouees, type_table, tables_utilisees) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7) 
             RETURNING *`,
-            [jeu_id, reservation_id, zone_plan_id, quantite, nombre_tables_allouees || 0]
+            [
+                jeu_id,
+                reservation_id,
+                zone_plan_id ?? null,
+                quantite,
+                nombre_tables_allouees || 0,
+                type_table || 'standard',
+                tables_utilisees || 1
+            ]
         );
 
         res.status(201).json({
@@ -60,7 +70,7 @@ router.get('/', async (req, res) => {
                 zp.nom AS nom_zone
             FROM jeu_festival jf
             JOIN jeu j ON jf.jeu_id = j.id
-            JOIN zone_plan zp ON jf.zone_plan_id = zp.id
+            LEFT JOIN zone_plan zp ON jf.zone_plan_id = zp.id
             WHERE jf.reservation_id = $1
             ORDER BY j.nom ASC
         `;
@@ -80,6 +90,9 @@ router.put('/:id', async (req, res) => {
     const { 
         quantite, 
         nombre_tables_allouees, 
+        type_table,
+        tables_utilisees,
+        zone_plan_id,
         liste_demandee, 
         liste_obtenue, 
         jeux_recus 
@@ -91,6 +104,9 @@ router.put('/:id', async (req, res) => {
 
     if (quantite !== undefined) { updates.push(`quantite = $${paramIndex++}`); values.push(quantite); }
     if (nombre_tables_allouees !== undefined) { updates.push(`nombre_tables_allouees = $${paramIndex++}`); values.push(nombre_tables_allouees); }
+    if (type_table !== undefined) { updates.push(`type_table = $${paramIndex++}`); values.push(type_table); }
+    if (tables_utilisees !== undefined) { updates.push(`tables_utilisees = $${paramIndex++}`); values.push(tables_utilisees); }
+    if (zone_plan_id !== undefined) { updates.push(`zone_plan_id = $${paramIndex++}`); values.push(zone_plan_id); }
     if (liste_demandee !== undefined) { updates.push(`liste_demandee = $${paramIndex++}`); values.push(liste_demandee); }
     if (liste_obtenue !== undefined) { updates.push(`liste_obtenue = $${paramIndex++}`); values.push(liste_obtenue); }
     if (jeux_recus !== undefined) { updates.push(`jeux_recus = $${paramIndex++}`); values.push(jeux_recus); }

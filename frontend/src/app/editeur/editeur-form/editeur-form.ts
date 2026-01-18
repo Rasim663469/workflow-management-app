@@ -16,6 +16,13 @@ export class EditeurFormComponent {
 
     readonly creating = signal(false);
     readonly error = signal<string | null>(null);
+    readonly reservantTypes = [
+        { value: 'editeur', label: 'Éditeur' },
+        { value: 'prestataire', label: 'Prestataire' },
+        { value: 'boutique', label: 'Boutique' },
+        { value: 'animation', label: 'Animation' },
+        { value: 'association', label: 'Association' },
+    ];
 
     readonly form = new FormGroup({
         login: new FormControl<string>('', {
@@ -27,6 +34,8 @@ export class EditeurFormComponent {
             validators: [Validators.required, Validators.minLength(2)],
         }),
         description: new FormControl<string>('', { nonNullable: true }),
+        type_reservant: new FormControl<string>('editeur', { nonNullable: true }),
+        est_reservant: new FormControl<boolean>(true, { nonNullable: true }),
     });
 
     submit(): void {
@@ -37,7 +46,7 @@ export class EditeurFormComponent {
             return;
         }
 
-        const { nom, login, description } = this.form.getRawValue();
+        const { nom, login, description, type_reservant, est_reservant } = this.form.getRawValue();
         this.creating.set(true);
 
         this.editeurService
@@ -45,6 +54,8 @@ export class EditeurFormComponent {
                 nom: nom.trim(),
                 login: login.trim(),
                 description: description.trim() || null,
+                type_reservant,
+                est_reservant,
             })
             .subscribe({
                 next: () => {
