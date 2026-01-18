@@ -616,6 +616,76 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+// CREATE facture for reservation
+router.post('/:id/factures', async (req, res) => {
+  const { id } = req.params;
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    const reservationRes = await client.query(
+      'SELECT id, festival_id, prix_final, prix_total, statut_workflow, date_facturation FROM reservation WHERE id = $1',
+      [id]
+    );
+    const reservation = reservationRes.rows[0];
+    if (!reservation) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Réservation non trouvée' });
+    }
+
+    const existing = await client.query(
+      'SELECT id FROM facture WHERE reservation_id = $1',
+      [reservation.id]
+    );
+    if (existing.rows.length > 0) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({ error: 'Une facture existe déjà pour cette réservation.' });
+    }
+
+    const currentStatus = reservation.statut_workflow ?? DEFAULT_WORKFLOW;
+    if (!isTransitionAllowed(currentStatus, 'facture')) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Transition de workflow non autorisée.' });
+    }
+
+    const amount = Number(reservation.prix_final ?? reservation.prix_total ?? 0);
+    const year = new Date().getFullYear();
+    const numero = `FAC-${reservation.festival_id}-${year}-${reservation.id}`;
+
+    const factureRes = await client.query(
+      `INSERT INTO facture (reservation_id, numero, montant_ttc, statut, emise_le)
+       VALUES ($1, $2, $3, 'facture', NOW())
+       RETURNING *`,
+      [reservation.id, numero, amount]
+    );
+
+    await client.query(
+      `UPDATE reservation
+       SET statut_workflow = 'facture',
+           date_facturation = COALESCE(date_facturation, NOW())
+       WHERE id = $1`,
+      [reservation.id]
+    );
+
+    await client.query('COMMIT');
+    res.status(201).json({
+      message: 'Facture créée',
+      facture: factureRes.rows[0],
+    });
+  } catch (err: any) {
+    await client.query('ROLLBACK');
+    console.error(err);
+    if (err?.code === '23505') {
+      res.status(409).json({ error: 'Numéro de facture déjà utilisé.' });
+    } else {
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  } finally {
+    client.release();
+  }
+});
+
 // CONTACTS history for reservation (editeur + festival)
 router.post('/:id/contacts', async (req, res) => {
   const { id } = req.params;

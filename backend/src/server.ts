@@ -15,6 +15,7 @@ import { ensureAdmin } from './db/initAdmin.js';
 import { ensureFestivals } from './db/initFestivals.js';
 import { waitForDatabase } from './db/database.js';
 import { ensureReservationWorkflow } from './db/initReservation.js';
+import { ensureFactures } from './db/initFactures.js';
 
 import zoneTarifaireRouter from './routes/zone_tarifaire.js';
 import jeuRouter from './routes/jeu.js';
@@ -27,6 +28,7 @@ import reservationRouter from './routes/reservation.js';
 import mecanismeRouter from './routes/mecanisme.js';
 import typeJeuRouter from './routes/type_jeu.js';
 import crmSuiviRouter from './routes/crm_suivi.js';
+import factureRouter from './routes/facture.js';
 
 
 // Création de l’application Express
@@ -95,6 +97,7 @@ app.use('/contact_editeur', contactRoutes, verifyToken, requireAdmin);
 app.use('/api/admin', verifyToken, requireAdmin, (req, res) => {
   res.json({ message: 'Welcome admin' });
 });
+app.use('/api/factures', verifyToken, requireAdmin, factureRouter);
 // Festivals : lecture publique, écriture protégée par verifyToken en amont si nécessaire
 app.use('/api/festivals', festivalRouter);
 
@@ -106,6 +109,7 @@ https.createServer({ key, cert }, app).listen(4000, () => {
 void (async () => {
   await waitForDatabase();
   await ensureReservationWorkflow();
+  await ensureFactures();
   await ensureAdmin();
   await ensureFestivals();
   console.log('👍 Initialisation DB terminée');

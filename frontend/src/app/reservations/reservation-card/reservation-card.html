@@ -87,6 +87,71 @@
   </div>
 
   <div class="workflow">
+    <label>Facturation</label>
+    @if (facture()) {
+      <span class="pill" [attr.data-status]="facture()!.statut">
+        {{ facture()!.numero }} · {{ facture()!.statut === 'payee' ? 'Payée' : 'Facturée' }}
+      </span>
+    } @else {
+      <span class="pill">Aucune facture</span>
+    }
+    @if (facture() && facture()!.emise_le) {
+      <span class="pill">Émise le {{ facture()!.emise_le | date : 'shortDate' }}</span>
+    }
+    @if (facture() && facture()!.payee_le) {
+      <span class="pill">Payée le {{ facture()!.payee_le | date : 'shortDate' }}</span>
+    }
+    @if (canCreateFacture()) {
+      <button type="button" class="secondary" (click)="createFacture()" [disabled]="factureLoading()">
+        Créer la facture
+      </button>
+    }
+    @if (canMarkPayee()) {
+      <button type="button" class="secondary" (click)="markFacturePayee()" [disabled]="factureLoading()">
+        Marquer payée
+      </button>
+    }
+    @if (facture()) {
+      <button type="button" class="secondary" (click)="toggleFactureDetails()">
+        @if (showFactureDetails()) { Masquer la facture } @else { Voir la facture }
+      </button>
+    }
+    @if (factureLoading()) {
+      <span class="pill">Facturation...</span>
+    }
+    @if (factureError()) {
+      <span class="error">{{ factureError() }}</span>
+    }
+  </div>
+
+  @if (showFactureDetails() && facture()) {
+    <div class="facture-details">
+      <div>
+        <p class="label">Numéro</p>
+        <p class="value">{{ facture()!.numero }}</p>
+      </div>
+      <div>
+        <p class="label">Montant TTC</p>
+        <p class="value">{{ facture()!.montant_ttc | currency : 'EUR' : 'symbol' : '1.0-0' }}</p>
+      </div>
+      <div>
+        <p class="label">Émise le</p>
+        <p class="value">{{ facture()!.emise_le | date : 'short' }}</p>
+      </div>
+      <div>
+        <p class="label">Payée le</p>
+        <p class="value">
+          @if (facture()!.payee_le) {
+            {{ facture()!.payee_le | date : 'short' }}
+          } @else {
+            —
+          }
+        </p>
+      </div>
+    </div>
+  }
+
+  <div class="workflow">
     <button type="button" class="secondary" (click)="addContactNow()" [disabled]="saving()">
       Ajouter un contact
     </button>
