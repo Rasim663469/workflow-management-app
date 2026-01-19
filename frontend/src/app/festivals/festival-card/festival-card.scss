@@ -46,6 +46,41 @@
     font-weight: 500;
   }
 
+  .current-pill {
+    align-self: flex-start;
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    background: rgba(16, 185, 129, 0.15);
+    color: #047857;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .current-actions {
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  .festival-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+  }
+
+  .festival-stats p {
+    margin: 0;
+  }
+
+  .empty {
+    margin: 0.35rem 0 0;
+    color: #6b7280;
+    font-size: 0.95rem;
+  }
+
   .tariff-zones {
     list-style: none;
     padding: 0;

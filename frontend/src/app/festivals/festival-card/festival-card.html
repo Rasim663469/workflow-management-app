@@ -9,6 +9,10 @@
     </div>
   </header>
 
+  @if (isCurrent()) {
+  <span class="current-pill">Festival courant</span>
+  }
+
   <div class="festival-body">
 
 
@@ -18,6 +22,32 @@
     </p>
     }
   </div>
+
+  <div class="festival-stats">
+    <p><strong>Total tables :</strong> {{ totalTables() }}</p>
+    <p><strong>Disponibles :</strong> {{ totalAvailable() }}</p>
+  </div>
+
+  <div class="current-actions" (click)="$event.stopPropagation()">
+    <button type="button" class="secondary-button" (click)="setCurrent($event)" [disabled]="isCurrent()">
+      Définir comme courant
+    </button>
+  </div>
+
+  @if (festival.tariffZones?.length) {
+  <ul class="tariff-zones">
+    @for (zone of festival.tariffZones; track zone.id ?? zone.name) {
+    <li class="tariff-zone">
+      <span class="zone-name">{{ zone.name }}</span>
+      <span class="zone-details">
+        {{ zoneAvailable(zone) }} dispo / {{ zone.totalTables }} tables
+      </span>
+    </li>
+    }
+  </ul>
+  } @else {
+  <p class="empty">Aucune zone tarifaire.</p>
+  }
 
   @if (auth.isAdmin()) {
   <footer class="actions" (click)="$event.stopPropagation()">
