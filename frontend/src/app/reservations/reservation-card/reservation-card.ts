@@ -33,12 +33,7 @@ export class ReservationCardComponent {
   private factureReservationId: string | null = null;
   readonly showFactureDetails = signal(false);
 
-  readonly facture = signal<any | null>(null);
-  readonly factureLoading = signal(false);
-  readonly showFactureDetails = signal(false);
-  readonly factureError = signal<string | null>(null);
 
-  @Output() gamesRequested = new EventEmitter<ReservationCard>();
 
   readonly statuses: { value: ReservationStatus; label: string }[] = [
     { value: 'pas_de_contact', label: 'Pas de contact' },
