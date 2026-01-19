@@ -111,4 +111,103 @@ export class ReservationCardComponent {
   requestEdit(): void {
     this.editRequested.emit(this.reservation);
   }
+<<<<<<< Updated upstream
+=======
+
+  requestGames(): void {
+    this.gamesRequested.emit(this.reservation);
+  }
+
+  toggleFactureDetails(): void {
+    const next = !this.showFactureDetails();
+    this.showFactureDetails.set(next);
+    if (next && !this.facture() && !this.factureLoading()) {
+      this.loadFacture(this.reservation.id);
+    }
+  }
+
+  createFacture(): void {
+    this.factureError.set(null);
+    this.factureLoading.set(true);
+    this.reservationService.createFacture(this.reservation.id).subscribe({
+      next: response => {
+        const facture = response?.facture ?? null;
+        if (facture) {
+          this.facture.set(facture);
+          this.reservation.statut = 'facture';
+          this.showFactureDetails.set(true);
+        }
+        this.factureLoading.set(false);
+      },
+      error: err => {
+        const message =
+          err?.error?.error ??
+          (err instanceof Error ? err.message : 'Erreur lors de la création de la facture');
+        this.factureError.set(message);
+        this.factureLoading.set(false);
+      },
+    });
+  }
+
+  markFacturePayee(): void {
+    const facture = this.facture();
+    if (!facture) return;
+    this.factureError.set(null);
+    this.factureLoading.set(true);
+    this.reservationService.markFacturePayee(facture.id).subscribe({
+      next: response => {
+        const updated = response?.facture ?? null;
+        if (updated) {
+          this.facture.set(updated);
+          this.reservation.statut = 'facture_payee';
+          this.showFactureDetails.set(true);
+        }
+        this.factureLoading.set(false);
+      },
+      error: err => {
+        const message =
+          err?.error?.error ??
+          (err instanceof Error ? err.message : 'Erreur lors de la mise à jour de la facture');
+        this.factureError.set(message);
+        this.factureLoading.set(false);
+      },
+    });
+  }
+
+  canCreateFacture(): boolean {
+    return this.reservation.statut === 'present' || this.reservation.statut === 'validée';
+  }
+
+  canMarkPayee(): boolean {
+    const facture = this.facture();
+    return Boolean(facture && facture.statut !== 'payee');
+  }
+
+  private shouldLoadFacture(status: string): boolean {
+    return status === 'facture' || status === 'facture_payee';
+  }
+
+  private loadFacture(reservationId: string): void {
+    this.factureError.set(null);
+    this.factureLoading.set(true);
+    this.reservationService.getFactureByReservation(reservationId).subscribe({
+      next: data => {
+        this.facture.set(data ?? null);
+        this.factureLoading.set(false);
+      },
+      error: err => {
+        if (err?.status === 404) {
+          this.facture.set(null);
+          this.factureLoading.set(false);
+          return;
+        }
+        const message =
+          err?.error?.error ??
+          (err instanceof Error ? err.message : 'Erreur lors du chargement de la facture');
+        this.factureError.set(message);
+        this.factureLoading.set(false);
+      },
+    });
+  }
+>>>>>>> Stashed changes
 }

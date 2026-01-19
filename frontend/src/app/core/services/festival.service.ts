@@ -186,6 +186,14 @@ export class FestivalService {
     }
     this._currentFestivalId.set(String(id));
   }
-  
+
+  getOne(id: string): Observable<FestivalDto> {
+    return this.http.get<FestivalDto>(`${environment.apiUrl}/festivals/${id}`, { withCredentials: true });
+  }
+
+  getGamesForFestival(id: string): Observable<any[]> {
+    return this.http.get<any[]>(`${environment.apiUrl}/festivals/${id}/games`, { withCredentials: true });
+  }
+
 
 }
