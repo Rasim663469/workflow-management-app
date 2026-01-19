@@ -14,6 +14,7 @@ export class ReservationsListComponent {
 
   @Input({ required: true }) festivalId!: number | string;
   @Output() editRequested = new EventEmitter<ReservationCard>();
+  @Output() gamesRequested = new EventEmitter<ReservationCard>();
 
   readonly reservations = this.reservationService.reservations;
   readonly loading = this.reservationService.loading;
@@ -38,5 +39,9 @@ export class ReservationsListComponent {
 
   handleEditRequest(reservation: ReservationCard): void {
     this.editRequested.emit(reservation);
+  }
+
+  handleGamesRequest(reservation: ReservationCard): void {
+    this.gamesRequested.emit(reservation);
   }
 }

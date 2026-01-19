@@ -19,6 +19,7 @@ export class ReservationCardComponent {
   @Input({ required: true }) reservation!: ReservationCard;
   @Input() lastContact?: string | null;
   @Output() editRequested = new EventEmitter<ReservationCard>();
+  @Output() gamesRequested = new EventEmitter<ReservationCard>();
 
   private readonly reservationService = inject(ReservationService);
   readonly saving = signal(false);

@@ -1,4 +1,5 @@
 export interface TariffZoneDto {
+  id?: number;
   name: string;
   totalTables: number;
   availableTables?: number;

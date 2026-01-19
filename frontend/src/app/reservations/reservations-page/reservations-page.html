@@ -29,6 +29,12 @@
       <button type="button" class="tab" [class.active]="activeTab() === 'nouvelle'" (click)="activeTab.set('nouvelle')">
         Nouvelle réservation
       </button>
+      <button type="button" class="tab" [class.active]="activeTab() === 'jeux'" (click)="activeTab.set('jeux')">
+        Jeux & placement
+      </button>
+      <button type="button" class="tab" [class.active]="activeTab() === 'plan'" (click)="activeTab.set('plan')">
+        Zones du plan
+      </button>
     </div>
 
     @if (activeTab() === 'suivi') {
@@ -39,6 +45,7 @@
       <app-reservations-list
         [festivalId]="selectedFestivalId()!"
         (editRequested)="handleEditRequested($event)"
+        (gamesRequested)="handleGamesRequested($event)"
       />
     }
 
@@ -50,6 +57,18 @@
         (updated)="handleUpdated()"
         (cancelled)="handleCancelled()"
       />
+    }
+
+    @if (activeTab() === 'jeux') {
+      <app-reservation-games
+        [festivalId]="selectedFestivalId()!"
+        [festival]="currentFestival()"
+        [reservation]="gamesReservation()"
+      />
+    }
+
+    @if (activeTab() === 'plan') {
+      <app-plan-zones [festivalId]="selectedFestivalId()!" />
     }
   } @else {
     <p>Aucun festival disponible.</p>

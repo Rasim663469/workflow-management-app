@@ -1,0 +1,132 @@
+.games-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 1.2rem 1.5rem;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.08);
+
+  header {
+    margin-bottom: 1rem;
+  }
+
+  .alerts {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .alert {
+    background: rgba(239, 68, 68, 0.1);
+    color: #b91c1c;
+    padding: 0.4rem 0.6rem;
+    border-radius: 8px;
+  }
+
+  .create-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.6rem;
+    align-items: end;
+    margin-bottom: 1rem;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+
+    input,
+    select {
+      padding: 0.45rem 0.6rem;
+      border-radius: 8px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+    }
+  }
+
+  button {
+    padding: 0.55rem 0.9rem;
+    border-radius: 999px;
+    border: 1px solid #0b1220;
+    background: #0b1220;
+    color: #e5e7eb;
+    font-weight: 600;
+  }
+
+  .ghost {
+    background: transparent;
+    color: #1f2937;
+    border: 1px solid rgba(15, 23, 42, 0.2);
+  }
+
+  .list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: 1.2fr 120px 1fr 1fr 140px 1.2fr 200px;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-radius: 14px;
+    background: rgba(148, 163, 184, 0.08);
+  }
+
+  .name {
+    margin: 0;
+    font-weight: 600;
+  }
+
+  .meta {
+    margin: 0.15rem 0 0;
+    color: #475569;
+    font-size: 0.85rem;
+  }
+
+  .actions {
+    display: flex;
+    gap: 0.4rem;
+  }
+
+  .toggle {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    label {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.85rem;
+      color: #475569;
+    }
+
+    input {
+      width: auto;
+    }
+  }
+
+  .empty {
+    color: #64748b;
+  }
+
+  .error {
+    color: #b91c1c;
+  }
+}
+
+@media (max-width: 1100px) {
+  .games-card {
+    .create-form,
+    .row {
+      grid-template-columns: 1fr;
+    }
+
+    .actions {
+      justify-content: flex-start;
+    }
+  }
+}

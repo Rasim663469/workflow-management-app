@@ -5,8 +5,11 @@ import { TariffZoneDto } from '../festival/festival-dto';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '@env/environment';
 import { ActivatedRoute, Router } from '@angular/router';
+import { ZoneTarifaireService } from '@services/zone-tarifaire.service';
+import { forkJoin } from 'rxjs';
 
 type TariffZoneFormGroup = FormGroup<{
+  id: FormControl<number | null>;
   name: FormControl<string>;
   totalTables: FormControl<number>;
   pricePerTable: FormControl<number>;
@@ -25,6 +28,7 @@ export class FestivalForm implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly zoneTarifaireService = inject(ZoneTarifaireService);
   readonly festivals = this.festivalService.festivals;
   readonly editing = signal(false);
   private festivalId: string | null = null;
@@ -33,6 +37,7 @@ export class FestivalForm implements OnInit {
 
   private createZoneGroup(initial?: Partial<TariffZoneDto>): TariffZoneFormGroup {
     return new FormGroup({
+      id: new FormControl<number | null>(initial?.id ?? null),
       name: new FormControl<string>(initial?.name ?? '', { nonNullable: true, validators: [Validators.required] }),
       totalTables: new FormControl<number>(initial?.totalTables ?? 1, { nonNullable: true, validators: [Validators.required, Validators.min(1)] }),
       pricePerTable: new FormControl<number>(initial?.pricePerTable ?? 0, { nonNullable: true, validators: [Validators.required, Validators.min(0)] }),
@@ -69,7 +74,26 @@ export class FestivalForm implements OnInit {
   addZone(): void { this.tariffZones.push(this.createZoneGroup()); }
 
   removeZone(index: number): void {
-    if (this.tariffZones.length > 1) this.tariffZones.removeAt(index);
+    if (this.tariffZones.length <= 1) return;
+    const zoneGroup = this.tariffZones.at(index);
+    const zoneId = zoneGroup.controls.id.value;
+
+    if (this.editing() && zoneId) {
+      this.zoneTarifaireService.delete(zoneId).subscribe({
+        next: () => {
+          this.tariffZones.removeAt(index);
+        },
+        error: err => {
+          const message =
+            err?.error?.error ??
+            (err instanceof Error ? err.message : 'Erreur lors de la suppression de la zone');
+          this.submitError.set(message);
+        },
+      });
+      return;
+    }
+
+    this.tariffZones.removeAt(index);
   }
 
   onSubmit() {
@@ -91,6 +115,7 @@ export class FestivalForm implements OnInit {
           : Number(zone.pricePerM2);
 
       return {
+        id: zone.id ?? undefined,
         name: zone.name.trim() || `Zone ${index + 1}`,
         totalTables: Number(zone.totalTables) || 0,
         pricePerTable,
@@ -125,7 +150,7 @@ export class FestivalForm implements OnInit {
         stockTablesGrandes: payload.stockTablesGrandes,
         stockTablesMairie: payload.stockTablesMairie,
         stockChaises: payload.stockChaises,
-      });
+      }, payload.tariffZones);
     } else {
       // Persiste en base puis recharge la liste pour récupérer l'ID et les données réelles
       this.persistFestival(payload);
@@ -193,7 +218,7 @@ export class FestivalForm implements OnInit {
     stockTablesGrandes: number;
     stockTablesMairie: number;
     stockChaises: number;
-  }): void {
+  }, zones: TariffZoneDto[]): void {
     this.http
       .patch(
         `${environment.apiUrl}/festivals/${payload.id}`,
@@ -213,9 +238,44 @@ export class FestivalForm implements OnInit {
       )
       .subscribe({
         next: () => {
-          this.festivalService.loadAll();
-          this.submitSuccess.set('Festival mis à jour.');
-          this.router.navigate(['/home']);
+          const ops = zones.map(zone => {
+            if (zone.id) {
+              return this.zoneTarifaireService.update(zone.id, {
+                nom: zone.name,
+                nombre_tables_total: zone.totalTables,
+                prix_table: zone.pricePerTable,
+                prix_m2: zone.pricePerM2,
+              });
+            }
+            return this.zoneTarifaireService.create({
+              festival_id: Number(payload.id),
+              nom: zone.name,
+              nombre_tables_total: zone.totalTables,
+              prix_table: zone.pricePerTable,
+              prix_m2: zone.pricePerM2,
+            });
+          });
+
+          const finalizeSuccess = () => {
+            this.festivalService.loadAll();
+            this.submitSuccess.set('Festival mis à jour.');
+            this.router.navigate(['/home']);
+          };
+
+          if (ops.length === 0) {
+            finalizeSuccess();
+            return;
+          }
+
+          forkJoin(ops).subscribe({
+            next: () => finalizeSuccess(),
+            error: err => {
+              const message =
+                err?.error?.error ??
+                (err instanceof Error ? err.message : 'Erreur lors de la mise à jour des zones');
+              this.submitError.set(message);
+            },
+          });
         },
         error: err => {
           console.error('Erreur lors de la mise à jour du festival', err);
