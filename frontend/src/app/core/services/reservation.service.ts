@@ -166,6 +166,23 @@ export class ReservationService {
     );
   }
 
+  getFactureByReservation(id: string | number) {
+    return this.http.get<any>(`${environment.apiUrl}/reservations/${id}/facture`, { withCredentials: true });
+  }
+
+  createFacture(id: string | number) {
+    return this.http.post<any>(`${environment.apiUrl}/reservations/${id}/facture`, {}, { withCredentials: true });
+  }
+
+  markFacturePayee(factureId: string | number) {
+    // Note: Endpoint hypothetical pending backend implementation
+    return this.http.put<any>(
+      `${environment.apiUrl}/reservations/facture/${factureId}/payee`,
+      {},
+      { withCredentials: true }
+    );
+  }
+
   private normalizeStatus(value?: string | null): string {
     if (!value) return 'pas_de_contact';
     if (value === 'brouillon') return 'pas_de_contact';
