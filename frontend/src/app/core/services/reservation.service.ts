@@ -211,7 +211,6 @@ export class ReservationService {
       { withCredentials: true }
     );
   }
-
   createFacture(reservationId: string | number) {
     return this.http.post<{ facture: FactureDto }>(
       `${environment.apiUrl}/reservations/${reservationId}/factures`,

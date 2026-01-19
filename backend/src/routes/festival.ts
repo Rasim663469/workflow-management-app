@@ -32,9 +32,10 @@ router.post('/', verifyToken, requireAdmin, async (req, res) => {
   try {
     await client.query('BEGIN');
 
+    // Option recommandée : on garde tous les champs de stock
     const { rows } = await client.query(
-      `INSERT INTO festival
-        (nom, location, nombre_total_tables, date_debut, date_fin, description,
+      `INSERT INTO festival 
+        (nom, location, nombre_total_tables, date_debut, date_fin, description, 
          stock_tables_standard, stock_tables_grandes, stock_tables_mairie, stock_chaises)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        RETURNING *`,
@@ -87,7 +88,7 @@ router.post('/', verifyToken, requireAdmin, async (req, res) => {
   }
 });
 
-// READ ALL avec zones agrégées pour l’affichage (champs essentiels)
+// READ ALL avec zones agrégées pour l'affichage (champs essentiels)
 router.get('/', async (_req, res) => {
   try {
     const { rows } = await pool.query(
@@ -105,7 +106,8 @@ router.get('/', async (_req, res) => {
         f.stock_tables_mairie AS "stockTablesMairie",
         f.stock_chaises AS "stockChaises",
         COALESCE(json_agg(
-          json_build_object(
+          DISTINCT jsonb_build_object(
+
             'id', zt.id,
             'name', zt.nom,
             'totalTables', zt.nombre_tables_total,
@@ -113,9 +115,17 @@ router.get('/', async (_req, res) => {
             'pricePerTable', zt.prix_table,
             'pricePerM2', zt.prix_m2
           )
-        ) FILTER (WHERE zt.id IS NOT NULL), '[]') AS "tariffZones"
+        ) FILTER (WHERE zt.id IS NOT NULL), '[]') AS "tariffZones",
+        COALESCE(json_agg(
+          DISTINCT jsonb_build_object(
+            'id', e.id,
+            'name', e.nom
+          )
+        ) FILTER (WHERE e.id IS NOT NULL), '[]') AS "editeurs"
       FROM festival f
       LEFT JOIN zone_tarifaire zt ON zt.festival_id = f.id
+      LEFT JOIN reservation r ON r.festival_id = f.id
+      LEFT JOIN editeur e ON e.id = r.editeur_id
       GROUP BY f.id
       ORDER BY f.date_debut DESC
       `
@@ -146,7 +156,7 @@ router.get('/:id', async (req, res) => {
         f.stock_tables_mairie AS "stockTablesMairie",
         f.stock_chaises AS "stockChaises",
         COALESCE(json_agg(
-          json_build_object(
+          DISTINCT jsonb_build_object(
             'id', zt.id,
             'name', zt.nom,
             'totalTables', zt.nombre_tables_total,
@@ -154,9 +164,17 @@ router.get('/:id', async (req, res) => {
             'pricePerTable', zt.prix_table,
             'pricePerM2', zt.prix_m2
           )
-        ) FILTER (WHERE zt.id IS NOT NULL), '[]') AS "tariffZones"
+        ) FILTER (WHERE zt.id IS NOT NULL), '[]') AS "tariffZones",
+        COALESCE(json_agg(
+          DISTINCT jsonb_build_object(
+            'id', e.id,
+            'name', e.nom
+          )
+        ) FILTER (WHERE e.id IS NOT NULL), '[]') AS "editeurs"
       FROM festival f
       LEFT JOIN zone_tarifaire zt ON zt.festival_id = f.id
+      LEFT JOIN reservation r ON r.festival_id = f.id
+      LEFT JOIN editeur e ON e.id = r.editeur_id
       WHERE f.id = $1
       GROUP BY f.id
       `,
@@ -176,91 +194,122 @@ router.get('/:id', async (req, res) => {
 
 // UPDATE 
 router.patch('/:id', verifyToken, requireAdmin, async (req, res) => {
-    const { id } = req.params;
-    const {
-      nom,
-      location,
-      nombre_total_tables,
-      date_debut,
-      date_fin,
-      description,
-      stock_tables_standard,
-      stock_tables_grandes,
-      stock_tables_mairie,
-      stock_chaises,
-    } = req.body;
+  const { id } = req.params;
+  const {
+    nom,
+    location,
+    nombre_total_tables,
+    date_debut,
+    date_fin,
+    description,
+    stock_tables_standard,
+    stock_tables_grandes,
+    stock_tables_mairie,
+    stock_chaises,
+  } = req.body;
 
-    const updates: string[] = [];
-    const values: any[] = [];
-    let paramIndex = 1;
+  const updates: string[] = [];
+  const values: any[] = [];
+  let paramIndex = 1;
 
-    if (nom !== undefined) { updates.push(`nom = $${paramIndex++}`); values.push(nom); }
-    if (location !== undefined) { updates.push(`location = $${paramIndex++}`); values.push(location); }
-    if (nombre_total_tables !== undefined) { updates.push(`nombre_total_tables = $${paramIndex++}`); values.push(nombre_total_tables); }
-    if (date_debut !== undefined) { updates.push(`date_debut = $${paramIndex++}`); values.push(date_debut); }
-    if (date_fin !== undefined) { updates.push(`date_fin = $${paramIndex++}`); values.push(date_fin); }
-    if (description !== undefined) { updates.push(`description = $${paramIndex++}`); values.push(description); }
-    if (stock_tables_standard !== undefined) { updates.push(`stock_tables_standard = $${paramIndex++}`); values.push(stock_tables_standard); }
-    if (stock_tables_grandes !== undefined) { updates.push(`stock_tables_grandes = $${paramIndex++}`); values.push(stock_tables_grandes); }
-    if (stock_tables_mairie !== undefined) { updates.push(`stock_tables_mairie = $${paramIndex++}`); values.push(stock_tables_mairie); }
-    if (stock_chaises !== undefined) { updates.push(`stock_chaises = $${paramIndex++}`); values.push(stock_chaises); }
+  if (nom !== undefined) { updates.push(`nom = $${paramIndex++}`); values.push(nom); }
+  if (location !== undefined) { updates.push(`location = $${paramIndex++}`); values.push(location); }
+  if (nombre_total_tables !== undefined) { updates.push(`nombre_total_tables = $${paramIndex++}`); values.push(nombre_total_tables); }
+  if (date_debut !== undefined) { updates.push(`date_debut = $${paramIndex++}`); values.push(date_debut); }
+  if (date_fin !== undefined) { updates.push(`date_fin = $${paramIndex++}`); values.push(date_fin); }
+  if (description !== undefined) { updates.push(`description = $${paramIndex++}`); values.push(description); }
+  if (stock_tables_standard !== undefined) { updates.push(`stock_tables_standard = $${paramIndex++}`); values.push(stock_tables_standard); }
+  if (stock_tables_grandes !== undefined) { updates.push(`stock_tables_grandes = $${paramIndex++}`); values.push(stock_tables_grandes); }
+  if (stock_tables_mairie !== undefined) { updates.push(`stock_tables_mairie = $${paramIndex++}`); values.push(stock_tables_mairie); }
+  if (stock_chaises !== undefined) { updates.push(`stock_chaises = $${paramIndex++}`); values.push(stock_chaises); }
 
-    if (updates.length === 0) {
-        return res.status(400).json({ error: 'Aucun champ à mettre à jour' });
-    }
+  if (updates.length === 0) {
+    return res.status(400).json({ error: 'Aucun champ à mettre à jour' });
+  }
 
-    values.push(id);
+  values.push(id);
 
-    try {
-        const query = `
+  try {
+    const query = `
             UPDATE festival 
             SET ${updates.join(', ')} 
             WHERE id = $${paramIndex}
             RETURNING *
         `;
 
-        const { rows } = await pool.query(query, values);
+    const { rows } = await pool.query(query, values);
 
-        if (rows.length === 0) {
-            return res.status(404).json({ error: 'Festival non trouvé' });
-        }
-
-        res.json({
-            message: 'Festival mis à jour avec succès',
-            festival: rows[0]
-        });
-
-    } catch (err: any) {
-        if (err.code === '23505') {
-            res.status(409).json({ error: 'Ce nom est déjà utilisé' });
-        } else {
-            console.error(err);
-            res.status(500).json({ error: 'Erreur serveur' });
-        }
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Festival non trouvé' });
     }
+
+    res.json({
+      message: 'Festival mis à jour avec succès',
+      festival: rows[0]
+    });
+
+  } catch (err: any) {
+    if (err.code === '23505') {
+      res.status(409).json({ error: 'Ce nom est déjà utilisé' });
+    } else {
+      console.error(err);
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  }
 });
 
 // DELETE 
 router.delete('/:id', verifyToken, requireAdmin, async (req, res) => {
-    const { id } = req.params;
+  const { id } = req.params;
 
-    try {
+  try {
 
-        const { rowCount } = await pool.query(
-            'DELETE FROM festival WHERE id = $1',
-            [id]
-        );
+    const { rowCount } = await pool.query(
+      'DELETE FROM festival WHERE id = $1',
+      [id]
+    );
 
-        if (rowCount === 0) {
-            return res.status(404).json({ error: 'Festival non trouvé' });
-        }
-
-        res.status(200).json({ message: 'Festival supprimé avec succès' });
-
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Erreur serveur lors de la suppression' });
+    if (rowCount === 0) {
+      return res.status(404).json({ error: 'Festival non trouvé' });
     }
+
+    res.status(200).json({ message: 'Festival supprimé avec succès' });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erreur serveur lors de la suppression' });
+  }
+});
+
+// READ games for a festival
+router.get('/:id/games', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rows } = await pool.query(
+      `SELECT 
+        j.id,
+        j.nom AS name,
+        j.auteurs,
+        j.age_min AS "ageMin",
+        j.age_max AS "ageMax",
+        j.type_jeu AS "typeJeu",
+        e.nom AS "editeurName",
+        e.id AS "editeurId",
+        jf.quantite,
+        jf.tables_utilisees AS "tablesUtilisees"
+      FROM jeu_festival jf
+      JOIN jeu j ON j.id = jf.jeu_id
+      JOIN reservation r ON r.id = jf.reservation_id
+      JOIN editeur e ON e.id = j.editeur_id
+      WHERE r.festival_id = $1
+      ORDER BY e.nom, j.nom`,
+      [id]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
 });
 
 

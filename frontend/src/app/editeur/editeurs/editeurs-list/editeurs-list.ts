@@ -13,6 +13,7 @@ import { AuthService } from '@shared/auth/auth.service';
   templateUrl: './editeurs-list.html',
   styleUrl: './editeurs-list.scss'
 })
+
 export class EditeursList {
   private readonly editeurService = inject(EditeurService);
   readonly authService = inject(AuthService); // Public for template access

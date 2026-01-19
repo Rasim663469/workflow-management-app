@@ -11,6 +11,7 @@ import { EditeurDetailComponent } from './editeur/editeur-detail/editeur-detail'
 import { ReservationsPageComponent } from './reservations/reservations-page/reservations-page';
 import { JeuxCatalogueComponent } from './jeux/jeux-catalogue/jeux-catalogue';
 import { EditeurFormComponent } from './editeur/editeur-form/editeur-form';
+import { FestivalDetailComponent } from './festivals/festival-detail/festival-detail.component';
 
 
 export const routes: Routes = [
@@ -27,6 +28,7 @@ export const routes: Routes = [
   { path: 'editeurs', component: EditeurComponent },
   { path: 'festivals/new', component: FestivalForm, canActivate: [adminGuard] },
   { path: 'festivals/:id/edit', component: FestivalForm, canActivate: [adminGuard] },
+  { path: 'festivals/:id', component: FestivalDetailComponent },
   { path: 'reservations', component: ReservationsPageComponent, canActivate: [adminGuard] },
   { path: 'admin', component: AdminComponent, canActivate: [adminGuard] },
   { path: '', pathMatch: 'full', redirectTo: 'home' },

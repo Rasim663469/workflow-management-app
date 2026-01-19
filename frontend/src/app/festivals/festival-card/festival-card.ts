@@ -1,5 +1,4 @@
 import { Component, Input, inject } from '@angular/core';
-import { CurrencyPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Festival } from '../festival/festival';
 import { AuthService } from '@shared/auth/auth.service';
@@ -7,7 +6,7 @@ import { AuthService } from '@shared/auth/auth.service';
 @Component({
   selector: 'app-festival-card',
   standalone: true,
-  imports: [CurrencyPipe, RouterLink],
+  imports: [RouterLink],
   templateUrl: './festival-card.html',
   styleUrl: './festival-card.scss'
 })
