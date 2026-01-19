@@ -1,0 +1,54 @@
+<section class="plan-card">
+  <header>
+    <div>
+      <p class="eyebrow">Zones du plan</p>
+      <h2>Organisation physique</h2>
+    </div>
+    @if (loading()) {
+      <span class="pill">Chargement...</span>
+    }
+  </header>
+
+  @if (error()) {
+    <p class="error">{{ error() }}</p>
+  }
+  @if (success()) {
+    <p class="success">{{ success() }}</p>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="create()" class="plan-form">
+    <div class="field">
+      <label>Nom</label>
+      <input type="text" formControlName="nom" placeholder="Zone A1" />
+    </div>
+    <div class="field">
+      <label>Zone tarifaire</label>
+      <select formControlName="zone_tarifaire_id">
+        <option value="">Choisir</option>
+        @for (zone of zonesTarifaires(); track zone.id) {
+          <option [value]="zone.id">{{ zone.nom }}</option>
+        }
+      </select>
+    </div>
+    <div class="field small">
+      <label>Tables</label>
+      <input type="number" min="1" formControlName="nombre_tables" />
+    </div>
+    <button type="submit">Ajouter</button>
+  </form>
+
+  <div class="plan-list">
+    @for (zone of zones(); track zone.id) {
+      <article class="plan-row">
+        <div>
+          <p class="name">{{ zone.nom }}</p>
+          <p class="meta">Zone tarifaire {{ zone.zone_tarifaire_id }} · {{ zone.nombre_tables }} tables</p>
+        </div>
+        <button type="button" class="ghost" (click)="delete(zone.id)">Supprimer</button>
+      </article>
+    }
+    @if (zones().length === 0 && !loading()) {
+      <p class="empty">Aucune zone plan.</p>
+    }
+  </div>
+</section>

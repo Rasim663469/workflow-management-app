@@ -6,11 +6,20 @@ import { FestivalService } from '@services/festival.service';
 import { ReservationCard, ReservationService } from '@services/reservation.service';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { PlanZonesComponent } from '../../plan-zones/plan-zones';
+import { ReservationGamesComponent } from '../reservation-games/reservation-games';
 
 @Component({
   selector: 'app-reservations-page',
   standalone: true,
-  imports: [ReservationsListComponent, ReservationFormComponent, CrmListComponent, FormsModule],
+  imports: [
+    ReservationsListComponent,
+    ReservationFormComponent,
+    ReservationGamesComponent,
+    PlanZonesComponent,
+    CrmListComponent,
+    FormsModule,
+  ],
   templateUrl: './reservations-page.html',
   styleUrl: './reservations-page.scss',
 })
@@ -23,8 +32,10 @@ export class ReservationsPageComponent {
   readonly festivals = this.festivalService.remoteFestivals;
   readonly loadingFestivals = this.festivalService.loading;
   readonly selectedFestivalId = this.festivalService.currentFestivalId;
+  readonly currentFestival = this.festivalService.currentFestival;
   readonly editingReservation = signal<ReservationCard | null>(null);
-  readonly activeTab = signal<'suivi' | 'reservations' | 'nouvelle'>('suivi');
+  readonly gamesReservation = signal<ReservationCard | null>(null);
+  readonly activeTab = signal<'suivi' | 'reservations' | 'nouvelle' | 'jeux' | 'plan'>('suivi');
 
   constructor() {
     effect(() => this.festivalService.loadAll());
@@ -52,6 +63,7 @@ export class ReservationsPageComponent {
     this.festivalService.setCurrentFestival(value);
     this.reservationService.loadByFestival(value);
     this.editingReservation.set(null);
+    this.gamesReservation.set(null);
 
     // Mettre à jour la query pour navigation directe depuis les cartes
     this.router.navigate([], {
@@ -71,6 +83,11 @@ export class ReservationsPageComponent {
   handleEditRequested(reservation: ReservationCard): void {
     this.editingReservation.set(reservation);
     this.activeTab.set('nouvelle');
+  }
+
+  handleGamesRequested(reservation: ReservationCard): void {
+    this.gamesReservation.set(reservation);
+    this.activeTab.set('jeux');
   }
 
   handleCancelled(): void {

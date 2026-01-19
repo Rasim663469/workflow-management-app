@@ -1,0 +1,195 @@
+<section class="games-card">
+  <header>
+    <div>
+      <p class="eyebrow">Jeux & placement</p>
+      <h2>Placement des jeux</h2>
+    </div>
+  </header>
+
+  @if (!reservation) {
+    <p class="empty">Sélectionnez une réservation pour gérer les jeux.</p>
+  }
+
+  @if (reservation) {
+    <div class="alerts">
+      @if (stockAlert()) { <p class="alert">{{ stockAlert() }}</p> }
+      @if (capacityAlert()) { <p class="alert">{{ capacityAlert() }}</p> }
+      @if (unplacedAlert()) { <p class="alert">{{ unplacedAlert() }}</p> }
+    </div>
+
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+    }
+
+    <form class="create-form" (submit)="handleSubmit($event)">
+      <div class="field">
+        <label>Jeu</label>
+        <select
+          [value]="newGame().jeu_id ?? ''"
+          (change)="setNewGame('jeu_id', $any($event.target).value ? toNumber($any($event.target).value) : null)"
+        >
+          <option value="">Choisir un jeu</option>
+          @for (jeu of jeux(); track jeu.id) {
+            <option [value]="jeu.id">{{ jeu.name }}</option>
+          }
+        </select>
+      </div>
+      <div class="field small">
+        <label>Quantité</label>
+        <input
+          type="number"
+          min="1"
+          [value]="newGame().quantite"
+          (input)="setNewGame('quantite', toNumber($any($event.target).value))"
+        />
+      </div>
+      <div class="field small">
+        <label>Tables utilisées</label>
+        <input
+          type="number"
+          step="0.5"
+          min="0"
+          [value]="newGame().tables_utilisees"
+          (input)="setNewGame('tables_utilisees', toNumber($any($event.target).value))"
+        />
+      </div>
+      <div class="field">
+        <label>Type table</label>
+        <select [value]="newGame().type_table" (change)="setNewGame('type_table', $any($event.target).value)">
+          <option value="standard">Standard</option>
+          <option value="grande">Grande</option>
+          <option value="mairie">Mairie</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Zone plan</label>
+        <select
+          [value]="newGame().zone_plan_id ?? ''"
+          (change)="setNewGame('zone_plan_id', $any($event.target).value ? toNumber($any($event.target).value) : null)"
+        >
+          <option value="">Non placée</option>
+          @for (zone of zonesPlan(); track zone.id) {
+            <option [value]="zone.id">{{ zone.nom }}</option>
+          }
+        </select>
+      </div>
+      <div class="field toggle">
+        <label>
+          <input
+            type="checkbox"
+            [checked]="newGame().liste_demandee"
+            (change)="setNewGame('liste_demandee', $any($event.target).checked)"
+          />
+          Liste demandée
+        </label>
+      </div>
+      <div class="field toggle">
+        <label>
+          <input
+            type="checkbox"
+            [checked]="newGame().liste_obtenue"
+            (change)="setNewGame('liste_obtenue', $any($event.target).checked)"
+          />
+          Liste obtenue
+        </label>
+      </div>
+      <div class="field toggle">
+        <label>
+          <input
+            type="checkbox"
+            [checked]="newGame().jeux_recus"
+            (change)="setNewGame('jeux_recus', $any($event.target).checked)"
+          />
+          Jeux reçus
+        </label>
+      </div>
+      <button type="submit">Ajouter</button>
+    </form>
+
+    <div class="list">
+      @for (game of games(); track game.id) {
+        <article class="row">
+          <div>
+            <p class="name">{{ game.nom_jeu }}</p>
+            <p class="meta">Quantité {{ game.quantite }} · {{ game.tables_utilisees }} tables</p>
+          </div>
+          <div class="field small">
+            <label>Quantité</label>
+            <input
+              type="number"
+              min="1"
+              [value]="game.quantite"
+              (input)="updateDraftField(game.id, 'quantite', toNumber($any($event.target).value))"
+            />
+          </div>
+          <div class="field small">
+            <label>Zone</label>
+            <select
+              [value]="game.zone_plan_id ?? ''"
+              (change)="updateDraftField(game.id, 'zone_plan_id', $any($event.target).value ? toNumber($any($event.target).value) : null)"
+            >
+              <option value="">Non placée</option>
+              @for (zone of zonesPlan(); track zone.id) {
+                <option [value]="zone.id">{{ zone.nom }}</option>
+              }
+            </select>
+          </div>
+          <div class="field small">
+            <label>Type</label>
+            <select
+              [value]="game.type_table"
+              (change)="updateDraftField(game.id, 'type_table', $any($event.target).value)"
+            >
+              <option value="standard">Standard</option>
+              <option value="grande">Grande</option>
+              <option value="mairie">Mairie</option>
+            </select>
+          </div>
+          <div class="field small">
+            <label>Tables</label>
+            <input
+              type="number"
+              step="0.5"
+              min="0"
+              [value]="game.tables_utilisees"
+              (input)="updateDraftField(game.id, 'tables_utilisees', toNumber($any($event.target).value))"
+            />
+          </div>
+          <div class="field toggle">
+            <label>
+              <input
+                type="checkbox"
+                [checked]="game.liste_demandee"
+                (change)="updateDraftField(game.id, 'liste_demandee', $any($event.target).checked)"
+              />
+              Demandée
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                [checked]="game.liste_obtenue"
+                (change)="updateDraftField(game.id, 'liste_obtenue', $any($event.target).checked)"
+              />
+              Obtenue
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                [checked]="game.jeux_recus"
+                (change)="updateDraftField(game.id, 'jeux_recus', $any($event.target).checked)"
+              />
+              Reçus
+            </label>
+          </div>
+          <div class="actions">
+            <button type="button" class="ghost" (click)="saveDraft(game.id)">Enregistrer</button>
+            <button type="button" class="ghost" (click)="delete(game.id)">Supprimer</button>
+          </div>
+        </article>
+      }
+      @if (!loading() && games().length === 0) {
+        <p class="empty">Aucun jeu ajouté.</p>
+      }
+    </div>
+  }
+</section>

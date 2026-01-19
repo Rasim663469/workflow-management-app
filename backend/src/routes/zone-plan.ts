@@ -13,6 +13,15 @@ router.post('/', async (req, res) => {
     }
 
     try {
+        const zoneTarifRes = await pool.query(
+            'SELECT festival_id FROM zone_tarifaire WHERE id = $1',
+            [zone_tarifaire_id]
+        );
+        const zoneTarif = zoneTarifRes.rows[0];
+        if (!zoneTarif || Number(zoneTarif.festival_id) !== Number(festival_id)) {
+            return res.status(400).json({ error: 'La zone tarifaire doit appartenir au festival.' });
+        }
+
         const result = await pool.query(
             'INSERT INTO zone_plan (festival_id, zone_tarifaire_id, nom, nombre_tables) VALUES ($1, $2, $3, $4) RETURNING *',
             [festival_id, zone_tarifaire_id, nom, nombre_tables]
@@ -58,11 +67,19 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-router.get('/', async (_req, res) => {
+router.get('/', async (req, res) => {
+    const { festival_id } = req.query;
     try {
-        const { rows } = await pool.query(
-            'SELECT id, festival_id, zone_tarifaire_id, nom, nombre_tables FROM zone_plan ORDER BY nom'
-        );
+        const values: any[] = [];
+        let query =
+            'SELECT id, festival_id, zone_tarifaire_id, nom, nombre_tables FROM zone_plan';
+        if (festival_id) {
+            values.push(festival_id);
+            query += ` WHERE festival_id = $1`;
+        }
+        query += ' ORDER BY nom';
+
+        const { rows } = await pool.query(query, values);
         
         res.json(rows);
     } catch (err) {
@@ -78,6 +95,7 @@ router.patch('/:id', async (req, res) => {
     const updates: string[] = [];
     const values: any[] = [];
     let paramIndex = 1;
+    let currentFestivalId: number | null = null;
 
     if (nom !== undefined) {
         updates.push(`nom = $${paramIndex}`);
@@ -95,9 +113,40 @@ router.patch('/:id', async (req, res) => {
         updates.push(`festival_id = $${paramIndex}`);
         values.push(festival_id);
         paramIndex++;
+
+        if (zone_tarifaire_id === undefined) {
+            const currentZone = await pool.query(
+                'SELECT zone_tarifaire_id FROM zone_plan WHERE id = $1',
+                [id]
+            );
+            const currentZoneId = currentZone.rows[0]?.zone_tarifaire_id;
+            if (currentZoneId) {
+                const zoneTarifRes = await pool.query(
+                    'SELECT festival_id FROM zone_tarifaire WHERE id = $1',
+                    [currentZoneId]
+                );
+                const zoneTarif = zoneTarifRes.rows[0];
+                if (zoneTarif && Number(zoneTarif.festival_id) !== Number(festival_id)) {
+                    return res.status(400).json({ error: 'Zone tarifaire actuelle incompatible avec le nouveau festival.' });
+                }
+            }
+        }
     }
 
     if (zone_tarifaire_id !== undefined) {
+        if (currentFestivalId === null) {
+            const current = await pool.query('SELECT festival_id FROM zone_plan WHERE id = $1', [id]);
+            currentFestivalId = Number(current.rows[0]?.festival_id ?? festival_id ?? 0) || null;
+        }
+        const zoneTarifRes = await pool.query(
+            'SELECT festival_id FROM zone_tarifaire WHERE id = $1',
+            [zone_tarifaire_id]
+        );
+        const zoneTarif = zoneTarifRes.rows[0];
+        const festivalToCheck = festival_id ?? currentFestivalId;
+        if (!zoneTarif || (festivalToCheck !== null && Number(zoneTarif.festival_id) !== Number(festivalToCheck))) {
+            return res.status(400).json({ error: 'La zone tarifaire doit appartenir au festival.' });
+        }
         updates.push(`zone_tarifaire_id = $${paramIndex}`);
         values.push(zone_tarifaire_id);
         paramIndex++;
@@ -145,6 +194,11 @@ router.delete('/:id', async (req, res) => {
     const { id } = req.params;
 
     try {
+        const usage = await pool.query('SELECT COUNT(*) AS total FROM jeu_festival WHERE zone_plan_id = $1', [id]);
+        if (Number(usage.rows[0]?.total ?? 0) > 0) {
+            return res.status(400).json({ error: 'Impossible de supprimer: des jeux sont affectés à cette zone.' });
+        }
+
         const { rowCount } = await pool.query(
             'DELETE FROM zone_plan WHERE id = $1',
             [id]

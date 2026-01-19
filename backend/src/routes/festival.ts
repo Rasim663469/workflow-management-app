@@ -106,6 +106,7 @@ router.get('/', async (_req, res) => {
         f.stock_chaises AS "stockChaises",
         COALESCE(json_agg(
           json_build_object(
+            'id', zt.id,
             'name', zt.nom,
             'totalTables', zt.nombre_tables_total,
             'availableTables', zt.nombre_tables_disponibles,
@@ -146,6 +147,7 @@ router.get('/:id', async (req, res) => {
         f.stock_chaises AS "stockChaises",
         COALESCE(json_agg(
           json_build_object(
+            'id', zt.id,
             'name', zt.nom,
             'totalTables', zt.nombre_tables_total,
             'availableTables', zt.nombre_tables_disponibles,

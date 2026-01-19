@@ -98,6 +98,14 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
     const { id } = req.params;
     try {
+        const usage = await pool.query(
+            'SELECT COUNT(*) AS total FROM reservation_detail WHERE zone_tarifaire_id = $1',
+            [id]
+        );
+        if (Number(usage.rows[0]?.total ?? 0) > 0) {
+            return res.status(400).json({ error: 'Impossible de supprimer: réservations existantes.' });
+        }
+
         const { rowCount } = await pool.query('DELETE FROM zone_tarifaire WHERE id = $1', [id]);
         if (rowCount === 0) return res.status(404).json({ error: 'Zone non trouvée' });
         res.json({ message: 'Zone supprimée' });

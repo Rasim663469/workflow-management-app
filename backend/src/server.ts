@@ -83,14 +83,16 @@ app.use('/api/zones-tarifaires', verifyToken, requireAdmin, zoneTarifaireRouter)
 app.use('/jeux', jeuRouter, verifyToken, requireAdmin);
 app.use('/api/jeux', verifyToken, jeuRouter);
 app.use('/api/contacts', verifyToken, requireAdmin, contatcRouter);
-app.use('/zone-plans', zonePlanRouter, verifyToken, requireAdmin);
+app.use('/zone-plans', verifyToken, requireAdmin, zonePlanRouter);
+app.use('/api/zone-plans', verifyToken, requireAdmin, zonePlanRouter);
 app.use('api/festival', festivalRouter, verifyToken, requireAdmin);
 app.use('/api/editeurs', verifyToken, editeurRouter);
 app.use('/api/reservations', verifyToken, requireAdmin, reservationRouter);
 app.use('/api/crm', verifyToken, requireAdmin, crmSuiviRouter);
 app.use('/api/mecanismes', verifyToken, mecanismeRouter);
 app.use('/api/types-jeu', verifyToken, typeJeuRouter);
-app.use('/jeu_festival', jeuFestivalRoutes, verifyToken, requireAdmin);
+app.use('/jeu_festival', verifyToken, requireAdmin, jeuFestivalRoutes);
+app.use('/api/jeu_festival', verifyToken, requireAdmin, jeuFestivalRoutes);
 app.use('/contact_editeur', contactRoutes, verifyToken, requireAdmin);
 app.use('/api/admin', verifyToken, requireAdmin, (req, res) => {
   res.json({ message: 'Welcome admin' });

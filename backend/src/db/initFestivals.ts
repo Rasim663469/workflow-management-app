@@ -42,6 +42,12 @@ export async function ensureFestivals(): Promise<void> {
     )
   `);
 
+  const seedEnabled = process.env.SEED_DATA === 'true';
+  if (!seedEnabled) {
+    console.log('ℹ️ Seed festivals/zones désactivé (SEED_DATA != true)');
+    return;
+  }
+
   for (const festival of seedFestivals) {
     await pool.query(
       `INSERT INTO festival (nom, location, nombre_total_tables, date_debut, date_fin,
@@ -58,7 +64,10 @@ export async function ensureFestivals(): Promise<void> {
     );
   }
 
-  const { rows } = await pool.query('SELECT id, nom FROM festival');
+  const { rows } = await pool.query(
+    'SELECT id, nom FROM festival WHERE nom = ANY($1::text[])',
+    [seedFestivals.map(f => f.nom)]
+  );
   for (const festival of rows) {
     for (const zone of seedZones) {
       const prixM2 = zone.prix_table / 4;
