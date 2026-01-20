@@ -33,6 +33,8 @@ export class ReservationCardComponent {
   private factureReservationId: string | null = null;
   readonly showFactureDetails = signal(false);
 
+
+
   readonly statuses: { value: ReservationStatus; label: string }[] = [
     { value: 'pas_de_contact', label: 'Pas de contact' },
     { value: 'contact_pris', label: 'Contact pris' },

@@ -1,50 +1,63 @@
-<article class="festival-card">
+<article class="festival-card" [routerLink]="['/festivals', festival.id]" style="cursor: pointer;">
   <header>
     <h3 class="festival-name">{{ festival.name }}</h3>
-    <p class="festival-location">{{ festival.location }}</p>
-    <p class="festival-datedebut">Date de début : {{ festival.displayDateDebut }}</p>
-    <p class="festival-datefin">Date de fin : {{ festival.displayDateFin }}</p>
-    @if (festival.description) {
-      <p class="festival-description">{{ festival.description }}</p>
-    }
+    <p class="festival-location"><strong>Lieu :</strong> {{ festival.location }}</p>
+
+    <div class="festival-dates">
+      <p><strong>Début :</strong> {{ festival.displayDateDebut }}</p>
+      <p><strong>Fin :</strong> {{ festival.displayDateFin }}</p>
+    </div>
   </header>
 
-  <div class="festival-body">
-    <p class="festival-description">
-      Zones tarifaires : {{ festival.tariffZones.length }}
-    </p>
+  @if (isCurrent()) {
+  <span class="current-pill">Festival courant</span>
+  }
 
-    @if (festival.tariffZones.length) {
-      <ul class="tariff-zones">
-        @for (zone of festival.tariffZones; track zone.name) {
-          <li class="tariff-zone">
-            <div class="zone-name">{{ zone.name }}</div>
-            <div class="zone-details">
-              <span>{{ zone.totalTables }} tables</span>
-              <span>Table : {{ zone.pricePerTable | currency : 'EUR' : 'symbol' : '1.0-0' }}</span>
-              <span>m² : {{ zone.pricePerM2 | currency : 'EUR' : 'symbol' : '1.0-2' }}</span>
-            </div>
-          </li>
-        }
-      </ul>
+  <div class="festival-body">
+
+
+    @if (festival.description && festival.description.length > 0) {
+    <p class="festival-description">
+      {{ festival.description }}
+    </p>
     }
   </div>
 
+  <div class="festival-stats">
+    <p><strong>Total tables :</strong> {{ totalTables() }}</p>
+    <p><strong>Disponibles :</strong> {{ totalAvailable() }}</p>
+  </div>
+
+  <div class="current-actions" (click)="$event.stopPropagation()">
+    <button type="button" class="secondary-button" (click)="setCurrent($event)" [disabled]="isCurrent()">
+      Définir comme courant
+    </button>
+  </div>
+
+  @if (festival.tariffZones?.length) {
+  <ul class="tariff-zones">
+    @for (zone of festival.tariffZones; track zone.id ?? zone.name) {
+    <li class="tariff-zone">
+      <span class="zone-name">{{ zone.name }}</span>
+      <span class="zone-details">
+        {{ zoneAvailable(zone) }} dispo / {{ zone.totalTables }} tables
+      </span>
+    </li>
+    }
+  </ul>
+  } @else {
+  <p class="empty">Aucune zone tarifaire.</p>
+  }
+
   @if (auth.isAdmin()) {
-    <footer class="actions">
-      <a
-        class="primary-button"
-        [routerLink]="['/reservations']"
-        [queryParams]="{ festivalId: festival.id }"
-      >
-        Gérer les réservations
-      </a>
-      <a
-        class="secondary-button"
-        [routerLink]="['/festivals', festival.id, 'edit']"
-      >
-        Modifier
-      </a>
-    </footer>
+  <footer class="actions" (click)="$event.stopPropagation()">
+    <a class="primary-button" [routerLink]="['/reservations']" [queryParams]="{ festivalId: festival.id }">
+      Gérer les réservations
+    </a>
+
+    <a class="secondary-button" [routerLink]="['/festivals', festival.id, 'edit']">
+      Modifier
+    </a>
+  </footer>
   }
 </article>

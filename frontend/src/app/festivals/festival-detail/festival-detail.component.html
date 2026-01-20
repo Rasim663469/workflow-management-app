@@ -1,0 +1,66 @@
+<div class="festival-detail-container">
+    @if (loading()) {
+    <p>Chargement...</p>
+    }
+    @else if (error()) {
+    <p class="error">{{ error() }}</p>
+    }
+    @else if (festival(); as fest) {
+    <header class="festival-header">
+        <h1>{{ fest.name }}</h1>
+        <p class="location"> {{ fest.location }}</p>
+        <p class="dates">
+            Du {{ fest.displayDateDebut }} au {{ fest.displayDateFin }}
+        </p>
+        @if (fest.description) {
+        <p class="description">{{ fest.description }}</p>
+        }
+    </header>
+
+    <section class="editors-section">
+        <h2>Éditeurs ayant réservé</h2>
+        @if (fest.editeurs && fest.editeurs.length > 0) {
+        <ul class="editors-list">
+            @for (editeur of fest.editeurs; track editeur.id) {
+            <li>{{ editeur.name }}</li>
+            }
+        </ul>
+        }
+        @else {
+        <p>Aucun éditeur n'a encore réservé</p>
+        }
+    </section>
+
+    <section class="games-section">
+        <h2>Jeux présents au festival</h2>
+        @if (games() && games().length > 0) {
+        <div class="games-by-editor">
+            @for (group of groupGamesByEditor(); track group[0]) {
+            <div class="editor-group">
+                <h3>{{ group[0] }}</h3>
+                <ul class="games-list">
+                    @for (game of group[1]; track game.id) {
+                    <li class="game-item">
+                        <strong>{{ game.name }}</strong>
+                        @if (game.auteurs) {
+                        <span class="authors"> - {{ game.auteurs }}</span>
+                        }
+                        @if (game.ageMin || game.ageMax) {
+                        <span class="ages"> ({{ game.ageMin }}+ ans)</span>
+                        }
+                        <div class="game-details">
+                            Quantité: {{ game.quantite }}, Tables utilisées: {{ game.tablesUtilisees }}
+                        </div>
+                    </li>
+                    }
+                </ul>
+            </div>
+            }
+        </div>
+        }
+        @else {
+        <p>Aucun jeu n'a encore été enregistré pour ce festival</p>
+        }
+    </section>
+    }
+</div>

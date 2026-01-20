@@ -20,6 +20,7 @@ export interface FestivalDto {
   stockTablesMairie?: number;
   stockChaises?: number;
   tariffZones: TariffZoneDto[];
+  editeurs?: { id: string; name: string }[];
 }
 
 export type CreateFestivalDto = Omit<FestivalDto, 'id'>;
