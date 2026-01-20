@@ -5,6 +5,28 @@ import { HttpClient } from '@angular/common/http';
 import { catchError, map, Observable, of } from 'rxjs';
 import { environment } from '@env/environment';
 
+export interface FestivalStockUsageDto {
+  festivalId: number | string;
+  totals: {
+    standard: number;
+    grandes: number;
+    mairie: number;
+    chaises: number;
+  };
+  used: {
+    standard: number;
+    grandes: number;
+    mairie: number;
+    chaises: number;
+  };
+  remaining: {
+    standard: number;
+    grandes: number;
+    mairie: number;
+    chaises: number;
+  };
+}
+
 
 
 @Injectable({ providedIn: 'root' })
@@ -75,6 +97,12 @@ export class FestivalService {
         tariffZones: data.tariffZones ?? [],
       }))
     );
+  }
+
+  getStockUsage(id: string | number): Observable<FestivalStockUsageDto> {
+    return this.http.get<FestivalStockUsageDto>(`${environment.apiUrl}/festivals/${id}/stock`, {
+      withCredentials: true,
+    });
   }
 
   private normalizeDraft(draft: CreateFestivalDto): CreateFestivalDto {

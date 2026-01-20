@@ -141,6 +141,8 @@ router.post('/', async (req, res) => {
     prises_electriques = 0,
     notes = null,
     souhait_grandes_tables = 0,
+    souhait_tables_standard = 0,
+    souhait_tables_mairie = 0,
     statut_workflow = DEFAULT_WORKFLOW,
   } = req.body;
 
@@ -156,6 +158,21 @@ router.post('/', async (req, res) => {
     return res.status(400).json({
       error:
         'Chaque ligne doit contenir un zone_tarifaire_id et un nombre_tables ou surface_m2 > 0.',
+    });
+  }
+
+  const totalReservedTables = normalizedLines.reduce(
+    (sum, line) => sum + lineTables(line),
+    0
+  );
+  const desiredTablesSum =
+    (Number(souhait_grandes_tables) || 0) +
+    (Number(souhait_tables_standard) || 0) +
+    (Number(souhait_tables_mairie) || 0);
+  if (desiredTablesSum > totalReservedTables) {
+    return res.status(400).json({
+      error:
+        'La somme des souhaits (standard + grandes + mairie) ne doit pas dépasser le total réservé.',
     });
   }
 
@@ -216,8 +233,9 @@ router.post('/', async (req, res) => {
     const insertReservation = await client.query(
       `INSERT INTO reservation 
        (editeur_id, festival_id, remise_tables_offertes, remise_argent, prix_total, prix_final,
-        editeur_presente_jeux, besoin_animateur, prises_electriques, notes, souhait_grandes_tables, statut_workflow) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) 
+        editeur_presente_jeux, besoin_animateur, prises_electriques, notes, souhait_grandes_tables,
+        souhait_tables_standard, souhait_tables_mairie, statut_workflow) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) 
        RETURNING *`,
       [
         editeur_id,
@@ -231,6 +249,8 @@ router.post('/', async (req, res) => {
         Number(prises_electriques) || 0,
         notes,
         Number(souhait_grandes_tables) || 0,
+        Number(souhait_tables_standard) || 0,
+        Number(souhait_tables_mairie) || 0,
         workflow,
       ]
     );
@@ -417,6 +437,8 @@ router.put('/:id', async (req, res) => {
     prises_electriques,
     notes,
     souhait_grandes_tables,
+    souhait_tables_standard,
+    souhait_tables_mairie,
     lignes,
   } = req.body;
 
@@ -484,6 +506,14 @@ router.put('/:id', async (req, res) => {
       updates.push(`souhait_grandes_tables = $${paramIndex++}`);
       values.push(souhait_grandes_tables);
     }
+    if (souhait_tables_standard !== undefined) {
+      updates.push(`souhait_tables_standard = $${paramIndex++}`);
+      values.push(souhait_tables_standard);
+    }
+    if (souhait_tables_mairie !== undefined) {
+      updates.push(`souhait_tables_mairie = $${paramIndex++}`);
+      values.push(souhait_tables_mairie);
+    }
 
     const existingDetails = await client.query(
       'SELECT zone_tarifaire_id, nombre_tables, surface_m2 FROM reservation_detail WHERE reservation_id = $1',
@@ -498,6 +528,31 @@ router.put('/:id', async (req, res) => {
       return res.status(400).json({
         error:
           'Chaque ligne doit contenir un zone_tarifaire_id et un nombre_tables ou surface_m2 > 0.',
+      });
+    }
+
+    const totalReservedTables = normalizedLines.reduce(
+      (sum, line) => sum + lineTables(line),
+      0
+    );
+    const desiredGrandes =
+      souhait_grandes_tables !== undefined
+        ? Number(souhait_grandes_tables) || 0
+        : Number(reservation.souhait_grandes_tables ?? 0);
+    const desiredStandard =
+      souhait_tables_standard !== undefined
+        ? Number(souhait_tables_standard) || 0
+        : Number(reservation.souhait_tables_standard ?? 0);
+    const desiredMairie =
+      souhait_tables_mairie !== undefined
+        ? Number(souhait_tables_mairie) || 0
+        : Number(reservation.souhait_tables_mairie ?? 0);
+    const desiredTablesSum = desiredGrandes + desiredStandard + desiredMairie;
+    if (desiredTablesSum > totalReservedTables) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({
+        error:
+          'La somme des souhaits (standard + grandes + mairie) ne doit pas dépasser le total réservé.',
       });
     }
 

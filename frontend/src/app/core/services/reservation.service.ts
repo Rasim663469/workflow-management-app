@@ -43,6 +43,8 @@ export type ReservationDto = {
   prises_electriques?: number | null;
   notes?: string | null;
   souhait_grandes_tables?: number | null;
+  souhait_tables_standard?: number | null;
+  souhait_tables_mairie?: number | null;
   date_facturation?: string | null;
   date_paiement?: string | null;
   statut_workflow: string;
@@ -62,6 +64,8 @@ export type CreateReservationDto = {
   prises_electriques?: number;
   notes?: string | null;
   souhait_grandes_tables?: number;
+  souhait_tables_standard?: number;
+  souhait_tables_mairie?: number;
   statut_workflow?: string;
 };
 
@@ -82,6 +86,8 @@ export type ReservationCard = {
   prisesElectriques?: number | null;
   notes?: string | null;
   souhaitGrandesTables?: number | null;
+  souhaitTablesStandard?: number | null;
+  souhaitTablesMairie?: number | null;
   dateFacturation?: string | null;
   datePaiement?: string | null;
   lastContact?: string | null;
@@ -144,6 +150,8 @@ export class ReservationService {
       prisesElectriques: dto.prises_electriques ?? 0,
       notes: dto.notes ?? null,
       souhaitGrandesTables: dto.souhait_grandes_tables ?? 0,
+      souhaitTablesStandard: dto.souhait_tables_standard ?? 0,
+      souhaitTablesMairie: dto.souhait_tables_mairie ?? 0,
       dateFacturation: dto.date_facturation ?? null,
       datePaiement: dto.date_paiement ?? null,
       lastContact: dto.last_contact ?? null,
