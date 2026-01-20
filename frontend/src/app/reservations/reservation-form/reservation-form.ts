@@ -42,6 +42,7 @@ export class ReservationFormComponent {
   readonly submitError = signal<string | null>(null);
   readonly submitSuccess = signal<string | null>(null);
   readonly editingId = signal<string | null>(null);
+  readonly locked = signal(false);
 
   readonly form = new FormGroup({
     editeur_id: new FormControl<number | null>(null, { validators: [Validators.required] }),
@@ -51,6 +52,8 @@ export class ReservationFormComponent {
     besoin_animateur: new FormControl<boolean>(false, { nonNullable: true }),
     prises_electriques: new FormControl<number>(0, { nonNullable: true }),
     souhait_grandes_tables: new FormControl<number>(0, { nonNullable: true }),
+    souhait_tables_standard: new FormControl<number>(0, { nonNullable: true }),
+    souhait_tables_mairie: new FormControl<number>(0, { nonNullable: true }),
     notes: new FormControl<string>('', { nonNullable: true }),
   });
 
@@ -122,6 +125,11 @@ export class ReservationFormComponent {
     this.submitError.set(null);
     this.submitSuccess.set(null);
 
+    if (this.locked()) {
+      this.submitError.set('Réservation verrouillée (facture payée).');
+      return;
+    }
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -150,19 +158,19 @@ export class ReservationFormComponent {
       return;
     }
 
-    // validation tables disponibles
+    // validation tables disponibles (cumul par zone)
     const errors: Record<number, string> = {};
+    const totalsByZone = new Map<number, number>();
     for (const line of lignesPayload) {
-      const zone = this.zones().find(z => z.id === line.zone_tarifaire_id);
-      if (zone && line.nombre_tables > zone.nombre_tables_disponibles) {
-        errors[line.zone_tarifaire_id] = `Max ${zone.nombre_tables_disponibles} table(s) disponibles`;
-      }
-      if (zone) {
-        const tablesFromArea = Math.ceil((line.surface_m2 || 0) / this.tableAreaM2);
-        const totalTables = (line.nombre_tables || 0) + tablesFromArea;
-        if (totalTables > zone.nombre_tables_disponibles) {
-          errors[line.zone_tarifaire_id] = `Max ${zone.nombre_tables_disponibles} table(s) disponibles`;
-        }
+      const tablesFromArea = Math.ceil((line.surface_m2 || 0) / this.tableAreaM2);
+      const totalTables = (line.nombre_tables || 0) + tablesFromArea;
+      const current = totalsByZone.get(line.zone_tarifaire_id) ?? 0;
+      totalsByZone.set(line.zone_tarifaire_id, current + totalTables);
+    }
+    for (const [zoneId, totalTables] of totalsByZone.entries()) {
+      const zone = this.zones().find(z => z.id === zoneId);
+      if (zone && totalTables > zone.nombre_tables_disponibles) {
+        errors[zoneId] = `Max ${zone.nombre_tables_disponibles} table(s) disponibles`;
       }
     }
     this.zoneErrors.set(errors);
@@ -171,15 +179,29 @@ export class ReservationFormComponent {
       return;
     }
 
-    this.submitting.set(true);
-
     const remise_tables_offertes = Number(this.form.value.remise_tables_offertes ?? 0);
     const remise_argent = Number(this.form.value.remise_argent ?? 0);
     const editeur_presente_jeux = Boolean(this.form.value.editeur_presente_jeux);
     const besoin_animateur = Boolean(this.form.value.besoin_animateur);
     const prises_electriques = Number(this.form.value.prises_electriques ?? 0);
     const souhait_grandes_tables = Number(this.form.value.souhait_grandes_tables ?? 0);
+    const souhait_tables_standard = Number(this.form.value.souhait_tables_standard ?? 0);
+    const souhait_tables_mairie = Number(this.form.value.souhait_tables_mairie ?? 0);
     const notes = (this.form.value.notes ?? '').trim() || null;
+    const totalReservedTables = Array.from(totalsByZone.values()).reduce(
+      (sum, value) => sum + value,
+      0
+    );
+    const totalDesiredTables =
+      souhait_grandes_tables + souhait_tables_standard + souhait_tables_mairie;
+    if (totalDesiredTables > totalReservedTables) {
+      this.submitError.set(
+        'La somme des souhaits (standard + grandes + mairie) ne doit pas dépasser le total réservé.'
+      );
+      return;
+    }
+
+    this.submitting.set(true);
 
     if (this.editingId()) {
       this.reservationService
@@ -191,6 +213,8 @@ export class ReservationFormComponent {
           besoin_animateur,
           prises_electriques,
           souhait_grandes_tables,
+          souhait_tables_standard,
+          souhait_tables_mairie,
           notes,
         })
         .subscribe({
@@ -222,6 +246,8 @@ export class ReservationFormComponent {
         besoin_animateur,
         prises_electriques,
         souhait_grandes_tables,
+        souhait_tables_standard,
+        souhait_tables_mairie,
         notes,
         statut_workflow: 'pas_de_contact',
       })
@@ -269,6 +295,15 @@ export class ReservationFormComponent {
     this.totalEstimate.set(Math.max(0, total));
   }
 
+  lineTablesFromArea(line: LineForm): number {
+    const m2 = Number(line.surface_m2) || 0;
+    return Math.ceil(m2 / this.tableAreaM2);
+  }
+
+  lineTotalTables(line: LineForm): number {
+    return (Number(line.nombre_tables) || 0) + this.lineTablesFromArea(line);
+  }
+
   private totalTablesFromLines(): number {
     return this.lignes().reduce((sum, line) => {
       const tables = Number(line.nombre_tables) || 0;
@@ -284,6 +319,7 @@ export class ReservationFormComponent {
 
   private applyEditState(reservation: ReservationCard): void {
     this.editingId.set(reservation.id);
+    this.locked.set(reservation.statut === 'facture_payee');
     this.submitSuccess.set(null);
     this.submitError.set(null);
 
@@ -295,6 +331,8 @@ export class ReservationFormComponent {
       besoin_animateur: Boolean(reservation.besoinAnimateur),
       prises_electriques: Number(reservation.prisesElectriques ?? 0),
       souhait_grandes_tables: Number(reservation.souhaitGrandesTables ?? 0),
+      souhait_tables_standard: Number(reservation.souhaitTablesStandard ?? 0),
+      souhait_tables_mairie: Number(reservation.souhaitTablesMairie ?? 0),
       notes: reservation.notes ?? '',
     });
 
@@ -312,6 +350,7 @@ export class ReservationFormComponent {
 
   private resetForm(): void {
     this.editingId.set(null);
+    this.locked.set(false);
     this.form.reset({
       editeur_id: null,
       remise_tables_offertes: 0,
@@ -320,6 +359,8 @@ export class ReservationFormComponent {
       besoin_animateur: false,
       prises_electriques: 0,
       souhait_grandes_tables: 0,
+      souhait_tables_standard: 0,
+      souhait_tables_mairie: 0,
       notes: '',
     });
     this.lignes.set([{ zone_tarifaire_id: null, nombre_tables: 1, surface_m2: 0 }]);

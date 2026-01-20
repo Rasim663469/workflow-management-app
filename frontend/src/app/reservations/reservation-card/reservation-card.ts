@@ -134,7 +134,6 @@ export class ReservationCardComponent {
     this.editRequested.emit(this.reservation);
   }
 
-
   requestGames(): void {
     this.gamesRequested.emit(this.reservation);
   }

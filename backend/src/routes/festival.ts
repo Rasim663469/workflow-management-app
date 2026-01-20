@@ -137,6 +137,69 @@ router.get('/', async (_req, res) => {
   }
 });
 
+// STOCK USAGE
+router.get('/:id/stock', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const { rows } = await pool.query(
+      `
+      SELECT
+        f.id AS "festivalId",
+        f.stock_tables_standard AS "stockTablesStandard",
+        f.stock_tables_grandes AS "stockTablesGrandes",
+        f.stock_tables_mairie AS "stockTablesMairie",
+        f.stock_chaises AS "stockChaises",
+        COALESCE(SUM(CASE WHEN jf.type_table = 'standard' THEN jf.tables_utilisees ELSE 0 END), 0) AS "usedStandard",
+        COALESCE(SUM(CASE WHEN jf.type_table = 'grande' THEN jf.tables_utilisees ELSE 0 END), 0) AS "usedGrandes",
+        COALESCE(SUM(CASE WHEN jf.type_table = 'mairie' THEN jf.tables_utilisees ELSE 0 END), 0) AS "usedMairie"
+      FROM festival f
+      LEFT JOIN reservation r ON r.festival_id = f.id
+      LEFT JOIN jeu_festival jf ON jf.reservation_id = r.id AND jf.zone_plan_id IS NOT NULL
+      WHERE f.id = $1
+      GROUP BY f.id
+      `,
+      [id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Festival non trouvé' });
+    }
+
+    const row = rows[0];
+    const usedStandard = Number(row.usedStandard ?? 0);
+    const usedGrandes = Number(row.usedGrandes ?? 0);
+    const usedMairie = Number(row.usedMairie ?? 0);
+    const usedTotal = usedStandard + usedGrandes + usedMairie;
+    const usedChaises = usedTotal * 6;
+
+    res.json({
+      festivalId: row.festivalId,
+      totals: {
+        standard: Number(row.stockTablesStandard ?? 0),
+        grandes: Number(row.stockTablesGrandes ?? 0),
+        mairie: Number(row.stockTablesMairie ?? 0),
+        chaises: Number(row.stockChaises ?? 0),
+      },
+      used: {
+        standard: usedStandard,
+        grandes: usedGrandes,
+        mairie: usedMairie,
+        chaises: usedChaises,
+      },
+      remaining: {
+        standard: Number(row.stockTablesStandard ?? 0) - usedStandard,
+        grandes: Number(row.stockTablesGrandes ?? 0) - usedGrandes,
+        mairie: Number(row.stockTablesMairie ?? 0) - usedMairie,
+        chaises: Number(row.stockChaises ?? 0) - usedChaises,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 // READ ONE avec zones
 router.get('/:id', async (req, res) => {
   const { id } = req.params;

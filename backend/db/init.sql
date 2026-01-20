@@ -128,6 +128,8 @@ CREATE TABLE IF NOT EXISTS reservation (
     date_paiement TIMESTAMP,
     notes TEXT,
     souhait_grandes_tables INT NOT NULL DEFAULT 0,
+    souhait_tables_standard INT NOT NULL DEFAULT 0,
+    souhait_tables_mairie INT NOT NULL DEFAULT 0,
     statut_workflow VARCHAR(30) NOT NULL DEFAULT 'pas_de_contact',
     CONSTRAINT chk_statut_workflow CHECK (statut_workflow IN (
       'brouillon',

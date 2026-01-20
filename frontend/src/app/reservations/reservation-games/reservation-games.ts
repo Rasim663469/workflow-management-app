@@ -1,15 +1,25 @@
 import { Component, effect, inject, Input, signal } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { ReservationCard } from '@services/reservation.service';
 import { JeuService } from '@services/jeu.service';
 import { JeuFestivalService, JeuFestivalDto } from '@services/jeu-festival.service';
 import { ZonePlanDto, ZonePlanService } from '@services/zone-plan.service';
 import { FestivalDto } from '../../festivals/festival/festival-dto';
+import { FestivalService, FestivalStockUsageDto } from '@services/festival.service';
 
 type DraftMap = Record<number, Partial<JeuFestivalDto>>;
+
+type ReservationTypeBudget = {
+  standard: number;
+  grandes: number;
+  mairie: number;
+  total: number;
+};
 
 @Component({
   selector: 'app-reservation-games',
   standalone: true,
+  imports: [DecimalPipe],
   templateUrl: './reservation-games.html',
   styleUrl: './reservation-games.scss',
 })
@@ -17,6 +27,7 @@ export class ReservationGamesComponent {
   private readonly jeuService = inject(JeuService);
   private readonly jeuFestivalService = inject(JeuFestivalService);
   private readonly zonePlanService = inject(ZonePlanService);
+  private readonly festivalService = inject(FestivalService);
 
   @Input() reservation: ReservationCard | null = null;
   @Input({ required: true }) festivalId!: number | string;
@@ -31,6 +42,8 @@ export class ReservationGamesComponent {
   readonly stockAlert = signal<string | null>(null);
   readonly capacityAlert = signal<string | null>(null);
   readonly unplacedAlert = signal<string | null>(null);
+  readonly stockUsage = signal<FestivalStockUsageDto | null>(null);
+  readonly reservationBudget = signal<ReservationTypeBudget | null>(null);
 
   readonly newGame = signal({
     jeu_id: null as number | null,
@@ -42,6 +55,26 @@ export class ReservationGamesComponent {
     liste_obtenue: false,
     jeux_recus: false,
   });
+
+  remainingForZonePlan(zonePlanId: number): number | null {
+    if (!this.reservation) return null;
+    const zonePlan = this.zonesPlan().find(z => z.id === zonePlanId);
+    if (!zonePlan) return null;
+    const zoneId = zonePlan.zone_tarifaire_id;
+    const reserved = (this.reservation.lignes ?? []).reduce((sum, line) => {
+      if (line.zone_tarifaire_id !== zoneId) return sum;
+      const tables = Number(line.nombre_tables ?? 0);
+      const m2 = Number(line.surface_m2 ?? 0);
+      return sum + tables + Math.ceil(m2 / 4);
+    }, 0);
+    const used = this.games().reduce((sum, game) => {
+      if (!game.zone_plan_id) return sum;
+      const gameZone = this.zonesPlan().find(z => z.id === game.zone_plan_id);
+      if (!gameZone || gameZone.zone_tarifaire_id !== zoneId) return sum;
+      return sum + Number(game.tables_utilisees ?? 0);
+    }, 0);
+    return reserved - used;
+  }
 
   constructor() {
     effect(() => {
@@ -82,6 +115,13 @@ export class ReservationGamesComponent {
     if (typeof value === 'number') return value;
     if (typeof value === 'string') return Number(value);
     return Number(value ?? 0);
+  }
+
+  perGameTables(totalTables: number | null | undefined, quantity: number | null | undefined): number {
+    const total = Number(totalTables ?? 0);
+    const qty = Number(quantity ?? 0);
+    if (!qty) return 0;
+    return total / qty;
   }
 
   ngOnChanges(): void {
@@ -148,30 +188,59 @@ export class ReservationGamesComponent {
         : null
     );
 
+    this.computeReservationBudget(games, zones);
+
     if (!this.festivalId) {
       this.stockAlert.set(null);
+      this.stockUsage.set(null);
       return;
     }
-    this.jeuFestivalService.listByFestival(this.festivalId).subscribe({
-      next: rows => {
-        const totals = { standard: 0, grande: 0, mairie: 0 };
-        for (const row of rows ?? []) {
-          if (!row.zone_plan_id) continue;
-          const type = (row.type_table ?? 'standard') as 'standard' | 'grande' | 'mairie';
-          totals[type] += Number(row.tables_utilisees ?? 0);
-        }
-        const stock = this.festival;
-        if (!stock) {
-          this.stockAlert.set(null);
-          return;
-        }
+    this.festivalService.getStockUsage(this.festivalId).subscribe({
+      next: data => {
+        this.stockUsage.set(data);
         const alerts: string[] = [];
-        if (totals.standard > (stock.stockTablesStandard ?? 0)) alerts.push('standard');
-        if (totals.grande > (stock.stockTablesGrandes ?? 0)) alerts.push('grandes');
-        if (totals.mairie > (stock.stockTablesMairie ?? 0)) alerts.push('mairie');
+        if (data.remaining.standard < 0) alerts.push('standard');
+        if (data.remaining.grandes < 0) alerts.push('grandes');
+        if (data.remaining.mairie < 0) alerts.push('mairie');
+        if (data.remaining.chaises < 0) alerts.push('chaises');
         this.stockAlert.set(alerts.length ? `Stock dépassé (${alerts.join(', ')})` : null);
       },
-      error: () => this.stockAlert.set(null),
+      error: () => {
+        this.stockUsage.set(null);
+        this.stockAlert.set(null);
+      },
+    });
+  }
+
+  private computeReservationBudget(games: JeuFestivalDto[], zones: ZonePlanDto[]): void {
+    if (!this.reservation) {
+      this.reservationBudget.set(null);
+      return;
+    }
+
+    const reservedTotal = (this.reservation.lignes ?? []).reduce((sum, line) => {
+      const tables = Number(line.nombre_tables ?? 0);
+      const m2 = Number(line.surface_m2 ?? 0);
+      return sum + tables + Math.ceil(m2 / 4);
+    }, 0);
+
+    const desiredGrandes = Number(this.reservation.souhaitGrandesTables ?? 0);
+    const desiredMairie = Number(this.reservation.souhaitTablesMairie ?? 0);
+    const desiredStandardRaw = Number(this.reservation.souhaitTablesStandard ?? 0);
+
+    const usedByType = { standard: 0, grandes: 0, mairie: 0 };
+    for (const game of games) {
+      if (!game.zone_plan_id) continue;
+      const type = (game.type_table ?? 'standard') as 'standard' | 'grande' | 'mairie';
+      const key = type === 'grande' ? 'grandes' : type;
+      usedByType[key] += Number(game.tables_utilisees ?? 0);
+    }
+
+    this.reservationBudget.set({
+      standard: reservedTotal - usedByType.standard - usedByType.grandes - usedByType.mairie,
+      grandes: desiredGrandes - usedByType.grandes,
+      mairie: desiredMairie - usedByType.mairie,
+      total: reservedTotal,
     });
   }
 

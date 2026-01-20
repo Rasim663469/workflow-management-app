@@ -18,10 +18,14 @@
     <p class="error">{{ errorZones() }}</p>
   }
 
+  @if (locked()) {
+    <p class="error">Réservation verrouillée : la facture est payée.</p>
+  }
+
   <form [formGroup]="form" (ngSubmit)="submit()">
       <div class="field">
         <label for="editeur">Éditeur *</label>
-        <select id="editeur" formControlName="editeur_id" [disabled]="!!editingId()">
+        <select id="editeur" formControlName="editeur_id" [disabled]="!!editingId() || locked()">
           <option value="">Sélectionner</option>
           @for (editeur of editeurs(); track editeur.id) {
             <option [value]="editeur.id">{{ editeur.name }}</option>
@@ -36,6 +40,7 @@
             <label>Zone tarifaire *</label>
             <select
               [value]="line.zone_tarifaire_id ?? ''"
+              [disabled]="locked()"
               (change)="updateLine($index, { zone_tarifaire_id: $any($event.target).value ? toNumber($any($event.target).value) : null })"
             >
               <option value="">Choisir une zone</option>
@@ -51,11 +56,12 @@
           </div>
 
           <div class="field small">
-            <label>Tables</label>
+            <label>Tables (espace)</label>
             <input
               type="number"
               min="0"
               [value]="line.nombre_tables"
+              [disabled]="locked()"
               (input)="updateLine($index, { nombre_tables: toNumber($any($event.target).value) })"
             />
           </div>
@@ -67,51 +73,69 @@
               min="0"
               step="0.5"
               [value]="line.surface_m2"
+              [disabled]="locked()"
               (input)="updateLine($index, { surface_m2: toNumber($any($event.target).value) })"
             />
           </div>
 
-          <button type="button" class="ghost" (click)="removeLine($index)" [disabled]="lignes().length === 1">
+          <button type="button" class="ghost" (click)="removeLine($index)" [disabled]="lignes().length === 1 || locked()">
             Retirer
           </button>
         </div>
+        <p class="line-meta">
+          Total: {{ lineTotalTables(line) }} table(s) espace
+          @if (line.surface_m2 > 0) {
+            <span>· {{ line.surface_m2 }} m² → {{ lineTablesFromArea(line) }} table(s)</span>
+          }
+        </p>
       }
     </div>
 
-    <button type="button" class="ghost" (click)="addLine()">Ajouter une zone</button>
+    <button type="button" class="ghost" (click)="addLine()" [disabled]="locked()">Ajouter une zone</button>
 
     <div class="grid">
       <div class="field">
         <label for="remiseTables">Remise en tables</label>
-        <input id="remiseTables" type="number" min="0" formControlName="remise_tables_offertes" (input)="recomputeTotal()" />
+        <input id="remiseTables" type="number" min="0" formControlName="remise_tables_offertes" [disabled]="locked()" (input)="recomputeTotal()" />
       </div>
       <div class="field">
         <label for="remiseArgent">Remise en montant</label>
-        <input id="remiseArgent" type="number" min="0" formControlName="remise_argent" (input)="recomputeTotal()" />
+        <input id="remiseArgent" type="number" min="0" formControlName="remise_argent" [disabled]="locked()" (input)="recomputeTotal()" />
       </div>
     </div>
 
     <div class="grid">
       <div class="field">
         <label for="prisesElectriques">Prises électriques</label>
-        <input id="prisesElectriques" type="number" min="0" formControlName="prises_electriques" (input)="recomputeTotal()" />
+        <input id="prisesElectriques" type="number" min="0" formControlName="prises_electriques" [disabled]="locked()" (input)="recomputeTotal()" />
       </div>
       <div class="field">
         <label for="souhaitGrandesTables">Souhait grandes tables</label>
-        <input id="souhaitGrandesTables" type="number" min="0" formControlName="souhait_grandes_tables" />
+        <input id="souhaitGrandesTables" type="number" min="0" formControlName="souhait_grandes_tables" [disabled]="locked()" />
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="field">
+        <label for="souhaitTablesStandard">Souhait tables standard (indicatif)</label>
+        <input id="souhaitTablesStandard" type="number" min="0" formControlName="souhait_tables_standard" [disabled]="locked()" />
+      </div>
+      <div class="field">
+        <label for="souhaitTablesMairie">Souhait tables mairie (indicatif)</label>
+        <input id="souhaitTablesMairie" type="number" min="0" formControlName="souhait_tables_mairie" [disabled]="locked()" />
       </div>
     </div>
 
     <div class="grid">
       <div class="field">
         <label>
-          <input type="checkbox" formControlName="editeur_presente_jeux" />
+          <input type="checkbox" formControlName="editeur_presente_jeux" [disabled]="locked()" />
           L’éditeur présente ses jeux
         </label>
       </div>
       <div class="field">
         <label>
-          <input type="checkbox" formControlName="besoin_animateur" />
+          <input type="checkbox" formControlName="besoin_animateur" [disabled]="locked()" />
           Besoin d’animateur
         </label>
       </div>
@@ -119,15 +143,16 @@
 
     <div class="field">
       <label for="notesReservation">Notes</label>
-      <textarea id="notesReservation" rows="3" formControlName="notes" placeholder="Notes internes"></textarea>
+      <textarea id="notesReservation" rows="3" formControlName="notes" placeholder="Notes internes" [disabled]="locked()"></textarea>
     </div>
 
     <div class="total">
       <p>Total estimé : <strong>{{ totalEstimate() | currency : 'EUR' : 'symbol' : '1.0-0' }}</strong></p>
+      <p class="total-sub">Estimation basée sur prix moyens si remise en tables.</p>
     </div>
 
     <footer class="actions">
-      <button type="submit" [disabled]="submitting()">
+      <button type="submit" [disabled]="submitting() || locked()">
         @if (editingId()) {
           {{ submitting() ? 'Mise à jour...' : 'Mettre à jour' }}
         } @else {

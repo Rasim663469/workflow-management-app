@@ -11,7 +11,7 @@
 
   <div class="meta">
     <div>
-      <p class="label">Tables</p>
+      <p class="label">Tables (espace)</p>
       <p class="value">{{ reservation.tables }}</p>
     </div>
     <div>
@@ -24,7 +24,7 @@
     </div>
   </div>
 
-  @if (reservation.prisesElectriques || reservation.besoinAnimateur || reservation.souhaitGrandesTables) {
+  @if (reservation.prisesElectriques || reservation.besoinAnimateur || reservation.souhaitGrandesTables || reservation.souhaitTablesStandard || reservation.souhaitTablesMairie) {
     <div class="meta">
       <div>
         <p class="label">Prises</p>
@@ -37,6 +37,14 @@
       <div>
         <p class="label">Grandes tables souhaitées</p>
         <p class="value">{{ reservation.souhaitGrandesTables ?? 0 }}</p>
+      </div>
+      <div>
+        <p class="label">Tables standard souhaitées (indicatif)</p>
+        <p class="value">{{ reservation.souhaitTablesStandard ?? 0 }}</p>
+      </div>
+      <div>
+        <p class="label">Tables mairie souhaitées (indicatif)</p>
+        <p class="value">{{ reservation.souhaitTablesMairie ?? 0 }}</p>
       </div>
     </div>
   }

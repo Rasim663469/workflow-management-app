@@ -53,6 +53,12 @@ form {
   gap: 0.75rem;
 }
 
+.line-meta {
+  margin: -0.4rem 0 0.4rem;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
 .line {
   display: grid;
   grid-template-columns: 2fr 1fr auto;
@@ -115,6 +121,13 @@ button[type='submit'] {
 .total {
   font-weight: 700;
   color: #111827;
+}
+
+.total-sub {
+  margin: 0;
+  font-weight: 400;
+  font-size: 0.85rem;
+  color: #64748b;
 }
 
 @media (max-width: 640px) {
