@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import pool from '../db/database.js';
+import { requireRoles } from '../middleware/auth-admin.js';
+import { verifyToken } from '../middleware/token-management.js';
 
 const router = Router();
-
-const isAdmin = (req: Express.Request) => req.user?.role === 'admin';
 const ALLOWED_TYPES = ['editeur', 'prestataire', 'boutique', 'animation', 'association'] as const;
 
 function normalizeType(value: unknown): string {
@@ -13,12 +13,8 @@ function normalizeType(value: unknown): string {
   return ALLOWED_TYPES.includes(normalized as any) ? normalized : 'editeur';
 }
 
-// CRÉER un éditeur (admin uniquement) : crée aussi le compte user associé
-router.post('/', async (req, res) => {
-  if (!isAdmin(req)) {
-    return res.status(403).json({ error: 'Accès réservé aux admins' });
-  }
-
+// CRÉER un éditeur (super admin / super organisateur)
+router.post('/', verifyToken, requireRoles(['super_admin', 'super_organisateur']), async (req, res) => {
   const { nom, login, description, type_reservant, est_reservant } = req.body;
   const normalizedName = typeof nom === 'string' ? nom.trim() : '';
   const normalizedLogin = typeof login === 'string' ? login.trim() : '';
@@ -34,27 +30,11 @@ router.post('/', async (req, res) => {
   try {
     const passwordHash = await bcrypt.hash('editeur123', 10);
 
-    // Crée le compte user
-    const userInsert = await pool.query(
-      `INSERT INTO users (login, password_hash, role)
-       VALUES ($1, $2, 'editeur')
-       ON CONFLICT (login) DO NOTHING
+    const insert = await pool.query(
+      `INSERT INTO editeur (nom, login, password_hash, description, type_reservant, est_reservant)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING id, login`,
-      [normalizedLogin, passwordHash]
-    );
-
-    const user = userInsert.rows[0];
-    if (!user) {
-      return res.status(409).json({ error: 'Un éditeur avec ce login existe déjà.' });
-    }
-
-    // Crée/associe la fiche éditeur avec le même id
-    await pool.query(
-      `INSERT INTO editeur (id, nom, login, password_hash, description, type_reservant, est_reservant)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       ON CONFLICT (id) DO NOTHING`,
       [
-        user.id,
         normalizedName,
         normalizedLogin,
         passwordHash,
@@ -67,15 +47,18 @@ router.post('/', async (req, res) => {
     res.status(201).json({
       message: 'Éditeur créé avec succès',
       editeur: {
-        id: user.id,
+        id: insert.rows[0]?.id,
         name: normalizedName,
-        login: user.login,
+        login: insert.rows[0]?.login,
         description: description?.trim() || null,
         type_reservant: normalizeType(type_reservant),
         est_reservant: est_reservant !== undefined ? Boolean(est_reservant) : true,
       },
     });
-  } catch (err) {
+  } catch (err: any) {
+    if (err?.code === '23505') {
+      return res.status(409).json({ error: 'Un éditeur avec ce login existe déjà.' });
+    }
     console.error(err);
     res.status(500).json({ error: 'Erreur serveur lors de la création.' });
   }
@@ -181,12 +164,8 @@ router.get('/:id/jeux', async (req, res) => {
   }
 });
 
-// MODIFIER un éditeur (admin)
-router.put('/:id', async (req, res) => {
-  if (!isAdmin(req)) {
-    return res.status(403).json({ error: 'Accès réservé aux admins' });
-  }
-
+// MODIFIER un éditeur (super admin / super organisateur)
+router.put('/:id', verifyToken, requireRoles(['super_admin', 'super_organisateur']), async (req, res) => {
   const { id } = req.params;
   const { nom, login, description, type_reservant, est_reservant } = req.body;
 
@@ -265,9 +244,6 @@ router.put('/:id', async (req, res) => {
     }
 
     const editeur = rows[0];
-    if (normalizedLogin !== undefined) {
-      await client.query('UPDATE users SET login = $1 WHERE id = $2', [normalizedLogin, id]);
-    }
     await client.query('COMMIT');
     client.release();
     res.json({
@@ -292,12 +268,8 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// SUPPRIMER un éditeur (admin)
-router.delete('/:id', async (req, res) => {
-  if (!isAdmin(req)) {
-    return res.status(403).json({ error: 'Accès réservé aux admins' });
-  }
-
+// SUPPRIMER un éditeur (super admin / super organisateur)
+router.delete('/:id', verifyToken, requireRoles(['super_admin', 'super_organisateur']), async (req, res) => {
   const { id } = req.params;
 
   const client = await pool.connect();
@@ -311,7 +283,6 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Éditeur non trouvé.' });
     }
 
-    await client.query('DELETE FROM users WHERE id = $1 AND role = $2', [id, 'editeur']);
     await client.query('COMMIT');
     client.release();
     res.json({ message: 'Éditeur supprimé avec succès.' });

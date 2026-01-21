@@ -17,7 +17,7 @@ export class FestivalsList {
   readonly festivals = this.festivalService.festivals;
   readonly loading = this.festivalService.loading;
   readonly error = this.festivalService.error;
-  readonly isAdmin = this.auth.isAdmin;
+  readonly canManageFestivals = this.auth.canManageFestivals;
 
 
   constructor() {

@@ -18,8 +18,19 @@ export type CrmRow = {
   est_reservant?: boolean | null;
   statut?: CrmStatus | null;
   derniere_relance?: string | null;
+  notes?: string | null;
   total_contacts?: number | null;
   last_contact?: string | null;
+};
+
+export type CrmContactDto = {
+  id: number;
+  editeur_id: number;
+  festival_id: number;
+  date_contact: string;
+  type_contact?: string | null;
+  notes?: string | null;
+  nom_editeur?: string | null;
 };
 
 @Injectable({ providedIn: 'root' })
@@ -63,15 +74,49 @@ export class CrmService {
       });
   }
 
-  updateStatus(editeurId: number, festivalId: number | string, statut: CrmStatus) {
+  updateStatus(
+    editeurId: number,
+    festivalId: number | string,
+    statut: CrmStatus,
+    notes?: string | null
+  ) {
     return this.http.post(
       `${environment.apiUrl}/crm`,
       {
         editeur_id: editeurId,
         festival_id: Number(festivalId),
         statut,
+        notes: notes ?? null,
       },
       { withCredentials: true }
     );
+  }
+
+  addContact(
+    editeurId: number,
+    festivalId: number | string,
+    notes?: string | null,
+    typeContact?: string | null
+  ) {
+    return this.http.post(
+      `${environment.apiUrl}/contact_editeur`,
+      {
+        editeur_id: editeurId,
+        festival_id: Number(festivalId),
+        notes: notes ?? null,
+        type_contact: typeContact ?? null,
+      },
+      { withCredentials: true }
+    );
+  }
+
+  loadContacts(editeurId: number, festivalId: number | string) {
+    return this.http.get<CrmContactDto[]>(`${environment.apiUrl}/contact_editeur`, {
+      params: {
+        editeur_id: editeurId,
+        festival_id: Number(festivalId),
+      },
+      withCredentials: true,
+    });
   }
 }

@@ -1,30 +1,29 @@
 
-body {
-  margin: 0;
-  font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
-  background: #f5f6fa;
-  color: #2f3640;
-}
-
 nav {
   width: 100%;
-  background: #273c75;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, var(--brand-900), var(--brand-700));
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.9rem 2.2rem;
+}
+
+.nav-inner {
+  display: flex;
+  align-items: center;
   gap: 2rem;
-  padding: 1rem 0;
 }
 
 nav a {
-  color: #dcdde1;
+  color: #e2e8f0;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 1rem;
   position: relative;
   padding-bottom: 0.25rem;
   transition: color 0.2s ease;
-  margin: 0.75rem;
+  margin: 0.75rem 0;
 }
 
 nav a:hover {
@@ -33,7 +32,14 @@ nav a:hover {
 
 nav a.active {
   color: #ffffff;
-  border-bottom: 2px solid #0097e6;
+  border-bottom: 2px solid var(--accent-500);
+}
+
+.nav-role {
+  color: #e2e8f0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 router-outlet {
@@ -41,50 +47,15 @@ router-outlet {
   margin-top: 2rem;
 }
 
-button {
-  background: #273c75;
-  color: #fff;
-  border: none;
-  padding: 0.6rem 1.2rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background 0.2s, transform 0.1s;
-
-  &:hover {
-    background: #40739e;
-    transform: translateY(-1px);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
-}
-
-a {
-  color: #0097e6;
-  text-decoration: none;
-
-  &:hover {
-    text-decoration: underline;
-  }
-}
-
-.error {
-  color: #e84118;
-  font-weight: 600;
-  background: rgba(232, 65, 24, 0.1);
-  padding: 0.8rem 1rem;
-  border-radius: 8px;
-  margin-top: 1rem;
-  text-align: center;
-}
-
 @media (max-width: 600px) {
   nav {
     flex-direction: column;
     align-items: center;
-    gap: 4rem;
-    padding: 0.8rem;
+    gap: 1rem;
+    padding: 0.8rem 1rem;
+  }
+  .nav-inner {
+    flex-wrap: wrap;
+    justify-content: center;
   }
 }

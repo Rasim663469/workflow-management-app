@@ -2,7 +2,7 @@ import { Router } from 'express';
 import pool from '../db/database.js';
 
 const router = Router();
-const DEFAULT_WORKFLOW = 'pas_de_contact';
+const DEFAULT_WORKFLOW = 'present';
 const PAYEE_ALLOWED_FROM = new Set(['facture', 'facture_payee']);
 
 router.get('/reservation/:reservationId', async (req, res) => {

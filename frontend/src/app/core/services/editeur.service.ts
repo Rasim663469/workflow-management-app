@@ -147,6 +147,47 @@ export class EditeurService {
       .subscribe();
   }
 
+  updateContact(contactId: string, payload: { name: string; email: string; phone?: string; role?: string }): void {
+    const nameParts = (payload.name || '').trim().split(/\s+/);
+    const prenom = nameParts.length > 1 ? nameParts[0] : (nameParts[0] || 'Unknown');
+    const nom = nameParts.length > 1 ? nameParts.slice(1).join(' ') : (nameParts[0] || 'Unknown');
+
+    const body = {
+      prenom,
+      nom,
+      email: payload.email,
+      telephone: payload.phone,
+      role: payload.role,
+    };
+
+    this.http.put<any>(`${environment.apiUrl}/contacts/${contactId}`, body)
+      .pipe(
+        tap(response => {
+          const updated = response?.contact ?? response;
+          if (!updated) return;
+
+          this._contacts.update((list: ContactDto[]) =>
+            list.map(c => c.id === String(contactId)
+              ? {
+                ...c,
+                name: `${updated.prenom ?? prenom} ${updated.nom ?? nom}`.trim(),
+                email: updated.email ?? payload.email,
+                phone: updated.telephone ?? payload.phone,
+                role: updated.role ?? payload.role,
+              }
+              : c
+            )
+          );
+        }),
+        catchError(err => {
+          console.error('Error updating contact:', err);
+          this._error.set("Erreur lors de la mise a jour du contact");
+          return of(null);
+        })
+      )
+      .subscribe();
+  }
+
 
 
 

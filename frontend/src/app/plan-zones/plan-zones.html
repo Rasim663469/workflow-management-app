@@ -2,7 +2,7 @@
   <header>
     <div>
       <p class="eyebrow">Zones du plan</p>
-      <h2>Organisation physique</h2>
+    <h2>Zones du plan</h2>
     </div>
     @if (loading()) {
       <span class="pill">Chargement...</span>
@@ -15,15 +15,18 @@
   @if (success()) {
     <p class="success">{{ success() }}</p>
   }
+  @if (!auth.canManagePlacement()) {
+    <p class="error">Accès réservé aux organisateurs pour modifier les zones du plan.</p>
+  }
 
   <form [formGroup]="form" (ngSubmit)="create()" class="plan-form">
     <div class="field">
       <label>Nom</label>
-      <input type="text" formControlName="nom" placeholder="Zone A1" />
+      <input type="text" formControlName="nom" placeholder="Zone A1" [disabled]="!auth.canManagePlacement()" />
     </div>
     <div class="field">
       <label>Zone tarifaire</label>
-      <select formControlName="zone_tarifaire_id">
+      <select formControlName="zone_tarifaire_id" [disabled]="!auth.canManagePlacement()">
         <option value="">Choisir</option>
         @for (zone of zonesTarifaires(); track zone.id) {
           <option [value]="zone.id">{{ zone.nom }}</option>
@@ -32,19 +35,51 @@
     </div>
     <div class="field small">
       <label>Tables</label>
-      <input type="number" min="1" formControlName="nombre_tables" />
+      <input type="number" min="1" formControlName="nombre_tables" [disabled]="!auth.canManagePlacement()" />
     </div>
-    <button type="submit">Ajouter</button>
+    <button type="submit" [disabled]="!auth.canManagePlacement()">Ajouter</button>
   </form>
 
   <div class="plan-list">
     @for (zone of zones(); track zone.id) {
       <article class="plan-row">
-        <div>
-          <p class="name">{{ zone.nom }}</p>
-          <p class="meta">Zone tarifaire {{ zone.zone_tarifaire_id }} · {{ zone.nombre_tables }} tables</p>
+        @if (editingId() === zone.id) {
+          <form [formGroup]="editForm" class="plan-edit">
+            <div class="field">
+              <label>Nom</label>
+              <input type="text" formControlName="nom" [disabled]="!auth.canManagePlacement()" />
+            </div>
+            <div class="field">
+              <label>Zone tarifaire</label>
+              <select formControlName="zone_tarifaire_id" [disabled]="!auth.canManagePlacement()">
+                <option value="">Choisir</option>
+                @for (zoneTarif of zonesTarifaires(); track zoneTarif.id) {
+                  <option [value]="zoneTarif.id">{{ zoneTarif.nom }}</option>
+                }
+              </select>
+            </div>
+            <div class="field small">
+              <label>Tables</label>
+              <input type="number" min="1" formControlName="nombre_tables" [disabled]="!auth.canManagePlacement()" />
+            </div>
+          </form>
+        } @else {
+          <div>
+            <p class="name">{{ zone.nom }}</p>
+            <p class="meta">
+              {{ zoneTarifaireName(zone.zone_tarifaire_id) }} · {{ zone.nombre_tables }} tables
+            </p>
+          </div>
+        }
+        <div class="actions">
+          @if (editingId() === zone.id) {
+            <button type="button" class="secondary" (click)="saveEdit(zone.id)" [disabled]="!auth.canManagePlacement()">Enregistrer</button>
+            <button type="button" class="ghost" (click)="cancelEdit()">Annuler</button>
+          } @else {
+            <button type="button" class="ghost" (click)="startEdit(zone)" [disabled]="!auth.canManagePlacement()">Modifier</button>
+            <button type="button" class="ghost" (click)="delete(zone.id)" [disabled]="!auth.canManagePlacement()">Supprimer</button>
+          }
         </div>
-        <button type="button" class="ghost" (click)="delete(zone.id)">Supprimer</button>
       </article>
     }
     @if (zones().length === 0 && !loading()) {

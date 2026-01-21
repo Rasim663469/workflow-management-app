@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import pool from '../db/database.js';
+import { requireRoles } from '../middleware/auth-admin.js';
 
 const router = Router();
 
@@ -17,7 +18,7 @@ function isValidStatus(value: unknown): value is (typeof ALLOWED_STATUSES)[numbe
 }
 
 // Liste CRM par festival
-router.get('/', async (req, res) => {
+router.get('/', requireRoles(['super_admin', 'super_organisateur']), async (req, res) => {
   const { festival_id } = req.query;
   if (!festival_id) {
     return res.status(400).json({ error: 'festival_id est requis' });
@@ -33,6 +34,7 @@ router.get('/', async (req, res) => {
         e.est_reservant,
         cs.statut,
         cs.derniere_relance,
+        cs.notes,
         COALESCE(cnt.total_contacts, 0) AS total_contacts,
         cnt.last_contact
       FROM editeur e
@@ -56,7 +58,7 @@ router.get('/', async (req, res) => {
 });
 
 // Upsert CRM status (festival + editeur)
-router.post('/', async (req, res) => {
+router.post('/', requireRoles(['super_admin', 'super_organisateur']), async (req, res) => {
   const { editeur_id, festival_id, statut, notes } = req.body;
 
   if (!editeur_id || !festival_id) {
@@ -67,8 +69,12 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error: 'Statut CRM invalide' });
   }
 
+  const client = await pool.connect();
+
   try {
-    const { rows } = await pool.query(
+    await client.query('BEGIN');
+
+    const { rows } = await client.query(
       `
       INSERT INTO crm_suivi (editeur_id, festival_id, statut, derniere_relance, notes)
       VALUES ($1, $2, COALESCE($3, 'pas_de_contact'), CASE WHEN $3 = 'contact_pris' THEN NOW() ELSE NULL END, $4)
@@ -85,14 +91,46 @@ router.post('/', async (req, res) => {
       [editeur_id, festival_id, statut ?? null, notes ?? null]
     );
 
+    const reservationRes = await client.query(
+      `
+      SELECT id, statut_workflow
+      FROM reservation
+      WHERE editeur_id = $1 AND festival_id = $2
+      ORDER BY id DESC
+      LIMIT 1
+      `,
+      [editeur_id, festival_id]
+    );
+    const reservation = reservationRes.rows[0];
+    if (reservation && statut) {
+      const current = reservation.statut_workflow ?? 'present';
+      const locked = current === 'facture' || current === 'facture_payee';
+      let nextStatus: string | null = null;
+      if (statut === 'present') {
+        nextStatus = 'present';
+      } else if (statut === 'sera_absent' || statut === 'considere_absent') {
+        nextStatus = 'annulée';
+      }
+      if (nextStatus && !locked && nextStatus !== current) {
+        await client.query('UPDATE reservation SET statut_workflow = $1 WHERE id = $2', [
+          nextStatus,
+          reservation.id,
+        ]);
+      }
+    }
+
+    await client.query('COMMIT');
     res.status(201).json({ message: 'Statut CRM enregistré', suivi: rows[0] });
   } catch (err: any) {
+    await client.query('ROLLBACK');
     console.error(err);
     if (err.code === '23503') {
       res.status(400).json({ error: "L'éditeur ou le festival n'existe pas." });
     } else {
       res.status(500).json({ error: 'Erreur serveur.' });
     }
+  } finally {
+    client.release();
   }
 });
 

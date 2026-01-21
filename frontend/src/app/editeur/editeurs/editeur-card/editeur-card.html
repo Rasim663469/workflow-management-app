@@ -3,7 +3,6 @@
     <header>
       <div class="editeur-top">
         <h3>{{ editeur().name }}</h3>
-        <p class="editeur-subtitle">ID: {{ editeur().id }}</p>
       </div>
       <div class="editeur-meta">
         @if (editeur().type_reservant) {
@@ -18,7 +17,7 @@
   </div>
 
   <div class="card-actions">
-    @if (authService.isAdmin()) {
+    @if (authService.canManageFestivals()) {
     <button type="button" class="btn-action" (click)="onCreateContact($event)">
       {{ showForm() ? 'Fermer' : 'Ajouter un contact' }}
     </button>

@@ -34,6 +34,7 @@ export class FestivalService {
   private readonly http = inject(HttpClient);
   private readonly _festivalCards = signal<FestivalCard[]>([]);
   private readonly _currentFestivalId = signal<string | null>(null);
+  private readonly storageKey = 'currentFestivalId';
 
   readonly festivals = this._festivalCards.asReadonly();
   readonly currentFestivalId = this._currentFestivalId.asReadonly();
@@ -65,9 +66,16 @@ export class FestivalService {
   hydrateFromDtos(dtos: FestivalDto[]): void {
     this._festivalCards.set(dtos.map(dto => this.mapToCard(dto)));
 
-    // Sélectionner par défaut le premier festival si aucun courant
-    if (!this._currentFestivalId() && dtos.length > 0) {
-      this._currentFestivalId.set(dtos[0].id);
+    const storedId = this.readStoredFestivalId();
+    const hasStored = storedId && dtos.some(dto => String(dto.id) === storedId);
+
+    if (hasStored) {
+      this._currentFestivalId.set(storedId);
+      return;
+    }
+
+    if (dtos.length > 0) {
+      this.setCurrentFestival(dtos[0].id);
     }
   }
 
@@ -79,6 +87,10 @@ export class FestivalService {
     this.http.delete(`${environment.apiUrl}/festivals/${id}`, { withCredentials: true }).subscribe(() => {
       this._festivalCards.update(cards => cards.filter(card => card.id !== id));
       this._festivals.update(dtos => dtos.filter(dto => dto.id !== id));
+      if (this._currentFestivalId() === id) {
+        const next = this._festivalCards()[0]?.id ?? null;
+        this.setCurrentFestival(next);
+      }
     });
   }
 
@@ -218,9 +230,12 @@ export class FestivalService {
   setCurrentFestival(id: string | number | null): void {
     if (!id) {
       this._currentFestivalId.set(null);
+      this.clearStoredFestivalId();
       return;
     }
-    this._currentFestivalId.set(String(id));
+    const normalized = String(id);
+    this._currentFestivalId.set(normalized);
+    this.storeFestivalId(normalized);
   }
 
   getOne(id: string): Observable<FestivalDto> {
@@ -231,5 +246,28 @@ export class FestivalService {
     return this.http.get<any[]>(`${environment.apiUrl}/festivals/${id}/games`, { withCredentials: true });
   }
 
+  private readStoredFestivalId(): string | null {
+    try {
+      return localStorage.getItem(this.storageKey);
+    } catch {
+      return null;
+    }
+  }
+
+  private storeFestivalId(id: string): void {
+    try {
+      localStorage.setItem(this.storageKey, id);
+    } catch {
+      // ignore storage errors (private mode, quota)
+    }
+  }
+
+  private clearStoredFestivalId(): void {
+    try {
+      localStorage.removeItem(this.storageKey);
+    } catch {
+      // ignore storage errors
+    }
+  }
 
 }

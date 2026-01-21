@@ -49,15 +49,27 @@
   <p class="empty">Aucune zone tarifaire.</p>
   }
 
-  @if (auth.isAdmin()) {
+  @if (auth.canManageFestivals() || auth.canManagePlacement()) {
   <footer class="actions" (click)="$event.stopPropagation()">
-    <a class="primary-button" [routerLink]="['/reservations']" [queryParams]="{ festivalId: festival.id }">
-      Gérer les réservations
-    </a>
-
-    <a class="secondary-button" [routerLink]="['/festivals', festival.id, 'edit']">
-      Modifier
-    </a>
+    @if (auth.canManageReservations()) {
+      <a class="primary-button" [routerLink]="['/reservations']" [queryParams]="{ festivalId: festival.id }">
+        Gérer les réservations
+      </a>
+    }
+    @if (!auth.canManageReservations() && auth.canManagePlacement()) {
+      <a
+        class="primary-button"
+        [routerLink]="['/reservations']"
+        [queryParams]="{ festivalId: festival.id, tab: 'jeux' }"
+      >
+        Gérer le placement des jeux
+      </a>
+    }
+    @if (auth.canManageFestivals()) {
+      <a class="secondary-button" [routerLink]="['/festivals', festival.id, 'edit']">
+        Modifier
+      </a>
+    }
   </footer>
   }
 </article>

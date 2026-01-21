@@ -17,6 +17,7 @@ export type ReservationContactDto = {
   editeur_id: number;
   festival_id: number;
   date_contact: string;
+  type_contact?: string | null;
   notes?: string | null;
 };
 
@@ -94,17 +95,9 @@ export type ReservationCard = {
 };
 
 export type ReservationStatus =
-  | 'brouillon'
-  | 'pas_de_contact'
-  | 'contact_pris'
-  | 'discussion_en_cours'
-  | 'sera_absent'
-  | 'considere_absent'
   | 'present'
   | 'facture'
   | 'facture_payee'
-  | 'envoyée'
-  | 'validée'
   | 'annulée';
 
 @Injectable({ providedIn: 'root' })
@@ -205,10 +198,10 @@ export class ReservationService {
     );
   }
 
-  addContact(id: string | number, notes?: string) {
+  addContact(id: string | number, notes?: string, type_contact?: string) {
     return this.http.post(
       `${environment.apiUrl}/reservations/${id}/contacts`,
-      { notes },
+      { notes, type_contact },
       { withCredentials: true }
     );
   }
@@ -243,10 +236,25 @@ export class ReservationService {
   }
 
   private normalizeStatus(value?: string | null): string {
-    if (!value) return 'pas_de_contact';
-    if (value === 'brouillon') return 'pas_de_contact';
-    if (value === 'envoyée') return 'discussion_en_cours';
-    if (value === 'validée') return 'present';
-    return value;
+    if (!value) return 'present';
+    const normalized = value
+      .toString()
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '_')
+      .replace(/é/g, 'e')
+      .replace(/è/g, 'e')
+      .replace(/ê/g, 'e')
+      .replace(/à/g, 'a');
+    if (normalized === 'facture_payee' || normalized === 'facture_payee') return 'facture_payee';
+    if (['sera_absent', 'considere_absent', 'annulee'].includes(normalized)) return 'annulée';
+    if (
+      ['brouillon', 'pas_de_contact', 'contact_pris', 'discussion_en_cours', 'envoyee', 'validee'].includes(
+        normalized
+      )
+    ) {
+      return 'present';
+    }
+    return normalized;
   }
 }

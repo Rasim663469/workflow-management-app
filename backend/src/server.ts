@@ -7,7 +7,7 @@ import cookieParser from 'cookie-parser';
 import 'dotenv/config';
 import authRouter from './routes/auth.js';
 import { verifyToken } from './middleware/token-management.js';
-import { requireAdmin } from './middleware/auth-admin.js';
+import { requireRoles } from './middleware/auth-admin.js';
 import usersRouter from './routes/users.js';
 import publicRouter from './routes/public.js';
 import festivalRouter from './routes/festival.js'
@@ -80,26 +80,27 @@ const cert = fs.readFileSync('./certs/localhost.pem');
 app.use('/api/public', publicRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/users', verifyToken, usersRouter);
-app.use('/zones-tarifaires', zoneTarifaireRouter, verifyToken, requireAdmin);
-app.use('/api/zones-tarifaires', verifyToken, requireAdmin, zoneTarifaireRouter);
-app.use('/jeux', jeuRouter, verifyToken, requireAdmin);
-app.use('/api/jeux', verifyToken, jeuRouter);
-app.use('/api/contacts', verifyToken, requireAdmin, contatcRouter);
-app.use('/zone-plans', verifyToken, requireAdmin, zonePlanRouter);
-app.use('/api/zone-plans', verifyToken, requireAdmin, zonePlanRouter);
-app.use('api/festival', festivalRouter, verifyToken, requireAdmin);
-app.use('/api/editeurs', verifyToken, editeurRouter);
-app.use('/api/reservations', verifyToken, requireAdmin, reservationRouter);
-app.use('/api/crm', verifyToken, requireAdmin, crmSuiviRouter);
-app.use('/api/mecanismes', verifyToken, mecanismeRouter);
-app.use('/api/types-jeu', verifyToken, typeJeuRouter);
-app.use('/jeu_festival', verifyToken, requireAdmin, jeuFestivalRoutes);
-app.use('/api/jeu_festival', verifyToken, requireAdmin, jeuFestivalRoutes);
-app.use('/contact_editeur', contactRoutes, verifyToken, requireAdmin);
-app.use('/api/admin', verifyToken, requireAdmin, (req, res) => {
+app.use('/zones-tarifaires', verifyToken, zoneTarifaireRouter);
+app.use('/api/zones-tarifaires', verifyToken, zoneTarifaireRouter);
+app.use('/jeux', jeuRouter);
+app.use('/api/jeux', jeuRouter);
+app.use('/api/contacts', verifyToken, contatcRouter);
+app.use('/zone-plans', verifyToken, zonePlanRouter);
+app.use('/api/zone-plans', verifyToken, zonePlanRouter);
+app.use('api/festival', verifyToken, festivalRouter);
+app.use('/api/editeurs', editeurRouter);
+app.use('/api/reservations', verifyToken, reservationRouter);
+app.use('/api/crm', verifyToken, crmSuiviRouter);
+app.use('/api/mecanismes', mecanismeRouter);
+app.use('/api/types-jeu', typeJeuRouter);
+app.use('/jeu_festival', verifyToken, jeuFestivalRoutes);
+app.use('/api/jeu_festival', verifyToken, jeuFestivalRoutes);
+app.use('/contact_editeur', verifyToken, contactRoutes);
+app.use('/api/contact_editeur', verifyToken, contactRoutes);
+app.use('/api/admin', verifyToken, requireRoles(['super_admin']), (req, res) => {
   res.json({ message: 'Welcome admin' });
 });
-app.use('/api/factures', verifyToken, requireAdmin, factureRouter);
+app.use('/api/factures', verifyToken, requireRoles(['super_admin', 'super_organisateur']), factureRouter);
 // Festivals : lecture publique, écriture protégée par verifyToken en amont si nécessaire
 app.use('/api/festivals', festivalRouter);
 

@@ -1,10 +1,11 @@
 import { Router } from 'express';
 import pool from '../db/database.js';
+import { requireRoles } from '../middleware/auth-admin.js';
 
 const router = Router();
 
 // CRÉATION 
-router.post('/', async (req, res) => {
+router.post('/', requireRoles(['super_admin', 'super_organisateur']), async (req, res) => {
     const { festival_id, nom, nombre_tables_total, prix_table, prix_m2 } = req.body;
 
     if (!festival_id || !nom || !nombre_tables_total || prix_table === undefined) {
@@ -62,7 +63,7 @@ router.get('/', async (req, res) => {
 });
 
 // MISE À JOUR 
-router.put('/:id', async (req, res) => {
+router.put('/:id', requireRoles(['super_admin', 'super_organisateur']), async (req, res) => {
     const { id } = req.params;
     const { nom, nombre_tables_total, prix_table, prix_m2 } = req.body;
 
@@ -95,7 +96,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // SUPPRESSION 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireRoles(['super_admin', 'super_organisateur']), async (req, res) => {
     const { id } = req.params;
     try {
         const usage = await pool.query(

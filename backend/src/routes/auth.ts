@@ -64,7 +64,7 @@ router.post('/register', async (req, res) => {
   try {
     const { rows } = await pool.query(
       `INSERT INTO users (login, password_hash, role)
-       VALUES ($1, $2, 'user')
+       VALUES ($1, $2, 'benevole')
        RETURNING id, login, role`,
       [login, hashed]
     );

@@ -12,11 +12,11 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 0.75rem;
-  background: linear-gradient(135deg, rgba(39, 60, 117, 0.95), rgba(15, 23, 42, 0.95));
+  background: linear-gradient(135deg, rgba(15, 28, 63, 0.98), rgba(31, 53, 111, 0.9));
   color: #f8fafc;
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   padding: 1.1rem 1.4rem;
-  box-shadow: 0 18px 35px rgba(15, 23, 42, 0.18);
+  box-shadow: var(--shadow-soft);
 
   h2 {
     margin: 0;
@@ -61,10 +61,10 @@
   flex-wrap: wrap;
   gap: 0.4rem;
   padding: 0.4rem;
-  background: #ffffff;
-  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: var(--radius-md);
   border: 1px solid rgba(15, 23, 42, 0.08);
-  box-shadow: 0 12px 25px rgba(15, 23, 42, 0.08);
+  box-shadow: var(--shadow-tight);
 }
 
 .tab {
@@ -72,35 +72,35 @@
   background: transparent;
   padding: 0.35rem 0.75rem;
   border-radius: 999px;
-  color: #1f2937;
+  color: var(--ink-700);
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
 
   &:hover {
-    background: rgba(39, 60, 117, 0.1);
+    background: rgba(44, 74, 168, 0.12);
     transform: translateY(-1px);
   }
 
   &.active {
-    background: #273c75;
+    background: var(--brand-700);
     color: #ffffff;
   }
 }
 
 .status {
   margin: 0;
-  color: #1f2937;
+  color: var(--ink-700);
   font-weight: 500;
   padding: 0.85rem 1rem;
-  border-radius: 12px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: var(--shadow-tight);
 
   &.error {
-    color: #b91c1c;
-    background: #fff2f2;
-    border-color: #ffcdd2;
+    color: var(--danger-600);
+    background: rgba(194, 65, 12, 0.12);
+    border-color: rgba(194, 65, 12, 0.35);
   }
 }

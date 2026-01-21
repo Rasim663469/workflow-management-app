@@ -3,11 +3,18 @@
     <a routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
     <a routerLink="/jeux" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Jeux</a>
     <a routerLink="/editeurs" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Editeurs</a>
-    @if(auth.isAdmin()) {
+    @if(auth.isSuperAdmin()) {
       <a routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Admin</a>
     }
     @if(!auth.isLoggedIn()) {
       <a routerLink="/login" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Login</a>
+    }
+  </div>
+  <div class="nav-role">
+    @if (auth.isLoggedIn()) {
+      <span>Rôle : {{ roleLabel(auth.currentUser()?.role) }}</span>
+    } @else {
+      <span>Rôle : Invité</span>
     }
   </div>
 </nav>

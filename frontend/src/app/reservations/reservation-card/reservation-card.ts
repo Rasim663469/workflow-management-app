@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output, inject, signal } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import {
   FactureDto,
   ReservationCard,
@@ -7,11 +8,12 @@ import {
   ReservationService,
   ReservationStatus,
 } from '@services/reservation.service';
+import { AuthService } from '@shared/auth/auth.service';
 
 @Component({
   selector: 'app-reservation-card',
   standalone: true,
-  imports: [CommonModule, CurrencyPipe, DatePipe],
+  imports: [CommonModule, CurrencyPipe, DatePipe, FormsModule],
   templateUrl: './reservation-card.html',
   styleUrl: './reservation-card.scss',
 })
@@ -22,6 +24,7 @@ export class ReservationCardComponent {
   @Output() gamesRequested = new EventEmitter<ReservationCard>();
 
   private readonly reservationService = inject(ReservationService);
+  readonly auth = inject(AuthService);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly contacts = signal<ReservationContactDto[]>([]);
@@ -32,15 +35,16 @@ export class ReservationCardComponent {
   readonly factureError = signal<string | null>(null);
   private factureReservationId: string | null = null;
   readonly showFactureDetails = signal(false);
+  readonly contactTypes: Record<string, string> = {
+    email: 'Email',
+    telephone: 'Téléphone',
+    physique: 'Physique',
+    autre: 'Autre',
+  };
 
 
 
   readonly statuses: { value: ReservationStatus; label: string }[] = [
-    { value: 'pas_de_contact', label: 'Pas de contact' },
-    { value: 'contact_pris', label: 'Contact pris' },
-    { value: 'discussion_en_cours', label: 'Discussion en cours' },
-    { value: 'sera_absent', label: 'Sera absent' },
-    { value: 'considere_absent', label: 'Considéré absent' },
     { value: 'present', label: 'Présent' },
     { value: 'facture', label: 'Facturé' },
     { value: 'facture_payee', label: 'Facture payée' },
@@ -64,6 +68,9 @@ export class ReservationCardComponent {
   }
 
   updateStatus(value: ReservationStatus): void {
+    if (!this.auth.canManageReservations()) {
+      return;
+    }
     this.error.set(null);
     this.saving.set(true);
     this.reservationService.updateStatus(this.reservation.id, value).subscribe({
@@ -85,7 +92,38 @@ export class ReservationCardComponent {
     return this.statusLabels.get(value as ReservationStatus) ?? value;
   }
 
+  factureBreakdown() {
+    const totalCatalogue = this.reservation.prixTotal ?? 0;
+    const totalTables = this.reservation.tables ?? 0;
+    const remiseTables = this.reservation.remiseTablesOffertes ?? 0;
+    const remiseArgent = this.reservation.remiseArgent ?? 0;
+    const prixMoyen = totalTables > 0 ? totalCatalogue / totalTables : 0;
+    const valeurRemiseTables = Math.min(remiseTables, totalTables) * prixMoyen;
+    const totalFinal = this.reservation.prixFinal ?? Math.max(0, totalCatalogue - valeurRemiseTables - remiseArgent);
+
+    const lignes = (this.reservation.lignes ?? []).map(line => {
+      const tables = line.nombre_tables ?? 0;
+      const surface = line.surface_m2 ?? 0;
+      const prixTable = line.prix_table ?? 0;
+      const prixM2 = line.prix_m2 ?? 0;
+      const total = tables * prixTable + surface * prixM2;
+      return {
+        zone: line.zone_nom ?? 'Zone',
+        tables,
+        surface,
+        prixTable,
+        prixM2,
+        total,
+      };
+    });
+
+    return { totalCatalogue, totalTables, remiseTables, valeurRemiseTables, remiseArgent, totalFinal, lignes };
+  }
+
   toggleContacts(): void {
+    if (!this.auth.canManageReservations()) {
+      return;
+    }
     this.error.set(null);
     if (this.showContacts()) {
       this.showContacts.set(false);
@@ -109,9 +147,13 @@ export class ReservationCardComponent {
   }
 
   addContactNow(): void {
+    if (!this.auth.canManageReservations()) {
+      return;
+    }
     this.error.set(null);
     this.saving.set(true);
-    this.reservationService.addContact(this.reservation.id).subscribe({
+    const note = 'Contact ajouté depuis la fiche réservation';
+    this.reservationService.addContact(this.reservation.id, note, 'telephone').subscribe({
       next: () => {
         this.reservation.lastContact = new Date().toISOString();
         this.saving.set(false);
@@ -130,11 +172,22 @@ export class ReservationCardComponent {
     });
   }
 
+  contactTypeLabel(type?: string | null): string {
+    if (!type) return 'Non renseigné';
+    return this.contactTypes[type] ?? type;
+  }
+
   requestEdit(): void {
+    if (!this.auth.canManageReservations()) {
+      return;
+    }
     this.editRequested.emit(this.reservation);
   }
 
   requestGames(): void {
+    if (!this.auth.canManagePlacement()) {
+      return;
+    }
     this.gamesRequested.emit(this.reservation);
   }
 
@@ -147,6 +200,9 @@ export class ReservationCardComponent {
   }
 
   createFacture(): void {
+    if (!this.auth.canManageReservations()) {
+      return;
+    }
     this.factureError.set(null);
     this.factureLoading.set(true);
     this.reservationService.createFacture(this.reservation.id).subscribe({
@@ -170,6 +226,9 @@ export class ReservationCardComponent {
   }
 
   markFacturePayee(): void {
+    if (!this.auth.canManageReservations()) {
+      return;
+    }
     const facture = this.facture();
     if (!facture) return;
     this.factureError.set(null);
@@ -195,7 +254,7 @@ export class ReservationCardComponent {
   }
 
   canCreateFacture(): boolean {
-    return this.reservation.statut === 'present' || this.reservation.statut === 'validée';
+    return this.reservation.statut === 'present';
   }
 
   canMarkPayee(): boolean {

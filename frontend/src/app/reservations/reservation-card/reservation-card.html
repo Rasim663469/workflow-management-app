@@ -57,11 +57,11 @@
         <span>{{ line.surface_m2 }} m²</span>
       }
       <span class="price" *ngIf="line.prix_table !== undefined && line.prix_table !== null">
-        @ {{ line.prix_table | currency : 'EUR' : 'symbol' : '1.0-0' }}
+        {{ line.prix_table | currency : 'EUR' : 'symbol' : '1.0-0' }}
       </span>
       @if (line.prix_m2 !== undefined && line.prix_m2 !== null && line.surface_m2 && line.surface_m2 > 0) {
         <span class="price">
-          @ {{ line.prix_m2 | currency : 'EUR' : 'symbol' : '1.0-0' }}/m²
+          {{ line.prix_m2 | currency : 'EUR' : 'symbol' : '1.0-0' }}/m²
         </span>
       }
     </li>
@@ -78,9 +78,9 @@
     <label for="statut">Workflow</label>
     <select
       id="statut"
-      [value]="reservation.statut"
-      (change)="updateStatus($any($event.target).value)"
-      [disabled]="saving()"
+      [ngModel]="reservation.statut"
+      (ngModelChange)="updateStatus($event)"
+      [disabled]="saving() || !auth.canManageReservations()"
     >
       @for (status of statuses; track status.value) {
         <option [value]="status.value">{{ status.label }}</option>
@@ -109,21 +109,25 @@
     @if (facture() && facture()!.payee_le) {
       <span class="pill">Payée le {{ facture()!.payee_le | date : 'shortDate' }}</span>
     }
-    @if (canCreateFacture()) {
-      <button type="button" class="secondary" (click)="createFacture()" [disabled]="factureLoading()">
-        Créer la facture
-      </button>
-    }
-    @if (canMarkPayee()) {
-      <button type="button" class="secondary" (click)="markFacturePayee()" [disabled]="factureLoading()">
-        Marquer payée
-      </button>
-    }
-    @if (facture()) {
-      <button type="button" class="secondary" (click)="toggleFactureDetails()">
-        @if (showFactureDetails()) { Masquer la facture } @else { Voir la facture }
-      </button>
-    }
+    <div class="actions-row">
+      @if (auth.canManageReservations()) {
+        @if (canCreateFacture()) {
+          <button type="button" class="secondary" (click)="createFacture()" [disabled]="factureLoading()">
+            Créer la facture
+          </button>
+        }
+        @if (canMarkPayee()) {
+          <button type="button" class="secondary" (click)="markFacturePayee()" [disabled]="factureLoading()">
+            Marquer payée
+          </button>
+        }
+      }
+      @if (facture()) {
+        <button type="button" class="secondary" (click)="toggleFactureDetails()">
+          @if (showFactureDetails()) { Masquer la facture } @else { Voir la facture }
+        </button>
+      }
+    </div>
     @if (factureLoading()) {
       <span class="pill">Facturation...</span>
     }
@@ -134,6 +138,52 @@
 
   @if (showFactureDetails() && facture()) {
     <div class="facture-details">
+      <div class="facture-summary">
+        <div>
+          <p class="label">Prix catalogue</p>
+          <p class="value">{{ factureBreakdown().totalCatalogue | currency : 'EUR' : 'symbol' : '1.0-0' }}</p>
+        </div>
+        <div>
+          <p class="label">Remise tables</p>
+          <p class="value">
+            {{ factureBreakdown().remiseTables }}
+            @if (factureBreakdown().remiseTables > 0) {
+              ({{ factureBreakdown().valeurRemiseTables | currency : 'EUR' : 'symbol' : '1.0-0' }})
+            }
+          </p>
+        </div>
+        <div>
+          <p class="label">Remise €</p>
+          <p class="value">{{ factureBreakdown().remiseArgent | currency : 'EUR' : 'symbol' : '1.0-0' }}</p>
+        </div>
+        <div>
+          <p class="label">Total à payer</p>
+          <p class="value strong">{{ factureBreakdown().totalFinal | currency : 'EUR' : 'symbol' : '1.0-0' }}</p>
+        </div>
+      </div>
+
+      <div class="facture-lines">
+        <p class="label">Détail par zone</p>
+        <ul class="zones">
+          @for (line of factureBreakdown().lignes; track line.zone) {
+            <li>
+              <strong>{{ line.zone }}</strong>
+              <span>{{ line.tables }} table(s)</span>
+              @if (line.surface && line.surface > 0) {
+                <span>{{ line.surface }} m²</span>
+              }
+              @if (line.prixTable) {
+                <span class="price">{{ line.prixTable | currency : 'EUR' : 'symbol' : '1.0-0' }}</span>
+              }
+              @if (line.prixM2 && line.surface && line.surface > 0) {
+                <span class="price">{{ line.prixM2 | currency : 'EUR' : 'symbol' : '1.0-0' }}/m²</span>
+              }
+              <span class="price">= {{ line.total | currency : 'EUR' : 'symbol' : '1.0-0' }}</span>
+            </li>
+          }
+        </ul>
+      </div>
+
       <div>
         <p class="label">Numéro</p>
         <p class="value">{{ facture()!.numero }}</p>
@@ -160,18 +210,24 @@
   }
 
   <div class="workflow">
-    <button type="button" class="secondary" (click)="addContactNow()" [disabled]="saving()">
-      Ajouter un contact
-    </button>
-    <button type="button" class="secondary" (click)="toggleContacts()" [disabled]="loadingContacts()">
-      @if (showContacts()) { Masquer l'historique } @else { Voir l'historique }
-    </button>
-    <button type="button" class="secondary" (click)="requestEdit()">
-      Modifier
-    </button>
-    <button type="button" class="secondary" (click)="requestGames()">
-      Jeux & placement
-    </button>
+    <div class="actions-row">
+      @if (auth.canManageReservations()) {
+        <button type="button" class="secondary" (click)="addContactNow()" [disabled]="saving()">
+          Ajouter un contact
+        </button>
+        <button type="button" class="secondary" (click)="toggleContacts()" [disabled]="loadingContacts()">
+          @if (showContacts()) { Masquer l'historique } @else { Voir l'historique }
+        </button>
+        <button type="button" class="secondary" (click)="requestEdit()">
+          Modifier
+        </button>
+      }
+      @if (auth.canManagePlacement()) {
+        <button type="button" class="secondary" (click)="requestGames()">
+          Jeux & placement
+        </button>
+      }
+    </div>
     @if (loadingContacts()) {
       <span class="pill">Chargement...</span>
     }
@@ -182,6 +238,7 @@
       @for (contact of contacts(); track contact.id) {
         <li>
           <strong>{{ contact.date_contact | date : 'short' }}</strong>
+          <span>Type: {{ contactTypeLabel(contact.type_contact) }}</span>
           @if (contact.notes) {
             <span>{{ contact.notes }}</span>
           }

@@ -42,26 +42,12 @@ export async function ensureEditeurs(): Promise<void> {
   for (const editeur of seedEditeurs) {
     const hash = await bcrypt.hash(editeur.password, 10);
 
-    // Crée le compte utilisateur "éditeur"
-    const userInsert = await pool.query(
-      `INSERT INTO users (login, password_hash, role)
-       VALUES ($1, $2, 'editeur')
-       ON CONFLICT (login) DO UPDATE SET login = EXCLUDED.login
-       RETURNING id`,
-      [editeur.login, hash]
+    await pool.query(
+      `INSERT INTO editeur (nom, login, password_hash, description)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (login) DO NOTHING`,
+      [editeur.name, editeur.login, hash, 'Compte éditeur initial']
     );
-
-    const userId = userInsert.rows[0]?.id;
-
-    if (userId) {
-      // Associe une fiche éditeur avec le même id
-      await pool.query(
-        `INSERT INTO editeur (id, nom, login, password_hash, description)
-         VALUES ($1, $2, $3, $4, $5)
-         ON CONFLICT (id) DO NOTHING`,
-        [userId, editeur.name, editeur.login, hash, 'Compte éditeur initial']
-      );
-    }
   }
 
   console.log('👍 Comptes éditeur vérifiés ou créés');
