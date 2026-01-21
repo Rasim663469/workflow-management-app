@@ -58,7 +58,7 @@ async function syncCrmStatus(
   await client.query(
     `
     INSERT INTO crm_suivi (editeur_id, festival_id, statut, derniere_relance)
-    VALUES ($1, $2, $3, CASE WHEN $3 = 'contact_pris' THEN NOW() ELSE NULL END)
+    VALUES ($1, $2, $3::varchar, CASE WHEN $3::varchar = 'contact_pris' THEN NOW() ELSE NULL END)
     ON CONFLICT (editeur_id, festival_id)
     DO UPDATE SET statut = EXCLUDED.statut
     `,
