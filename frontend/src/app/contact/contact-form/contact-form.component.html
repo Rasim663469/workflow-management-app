@@ -1,26 +1,38 @@
-<form [formGroup]="contactForm" (ngSubmit)="submitContact()">
-    <div class="field">
-        <label>Nom du contact *</label>
-        <input type="text" formControlName="name" />
-        @if (contactForm.controls.name.invalid && contactForm.controls.name.touched) {
-        <small class="error">Le nom est requis.</small>
-        }
-    </div>
+<section class="contact-form card">
+    <header>
+        <p class="eyebrow">Contact</p>
+        <h4>Ajouter un contact</h4>
+        <p class="helper">Renseignez les infos principales pour l'éditeur.</p>
+    </header>
 
-    <div class="field">
-        <label>Email *</label>
-        <input type="email" formControlName="email" />
-    </div>
+    <form [formGroup]="contactForm" (ngSubmit)="submitContact()">
+        <div class="form-grid">
+            <label class="field">
+                Nom du contact *
+                <input type="text" formControlName="name" placeholder="Ex: Claire Dupont" />
+                @if (contactForm.controls.name.invalid && contactForm.controls.name.touched) {
+                <small class="error">Le nom est requis.</small>
+                }
+            </label>
 
-    <div class="field">
-        <label>Téléphone</label>
-        <input type="tel" formControlName="phone" />
-    </div>
+            <label class="field">
+                Email *
+                <input type="email" formControlName="email" placeholder="prenom@exemple.com" />
+            </label>
 
-    <div class="field">
-        <label>Rôle</label>
-        <input type="text" formControlName="role" placeholder="Ex: Commercial, Gérant..." />
-    </div>
+            <label class="field">
+                Téléphone
+                <input type="tel" formControlName="phone" placeholder="06 12 34 56 78" />
+            </label>
 
-    <button type="submit" [disabled]="contactForm.invalid">Ajouter ce contact</button>
-</form>
+            <label class="field">
+                Rôle
+                <input type="text" formControlName="role" placeholder="Ex: Commercial, Gérant..." />
+            </label>
+        </div>
+
+        <div class="actions">
+            <button type="submit" [disabled]="contactForm.invalid">Ajouter ce contact</button>
+        </div>
+    </form>
+</section>

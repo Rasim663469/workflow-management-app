@@ -20,6 +20,7 @@
 .editeur-overview {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
   gap: 1rem;
   padding: 1rem 1.25rem;
   border: 1px solid rgba(15, 23, 42, 0.08);
@@ -37,11 +38,70 @@
   }
 }
 
+.overview-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
 .overview-meta {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   align-items: flex-end;
+}
+
+.overview-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-end;
+
+  button {
+    border: none;
+    background: var(--brand-600);
+    color: #fff;
+    padding: 0.45rem 1.1rem;
+    border-radius: 999px;
+    font-weight: 600;
+  }
+
+  .ghost {
+    background: transparent;
+    border: 1px solid rgba(15, 23, 42, 0.2);
+    color: var(--ink-700);
+  }
+
+  .ghost.danger {
+    border-color: rgba(220, 38, 38, 0.35);
+    color: var(--danger-600);
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-weight: 600;
+  color: var(--ink-700);
+
+  input,
+  select,
+  textarea {
+    padding: 0.5rem 0.65rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    font-weight: 500;
+  }
+}
+
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: var(--ink-700);
 }
 
 .pill {

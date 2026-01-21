@@ -1,7 +1,7 @@
 import pool from './database.js';
 
 type SeedContact = {
-  editeurLogin: string;
+  editeurNom: string;
   nom: string;
   prenom: string;
   email: string;
@@ -11,7 +11,7 @@ type SeedContact = {
 
 const seedContacts: SeedContact[] = [
   {
-    editeurLogin: 'editeur1',
+    editeurNom: 'Editeur 1',
     nom: 'Martin',
     prenom: 'Alice',
     email: 'alice.martin@editeur1.test',
@@ -19,7 +19,7 @@ const seedContacts: SeedContact[] = [
     role: 'Responsable salons',
   },
   {
-    editeurLogin: 'editeur1',
+    editeurNom: 'Editeur 1',
     nom: 'Bernard',
     prenom: 'Nicolas',
     email: 'nicolas.bernard@editeur1.test',
@@ -27,7 +27,7 @@ const seedContacts: SeedContact[] = [
     role: 'Commercial',
   },
   {
-    editeurLogin: 'editeur2',
+    editeurNom: 'Editeur 2',
     nom: 'Morel',
     prenom: 'Clara',
     email: 'clara.morel@editeur2.test',
@@ -35,7 +35,7 @@ const seedContacts: SeedContact[] = [
     role: 'Chargee de com',
   },
   {
-    editeurLogin: 'editeur2',
+    editeurNom: 'Editeur 2',
     nom: 'Rossi',
     prenom: 'Emma',
     email: 'emma.rossi@editeur2.test',
@@ -45,11 +45,11 @@ const seedContacts: SeedContact[] = [
 ];
 
 export async function ensureContacts(): Promise<void> {
-  const { rows } = await pool.query('SELECT id, login FROM editeur');
-  const editeurIds = new Map(rows.map(row => [row.login as string, Number(row.id)]));
+  const { rows } = await pool.query('SELECT id, nom FROM editeur');
+  const editeurIds = new Map(rows.map(row => [row.nom as string, Number(row.id)]));
 
   for (const contact of seedContacts) {
-    const editeurId = editeurIds.get(contact.editeurLogin);
+    const editeurId = editeurIds.get(contact.editeurNom);
     if (!editeurId) continue;
 
     await pool.query(

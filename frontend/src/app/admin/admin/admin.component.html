@@ -13,12 +13,56 @@
   <header>
     <p class="eyebrow">Éditeurs</p>
     <h2>Gestion des éditeurs</h2>
-    <p class="lead">Accéder à la liste des éditeurs pour en ajouter de nouveaux.</p>
+    <p class="lead">Créer un nouvel éditeur ou accéder à la liste complète.</p>
   </header>
-  <div class="actions">
-    <a routerLink="/editeurs" class="button-link">Gérer les éditeurs</a>
-    <a routerLink="/editeurs/new" class="button-link secondary">Ajouter un éditeur</a>
-  </div>
+
+  <form [formGroup]="formEditeur" (ngSubmit)="submitEditeur()">
+    <div class="grid">
+      <div class="field">
+        <label for="nomEditeur">Nom *</label>
+        <input id="nomEditeur" type="text" formControlName="nom" placeholder="Nom de l'éditeur" />
+        @if (formEditeur.controls.nom.invalid && formEditeur.controls.nom.touched) {
+          <p class="error">Nom obligatoire (2 caractères min).</p>
+        }
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="descEditeur">Description</label>
+      <textarea id="descEditeur" rows="3" formControlName="description" placeholder="Description courte"></textarea>
+    </div>
+
+    <div class="grid">
+      <div class="field">
+        <label for="typeEditeur">Type *</label>
+        <select id="typeEditeur" formControlName="type_reservant">
+          @for (type of reservantTypes; track type.value) {
+            <option [ngValue]="type.value">{{ type.label }}</option>
+          }
+        </select>
+      </div>
+      <div class="field inline">
+        <label>
+          <input type="checkbox" formControlName="est_reservant" />
+          Réservant
+        </label>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button type="submit" [disabled]="creatingEditeur() || formEditeur.invalid">
+        {{ creatingEditeur() ? 'Création...' : 'Ajouter l’éditeur' }}
+      </button>
+      <a routerLink="/editeurs" class="button-link secondary">Voir la liste</a>
+    </div>
+
+    @if (editeurSuccess()) {
+      <p class="success">{{ editeurSuccess() }}</p>
+    }
+    @if (editeurError()) {
+      <p class="error">{{ editeurError() }}</p>
+    }
+  </form>
 </section>
 
 <section class="card">

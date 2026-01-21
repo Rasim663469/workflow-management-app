@@ -19,12 +19,12 @@ export class EditeurService {
   readonly contacts = this._contacts.asReadonly();
 
   private normalizeEditeur(dto: EditeurDto): EditeurDto {
-    const login = dto.login?.trim() || 'editeur';
+    const name = dto.name?.trim() || 'Editeur';
+    const id = String(dto.id ?? `editeur-${Math.random().toString(36).slice(2, 8)}`);
 
     return {
-      id: String(dto.id ?? login ?? `editeur-${Math.random().toString(36).slice(2, 8)}`),
-      login,
-      name: dto.name?.trim() || login,
+      id,
+      name,
       description: dto.description?.trim() || 'Aucune description fournie.',
       type_reservant: dto.type_reservant ?? null,
       est_reservant: dto.est_reservant ?? null,
@@ -81,7 +81,6 @@ export class EditeurService {
 
   create(editeur: {
     nom: string;
-    login: string;
     description: string | null;
     type_reservant?: string | null;
     est_reservant?: boolean;
@@ -89,6 +88,27 @@ export class EditeurService {
     return this.http.post(`${environment.apiUrl}/editeurs`, editeur, { withCredentials: true }).pipe(
       tap(() => this.loadAll()) // Reload list after creation
     );
+  }
+
+  updateEditeur(editeurId: string | number, payload: {
+    nom?: string;
+    description?: string | null;
+    type_reservant?: string | null;
+    est_reservant?: boolean;
+  }): Observable<any> {
+    const id = `${editeurId ?? ''}`.trim();
+    if (!id) return of(null);
+    return this.http
+      .put(`${environment.apiUrl}/editeurs/${id}`, payload, { withCredentials: true })
+      .pipe(tap(() => this.loadAll()));
+  }
+
+  deleteEditeur(editeurId: string | number): Observable<any> {
+    const id = `${editeurId ?? ''}`.trim();
+    if (!id) return of(null);
+    return this.http
+      .delete(`${environment.apiUrl}/editeurs/${id}`, { withCredentials: true })
+      .pipe(tap(() => this.loadAll()));
   }
 
 

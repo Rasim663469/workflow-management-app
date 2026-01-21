@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import bcrypt from 'bcryptjs';
 import pool from '../db/database.js';
 import { requireRoles } from '../middleware/auth-admin.js';
 import { verifyToken } from '../middleware/token-management.js';
@@ -15,29 +14,20 @@ function normalizeType(value: unknown): string {
 
 // CRÉER un éditeur (super admin / super organisateur)
 router.post('/', verifyToken, requireRoles(['super_admin', 'super_organisateur']), async (req, res) => {
-  const { nom, login, description, type_reservant, est_reservant } = req.body;
+  const { nom, description, type_reservant, est_reservant } = req.body;
   const normalizedName = typeof nom === 'string' ? nom.trim() : '';
-  const normalizedLogin = typeof login === 'string' ? login.trim() : '';
 
-  if (!normalizedName || !normalizedLogin) {
-    return res.status(400).json({ error: 'Le nom et le login sont requis.' });
-  }
-
-  if (normalizedName === normalizedLogin) {
-    return res.status(400).json({ error: 'Le login doit être différent du nom.' });
+  if (!normalizedName) {
+    return res.status(400).json({ error: 'Le nom est requis.' });
   }
 
   try {
-    const passwordHash = await bcrypt.hash('editeur123', 10);
-
     const insert = await pool.query(
-      `INSERT INTO editeur (nom, login, password_hash, description, type_reservant, est_reservant)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING id, login`,
+      `INSERT INTO editeur (nom, description, type_reservant, est_reservant)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id`,
       [
         normalizedName,
-        normalizedLogin,
-        passwordHash,
         description?.trim() || null,
         normalizeType(type_reservant),
         est_reservant !== undefined ? Boolean(est_reservant) : true,
@@ -49,16 +39,12 @@ router.post('/', verifyToken, requireRoles(['super_admin', 'super_organisateur']
       editeur: {
         id: insert.rows[0]?.id,
         name: normalizedName,
-        login: insert.rows[0]?.login,
         description: description?.trim() || null,
         type_reservant: normalizeType(type_reservant),
         est_reservant: est_reservant !== undefined ? Boolean(est_reservant) : true,
       },
     });
   } catch (err: any) {
-    if (err?.code === '23505') {
-      return res.status(409).json({ error: 'Un éditeur avec ce login existe déjà.' });
-    }
     console.error(err);
     res.status(500).json({ error: 'Erreur serveur lors de la création.' });
   }
@@ -68,7 +54,7 @@ router.post('/', verifyToken, requireRoles(['super_admin', 'super_organisateur']
 router.get('/', async (_req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT e.id, e.nom, e.login, e.description, e.type_reservant, e.est_reservant
+      `SELECT e.id, e.nom, e.description, e.type_reservant, e.est_reservant
          FROM editeur e
         ORDER BY e.nom`
     );
@@ -76,7 +62,6 @@ router.get('/', async (_req, res) => {
     const mapped = rows.map(row => ({
       id: row.id,
       name: row.nom,
-      login: row.login,
       description: row.description,
       type_reservant: row.type_reservant,
       est_reservant: row.est_reservant,
@@ -93,7 +78,7 @@ router.get('/:id', async (req, res) => {
 
   try {
     const { rows } = await pool.query(
-      'SELECT id, nom, login, description, type_reservant, est_reservant FROM editeur WHERE id = $1',
+      'SELECT id, nom, description, type_reservant, est_reservant FROM editeur WHERE id = $1',
       [id]
     );
 
@@ -105,7 +90,6 @@ router.get('/:id', async (req, res) => {
     res.json({
       id: editeur.id,
       name: editeur.nom,
-      login: editeur.login,
       description: editeur.description,
       type_reservant: editeur.type_reservant,
       est_reservant: editeur.est_reservant,
@@ -167,39 +151,22 @@ router.get('/:id/jeux', async (req, res) => {
 // MODIFIER un éditeur (super admin / super organisateur)
 router.put('/:id', verifyToken, requireRoles(['super_admin', 'super_organisateur']), async (req, res) => {
   const { id } = req.params;
-  const { nom, login, description, type_reservant, est_reservant } = req.body;
+  const { nom, description, type_reservant, est_reservant } = req.body;
 
   const updates: string[] = [];
   const values: any[] = [];
   let paramIndex = 1;
 
   const normalizedName = typeof nom === 'string' ? nom.trim() : undefined;
-  const normalizedLogin = typeof login === 'string' ? login.trim() : undefined;
-
-  const current = await pool.query('SELECT nom, login FROM editeur WHERE id = $1', [id]);
+  const current = await pool.query('SELECT nom FROM editeur WHERE id = $1', [id]);
   if (current.rows.length === 0) {
     return res.status(404).json({ error: 'Éditeur non trouvé.' });
   }
   const currentName = current.rows[0].nom as string;
-  const currentLogin = current.rows[0].login as string;
 
   if (normalizedName !== undefined) {
-    const candidateLogin = normalizedLogin ?? currentLogin;
-    if (normalizedName === candidateLogin) {
-      return res.status(400).json({ error: 'Le login doit être différent du nom.' });
-    }
     updates.push(`nom = $${paramIndex}`);
     values.push(normalizedName);
-    paramIndex++;
-  }
-
-  if (normalizedLogin !== undefined) {
-    const candidateName = normalizedName ?? currentName;
-    if (normalizedLogin === candidateName) {
-      return res.status(400).json({ error: 'Le login doit être différent du nom.' });
-    }
-    updates.push(`login = $${paramIndex}`);
-    values.push(normalizedLogin);
     paramIndex++;
   }
 
@@ -229,7 +196,7 @@ router.put('/:id', verifyToken, requireRoles(['super_admin', 'super_organisateur
         UPDATE editeur 
         SET ${updates.join(', ')} 
         WHERE id = $${paramIndex}
-        RETURNING id, nom, login, description
+        RETURNING id, nom, description
     `;
 
   const client = await pool.connect();
@@ -251,7 +218,6 @@ router.put('/:id', verifyToken, requireRoles(['super_admin', 'super_organisateur
       editeur: {
         id: editeur.id,
         name: editeur.nom,
-        login: editeur.login,
         description: editeur.description,
       },
     });

@@ -28,6 +28,9 @@ export class AdminComponent {
   readonly creatingUser = signal(false);
   readonly userSuccess = signal<string | null>(null);
   readonly userError = signal<string | null>(null);
+  readonly creatingEditeur = signal(false);
+  readonly editeurSuccess = signal<string | null>(null);
+  readonly editeurError = signal<string | null>(null);
   readonly updatingRoles = signal<Record<number, boolean>>({});
   readonly deletingUsers = signal<Record<number, boolean>>({});
   readonly roles: Array<{ value: 'super_admin' | 'super_organisateur' | 'organisateur' | 'benevole'; label: string }> = [
@@ -35,6 +38,14 @@ export class AdminComponent {
     { value: 'super_organisateur', label: 'Super-organisateur' },
     { value: 'organisateur', label: 'Organisateur' },
     { value: 'benevole', label: 'Bénévole' },
+  ];
+
+  readonly reservantTypes: Array<{ value: string; label: string }> = [
+    { value: 'editeur', label: 'Editeur' },
+    { value: 'prestataire', label: 'Prestataire' },
+    { value: 'boutique', label: 'Boutique' },
+    { value: 'animation', label: 'Animation' },
+    { value: 'association', label: 'Association' },
   ];
 
   readonly formJeu = new FormGroup({
@@ -62,6 +73,16 @@ export class AdminComponent {
       nonNullable: true,
       validators: [Validators.required],
     }),
+  });
+
+  readonly formEditeur = new FormGroup({
+    nom: new FormControl<string>('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(2)],
+    }),
+    description: new FormControl<string>('', { nonNullable: true }),
+    type_reservant: new FormControl<string>('editeur', { nonNullable: true }),
+    est_reservant: new FormControl<boolean>(true, { nonNullable: true }),
   });
 
   constructor() {
@@ -148,6 +169,47 @@ export class AdminComponent {
             (err instanceof Error ? err.message : 'Erreur lors de la création utilisateur');
           this.userError.set(message);
           this.creatingUser.set(false);
+        },
+      });
+  }
+
+  submitEditeur(): void {
+    this.editeurSuccess.set(null);
+    this.editeurError.set(null);
+
+    if (this.formEditeur.invalid) {
+      this.formEditeur.markAllAsTouched();
+      return;
+    }
+
+    const { nom, description, type_reservant, est_reservant } = this.formEditeur.getRawValue();
+    this.creatingEditeur.set(true);
+
+    this.editeurService
+      .create({
+        nom: nom.trim(),
+        description: description?.trim() || null,
+        type_reservant: type_reservant ?? 'editeur',
+        est_reservant: est_reservant ?? true,
+      })
+      .subscribe({
+        next: () => {
+          this.editeurSuccess.set('Editeur créé avec succès.');
+          this.creatingEditeur.set(false);
+          this.formEditeur.reset({
+            nom: '',
+            description: '',
+            type_reservant: 'editeur',
+            est_reservant: true,
+          });
+          this.editeurService.loadAll();
+        },
+        error: err => {
+          const message =
+            err?.error?.error ??
+            (err instanceof Error ? err.message : 'Erreur lors de la création editeur');
+          this.editeurError.set(message);
+          this.creatingEditeur.set(false);
         },
       });
   }
