@@ -70,11 +70,11 @@ export class EditeurDetailComponent {
   }
 
   canEditEditeur(): boolean {
-    return this.auth.canManageFestivals();
+    return this.auth.isSuperAdmin();
   }
 
   canManageContacts(): boolean {
-    return this.auth.canManagePlacement();
+    return this.auth.isSuperAdmin();
   }
 
   startEdit(): void {
@@ -94,6 +94,7 @@ export class EditeurDetailComponent {
   }
 
   saveEditeur(): void {
+    if (!this.canEditEditeur()) return;
     const draft = this.editeurDraft();
     if (!draft.nom.trim()) return;
     this.editeurService.updateEditeur(this.editeurId, {
@@ -107,6 +108,7 @@ export class EditeurDetailComponent {
   }
 
   deleteEditeur(): void {
+    if (!this.canEditEditeur()) return;
     if (!this.editeurId) return;
     const confirmed = window.confirm('Supprimer cet editeur ? Cette action est definitive.');
     if (!confirmed) return;
@@ -127,10 +129,12 @@ export class EditeurDetailComponent {
   }
 
   addContact(payload: { name: string; email: string; phone?: string; role?: string }): void {
+    if (!this.canManageContacts()) return;
     this.editeurService.addContact({ ...payload, editeurId: this.editeurId });
   }
 
   removeContact(contactId: string): void {
+    if (!this.canManageContacts()) return;
     this.editeurService.deleteContact(contactId);
   }
 
@@ -155,6 +159,7 @@ export class EditeurDetailComponent {
   }
 
   saveContact(contactId: string): void {
+    if (!this.canManageContacts()) return;
     const draft = this.contactDrafts()[contactId];
     if (!draft?.name || !draft?.email) return;
     this.editeurService.updateContact(contactId, draft);

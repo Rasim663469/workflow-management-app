@@ -93,7 +93,7 @@
       @if (canManageContacts()) {
         <app-contact-form (add)="addContact($event)"></app-contact-form>
       } @else {
-        <div class="placeholder">Connexion requise pour ajouter ou modifier des contacts.</div>
+        <div class="placeholder">Seul un super-admin peut ajouter ou modifier des contacts.</div>
       }
 
       @if (contacts().length === 0) {
