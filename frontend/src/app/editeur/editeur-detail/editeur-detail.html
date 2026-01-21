@@ -8,14 +8,69 @@
 
   @if (editeur()) {
     <section class="editeur-overview">
-      <div>
-        <h3>{{ editeur()!.name }}</h3>
-        <p>{{ editeur()!.description }}</p>
+      <div class="overview-main">
+        @if (!editMode()) {
+          <h3>{{ editeur()!.name }}</h3>
+          <p>{{ editeur()!.description }}</p>
+        }
+        @else {
+          <label class="field">
+            Nom de l'éditeur
+            <input
+              type="text"
+              [value]="editeurDraft().nom"
+              (input)="updateEditeurDraftField('nom', $any($event.target).value)"
+            />
+          </label>
+          <label class="field">
+            Description
+            <textarea
+              rows="3"
+              [value]="editeurDraft().description"
+              (input)="updateEditeurDraftField('description', $any($event.target).value)"
+            ></textarea>
+          </label>
+        }
       </div>
       <div class="overview-meta">
-        <span class="pill">{{ editeur()!.type_reservant || 'Type non défini' }}</span>
-        <span class="pill">{{ editeur()!.est_reservant ? 'Réservant' : 'Non réservant' }}</span>
+        @if (!editMode()) {
+          <span class="pill">{{ editeur()!.type_reservant || 'Type non défini' }}</span>
+          <span class="pill">{{ editeur()!.est_reservant ? 'Réservant' : 'Non réservant' }}</span>
+        }
+        @else {
+          <label class="field">
+            Type de reservant
+            <select
+              [value]="editeurDraft().type_reservant"
+              (change)="updateEditeurDraftField('type_reservant', $any($event.target).value)"
+            >
+              @for (opt of typeOptions; track opt.value) {
+                <option [value]="opt.value">{{ opt.label }}</option>
+              }
+            </select>
+          </label>
+          <label class="checkbox-field">
+            <input
+              type="checkbox"
+              [checked]="editeurDraft().est_reservant"
+              (change)="updateEditeurDraftField('est_reservant', $any($event.target).checked)"
+            />
+            Reservant pour ce festival
+          </label>
+        }
       </div>
+      @if (canEditEditeur()) {
+        <div class="overview-actions">
+          @if (!editMode()) {
+            <button type="button" class="ghost" (click)="startEdit()">Modifier</button>
+            <button type="button" class="ghost danger" (click)="deleteEditeur()">Supprimer</button>
+          }
+          @else {
+            <button type="button" class="ghost" (click)="cancelEdit()">Annuler</button>
+            <button type="button" (click)="saveEditeur()">Enregistrer</button>
+          }
+        </div>
+      }
     </section>
   }
 
@@ -35,7 +90,11 @@
         <p>Ajoutez ou retirez les contacts de l'éditeur.</p>
       </header>
 
-      <app-contact-form (add)="addContact($event)"></app-contact-form>
+      @if (canManageContacts()) {
+        <app-contact-form (add)="addContact($event)"></app-contact-form>
+      } @else {
+        <div class="placeholder">Connexion requise pour ajouter ou modifier des contacts.</div>
+      }
 
       @if (contacts().length === 0) {
         <div class="placeholder">Aucun contact enregistré pour cet éditeur.</div>
@@ -46,7 +105,9 @@
             <article class="contact-edit-card">
               <header>
                 <strong>{{ contact.name }}</strong>
-                <button type="button" class="ghost danger" (click)="removeContact(contact.id)">Supprimer</button>
+                @if (canManageContacts()) {
+                  <button type="button" class="ghost danger" (click)="removeContact(contact.id)">Supprimer</button>
+                }
               </header>
 
               <div class="contact-edit-fields">
@@ -56,6 +117,7 @@
                     type="text"
                     [value]="contactDraft(contact).name"
                     (input)="updateContactDraft(contact.id, 'name', $any($event.target).value)"
+                    [disabled]="!canManageContacts()"
                   />
                 </label>
                 <label>
@@ -64,6 +126,7 @@
                     type="email"
                     [value]="contactDraft(contact).email"
                     (input)="updateContactDraft(contact.id, 'email', $any($event.target).value)"
+                    [disabled]="!canManageContacts()"
                   />
                 </label>
                 <label>
@@ -72,6 +135,7 @@
                     type="tel"
                     [value]="contactDraft(contact).phone"
                     (input)="updateContactDraft(contact.id, 'phone', $any($event.target).value)"
+                    [disabled]="!canManageContacts()"
                   />
                 </label>
                 <label>
@@ -80,14 +144,17 @@
                     type="text"
                     [value]="contactDraft(contact).role"
                     (input)="updateContactDraft(contact.id, 'role', $any($event.target).value)"
+                    [disabled]="!canManageContacts()"
                   />
                 </label>
               </div>
 
-              <div class="contact-actions">
-                <button type="button" class="ghost" (click)="cancelEditContact(contact.id)">Annuler</button>
-                <button type="button" (click)="saveContact(contact.id)">Enregistrer</button>
-              </div>
+              @if (canManageContacts()) {
+                <div class="contact-actions">
+                  <button type="button" class="ghost" (click)="cancelEditContact(contact.id)">Annuler</button>
+                  <button type="button" (click)="saveContact(contact.id)">Enregistrer</button>
+                </div>
+              }
             </article>
           }
         </div>

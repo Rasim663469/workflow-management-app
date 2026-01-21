@@ -20,8 +20,6 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS editeur (
   id SERIAL PRIMARY KEY,
   nom VARCHAR(255),
-  login TEXT UNIQUE NOT NULL,
-  password_hash TEXT NOT NULL,
   description TEXT,
   type_reservant VARCHAR(20) NOT NULL DEFAULT 'editeur',
   est_reservant BOOLEAN NOT NULL DEFAULT TRUE,

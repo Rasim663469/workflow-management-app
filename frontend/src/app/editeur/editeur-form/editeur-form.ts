@@ -25,10 +25,6 @@ export class EditeurFormComponent {
     ];
 
     readonly form = new FormGroup({
-        login: new FormControl<string>('', {
-            nonNullable: true,
-            validators: [Validators.required, Validators.minLength(2)],
-        }),
         nom: new FormControl<string>('', {
             nonNullable: true,
             validators: [Validators.required, Validators.minLength(2)],
@@ -46,13 +42,12 @@ export class EditeurFormComponent {
             return;
         }
 
-        const { nom, login, description, type_reservant, est_reservant } = this.form.getRawValue();
+        const { nom, description, type_reservant, est_reservant } = this.form.getRawValue();
         this.creating.set(true);
 
         this.editeurService
             .create({
                 nom: nom.trim(),
-                login: login.trim(),
                 description: description.trim() || null,
                 type_reservant,
                 est_reservant,

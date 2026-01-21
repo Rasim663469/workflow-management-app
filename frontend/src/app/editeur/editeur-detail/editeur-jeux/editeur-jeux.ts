@@ -3,6 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Jeu } from 'app/jeux/jeu/jeu';
 import { JeuService } from '@services/jeu.service';
+import { AuthService } from '@shared/auth/auth.service';
 
 @Component({
   selector: 'app-editeur-jeux',
@@ -14,12 +15,15 @@ import { JeuService } from '@services/jeu.service';
 export class EditeurJeuxComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly jeuService = inject(JeuService);
+  private readonly auth = inject(AuthService);
   private readonly fb = inject(FormBuilder);
 
   readonly editeurId = input<string>('');
   readonly editeurName = input<string>('');
   readonly jeuDrafts = signal<Record<string, { nom: string; auteurs: string; age_min: number | null; age_max: number | null; type_jeu: string }>>({});
   readonly editing = signal<Record<string, boolean>>({});
+  readonly showForm = signal(false);
+  readonly canEdit = computed(() => this.auth.isSuperAdmin());
 
   readonly resolvedEditeurId = computed(() => {
     const direct = this.editeurId().trim();
@@ -52,6 +56,7 @@ export class EditeurJeuxComponent {
   }
 
   submit(): void {
+    if (!this.canEdit()) return;
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -84,6 +89,7 @@ export class EditeurJeuxComponent {
   }
 
   startEdit(jeu: Jeu): void {
+    if (!this.canEdit()) return;
     this.jeuDrafts.set({
       ...this.jeuDrafts(),
       [jeu.id]: {
@@ -117,6 +123,7 @@ export class EditeurJeuxComponent {
   }
 
   saveEdit(jeuId: string): void {
+    if (!this.canEdit()) return;
     const draft = this.jeuDrafts()[jeuId];
     if (!draft?.nom) return;
     const editeurId = this.resolvedEditeurId();
@@ -137,9 +144,15 @@ export class EditeurJeuxComponent {
   }
 
   removeJeu(jeuId: string): void {
+    if (!this.canEdit()) return;
     const editeurId = this.resolvedEditeurId();
     if (!editeurId) return;
     this.jeuService.delete(jeuId, editeurId);
+  }
+
+  toggleForm(): void {
+    if (!this.canEdit()) return;
+    this.showForm.set(!this.showForm());
   }
 
   ageRange(jeu: Jeu): string {

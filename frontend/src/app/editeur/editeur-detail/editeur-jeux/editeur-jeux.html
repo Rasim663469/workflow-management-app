@@ -4,35 +4,46 @@
       <h3>Jeux de {{ resolvedEditeurName() }}</h3>
       <p>Ajoutez, consultez ou retirez les jeux associés à cet éditeur.</p>
     </div>
+    @if (canEdit()) {
+      <button type="button" class="ghost" (click)="toggleForm()">
+        @if (showForm()) { Masquer le formulaire } @else { Ajouter un jeu }
+      </button>
+    }
   </header>
 
-  <form class="jeu-form" [formGroup]="form" (ngSubmit)="submit()">
-    <div class="form-grid">
-      <label>
-        Nom du jeu *
-        <input type="text" formControlName="nom" placeholder="Nom du jeu" />
-      </label>
-      <label>
-        Auteur(s)
-        <input type="text" formControlName="auteurs" placeholder="Auteur, autrice..." />
-      </label>
-      <label>
-        Âge min
-        <input type="number" formControlName="age_min" min="0" />
-      </label>
-      <label>
-        Âge max
-        <input type="number" formControlName="age_max" min="0" />
-      </label>
-      <label>
-        Type
-        <input type="text" formControlName="type_jeu" placeholder="Famille, genre..." />
-      </label>
-    </div>
-    <div class="form-actions">
-      <button type="submit" [disabled]="form.invalid">Ajouter le jeu</button>
-    </div>
-  </form>
+  @if (canEdit()) {
+    @if (showForm()) {
+      <form class="jeu-form card" [formGroup]="form" (ngSubmit)="submit()">
+        <div class="form-grid">
+          <label>
+            Nom du jeu *
+            <input type="text" formControlName="nom" placeholder="Nom du jeu" />
+          </label>
+          <label>
+            Auteur(s)
+            <input type="text" formControlName="auteurs" placeholder="Auteur, autrice..." />
+          </label>
+          <label>
+            Âge min
+            <input type="number" formControlName="age_min" min="0" />
+          </label>
+          <label>
+            Âge max
+            <input type="number" formControlName="age_max" min="0" />
+          </label>
+          <label>
+            Type
+            <input type="text" formControlName="type_jeu" placeholder="Famille, genre..." />
+          </label>
+        </div>
+        <div class="form-actions">
+          <button type="submit" [disabled]="form.invalid">Ajouter le jeu</button>
+        </div>
+      </form>
+    }
+  } @else {
+    <p class="muted">Lecture seule : seuls les super-admin peuvent modifier les jeux.</p>
+  }
 
   @if (error()) {
     <p class="alert alert-error">{{ error() }}</p>
@@ -111,12 +122,14 @@
               </div>
             }
             @else {
-              <div class="jeu-actions">
-                <button type="button" class="ghost" (click)="startEdit(jeu)">Modifier</button>
-                <button type="button" class="ghost danger" (click)="removeJeu(jeu.id)">
-                  Supprimer
-                </button>
-              </div>
+              @if (canEdit()) {
+                <div class="jeu-actions">
+                  <button type="button" class="ghost" (click)="startEdit(jeu)">Modifier</button>
+                  <button type="button" class="ghost danger" (click)="removeJeu(jeu.id)">
+                    Supprimer
+                  </button>
+                </div>
+              }
             }
           </article>
         }

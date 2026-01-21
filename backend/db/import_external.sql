@@ -67,52 +67,27 @@ WITH missing_editeurs AS (
       SELECT 1 FROM staging_editeur se WHERE se.idEditeur = sj.idEditeur
     )
 )
-INSERT INTO users (id, login, password_hash, role)
-SELECT
-  me.idEditeur::int,
-  'editeur' || me.idEditeur,
-  crypt('editeur123', gen_salt('bf')),
-  'editeur'
-FROM missing_editeurs me
-ON CONFLICT (id) DO NOTHING;
-
--- Users + editeurs (login different from nom)
-INSERT INTO users (id, login, password_hash, role)
+INSERT INTO editeur (id, nom, description)
 SELECT
   se.idEditeur::int,
-  'editeur' || se.idEditeur,
-  crypt('editeur123', gen_salt('bf')),
-  'editeur'
-FROM staging_editeur se
-ON CONFLICT (id) DO NOTHING;
-
-INSERT INTO editeur (id, nom, login, password_hash, description)
-SELECT
-  u.id,
   se.libelleEditeur,
-  u.login,
-  u.password_hash,
   NULL
 FROM staging_editeur se
-JOIN users u ON u.id = se.idEditeur::int
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO editeur (id, nom, login, password_hash, description)
+INSERT INTO editeur (id, nom, description)
 SELECT
-  u.id,
-  'Editeur inconnu ' || u.id,
-  u.login,
-  u.password_hash,
+  sj.idEditeur::int,
+  'Editeur inconnu ' || sj.idEditeur::int,
   NULL
-FROM users u
-JOIN (
-  SELECT DISTINCT sj.idEditeur::int AS id
+FROM (
+  SELECT DISTINCT sj.idEditeur
   FROM staging_jeu sj
   WHERE NULLIF(sj.idEditeur, '') IS NOT NULL
     AND NOT EXISTS (
       SELECT 1 FROM staging_editeur se WHERE se.idEditeur::int = sj.idEditeur::int
     )
-) missing ON missing.id = u.id
+) sj
 ON CONFLICT (id) DO NOTHING;
 
 -- Reference tables for types and mecanisms

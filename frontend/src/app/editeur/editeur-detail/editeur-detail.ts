@@ -1,8 +1,9 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { EditeurService } from '@services/editeur.service';
 import { ContactFormComponent } from '../../contact/contact-form/contact-form.component';
 import { EditeurJeuxComponent } from './editeur-jeux/editeur-jeux';
+import { AuthService } from '@shared/auth/auth.service';
 
 @Component({
   selector: 'app-editeur-detail',
@@ -13,11 +14,33 @@ import { EditeurJeuxComponent } from './editeur-jeux/editeur-jeux';
 })
 export class EditeurDetailComponent {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly editeurService = inject(EditeurService);
+  private readonly auth = inject(AuthService);
 
   readonly editeurId = this.route.snapshot.paramMap.get('id') ?? '';
   readonly activeTab = signal<'contacts' | 'jeux'>('contacts');
   readonly contactDrafts = signal<Record<string, { name: string; email: string; phone: string; role: string }>>({});
+  readonly editMode = signal(false);
+  readonly editeurDraft = signal<{
+    nom: string;
+    description: string;
+    type_reservant: string;
+    est_reservant: boolean;
+  }>({
+    nom: '',
+    description: '',
+    type_reservant: 'editeur',
+    est_reservant: true,
+  });
+
+  readonly typeOptions = [
+    { value: 'editeur', label: 'Editeur' },
+    { value: 'prestataire', label: 'Prestataire' },
+    { value: 'boutique', label: 'Boutique' },
+    { value: 'animation', label: 'Animation' },
+    { value: 'association', label: 'Association' },
+  ];
 
   readonly editeur = computed(() => {
     const id = this.editeurId;
@@ -44,6 +67,63 @@ export class EditeurDetailComponent {
 
   setTab(tab: 'contacts' | 'jeux'): void {
     this.activeTab.set(tab);
+  }
+
+  canEditEditeur(): boolean {
+    return this.auth.canManageFestivals();
+  }
+
+  canManageContacts(): boolean {
+    return this.auth.canManagePlacement();
+  }
+
+  startEdit(): void {
+    const current = this.editeur();
+    if (!current) return;
+    this.editeurDraft.set({
+      nom: current.name ?? '',
+      description: current.description ?? '',
+      type_reservant: current.type_reservant ?? 'editeur',
+      est_reservant: current.est_reservant ?? true,
+    });
+    this.editMode.set(true);
+  }
+
+  cancelEdit(): void {
+    this.editMode.set(false);
+  }
+
+  saveEditeur(): void {
+    const draft = this.editeurDraft();
+    if (!draft.nom.trim()) return;
+    this.editeurService.updateEditeur(this.editeurId, {
+      nom: draft.nom.trim(),
+      description: draft.description?.trim() || null,
+      type_reservant: draft.type_reservant,
+      est_reservant: draft.est_reservant,
+    }).subscribe(() => {
+      this.editMode.set(false);
+    });
+  }
+
+  deleteEditeur(): void {
+    if (!this.editeurId) return;
+    const confirmed = window.confirm('Supprimer cet editeur ? Cette action est definitive.');
+    if (!confirmed) return;
+    this.editeurService.deleteEditeur(this.editeurId).subscribe(() => {
+      this.router.navigate(['/editeurs']);
+    });
+  }
+
+  updateEditeurDraftField(
+    field: 'nom' | 'description' | 'type_reservant' | 'est_reservant',
+    value: string | boolean
+  ): void {
+    const current = this.editeurDraft();
+    this.editeurDraft.set({
+      ...current,
+      [field]: value as any,
+    });
   }
 
   addContact(payload: { name: string; email: string; phone?: string; role?: string }): void {

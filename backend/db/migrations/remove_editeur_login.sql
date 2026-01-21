@@ -1,0 +1,6 @@
+BEGIN;
+
+ALTER TABLE editeur DROP COLUMN IF EXISTS password_hash;
+ALTER TABLE editeur DROP COLUMN IF EXISTS login;
+
+COMMIT;

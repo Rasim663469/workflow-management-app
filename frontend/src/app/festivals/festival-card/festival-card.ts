@@ -17,6 +17,10 @@ export class FestivalCard {
   private readonly festivalService = inject(FestivalService);
   readonly currentFestivalId = this.festivalService.currentFestivalId;
 
+  canViewFestivalNumbers(): boolean {
+    return this.auth.isLoggedIn() && !this.auth.isBenevole();
+  }
+
   isCurrent(): boolean {
     const current = this.currentFestivalId();
     if (!current) return false;

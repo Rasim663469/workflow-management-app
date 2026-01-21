@@ -9,7 +9,7 @@
     </div>
   </header>
 
-  @if (isCurrent()) {
+  @if (canViewFestivalNumbers() && isCurrent()) {
   <span class="current-pill">Festival courant</span>
   }
 
@@ -23,30 +23,34 @@
     }
   </div>
 
-  <div class="festival-stats">
-    <p><strong>Total tables :</strong> {{ totalTables() }}</p>
-    <p><strong>Disponibles :</strong> {{ totalAvailable() }}</p>
-  </div>
+  @if (canViewFestivalNumbers()) {
+    <div class="festival-stats">
+      <p><strong>Total tables :</strong> {{ totalTables() }}</p>
+      <p><strong>Disponibles :</strong> {{ totalAvailable() }}</p>
+    </div>
 
-  <div class="current-actions" (click)="$event.stopPropagation()">
-    <button type="button" class="secondary-button" (click)="setCurrent($event)" [disabled]="isCurrent()">
-      Définir comme courant
-    </button>
-  </div>
-
-  @if (festival.tariffZones?.length) {
-  <ul class="tariff-zones">
-    @for (zone of festival.tariffZones; track zone.id ?? zone.name) {
-    <li class="tariff-zone">
-      <span class="zone-name">{{ zone.name }}</span>
-      <span class="zone-details">
-        {{ zoneAvailable(zone) }} dispo / {{ zone.totalTables }} tables
-      </span>
-    </li>
+    @if (auth.canManageFestivals()) {
+      <div class="current-actions" (click)="$event.stopPropagation()">
+        <button type="button" class="secondary-button" (click)="setCurrent($event)" [disabled]="isCurrent()">
+          Définir comme courant
+        </button>
+      </div>
     }
-  </ul>
-  } @else {
-  <p class="empty">Aucune zone tarifaire.</p>
+
+    @if (festival.tariffZones?.length) {
+      <ul class="tariff-zones">
+        @for (zone of festival.tariffZones; track zone.id ?? zone.name) {
+          <li class="tariff-zone">
+            <span class="zone-name">{{ zone.name }}</span>
+            <span class="zone-details">
+              {{ zoneAvailable(zone) }} dispo / {{ zone.totalTables }} tables
+            </span>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="empty">Aucune zone tarifaire.</p>
+    }
   }
 
   @if (auth.canManageFestivals() || auth.canManagePlacement()) {
