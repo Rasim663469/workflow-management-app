@@ -1,6 +1,5 @@
-import { Component, EventEmitter, Input, Output, inject, signal } from '@angular/core';
-import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { Component, effect, inject, input, output, signal } from '@angular/core';
+import { CurrencyPipe, DatePipe } from '@angular/common';
 import {
   FactureDto,
   ReservationCard,
@@ -13,15 +12,15 @@ import { AuthService } from '@shared/auth/auth.service';
 @Component({
   selector: 'app-reservation-card',
   standalone: true,
-  imports: [CommonModule, CurrencyPipe, DatePipe, FormsModule],
+  imports: [CurrencyPipe, DatePipe],
   templateUrl: './reservation-card.html',
   styleUrl: './reservation-card.scss',
 })
 export class ReservationCardComponent {
-  @Input({ required: true }) reservation!: ReservationCard;
-  @Input() lastContact?: string | null;
-  @Output() editRequested = new EventEmitter<ReservationCard>();
-  @Output() gamesRequested = new EventEmitter<ReservationCard>();
+  reservation = input.required<ReservationCard>();
+  lastContact = input<string | null>();
+  editRequested = output<ReservationCard>();
+  gamesRequested = output<ReservationCard>();
 
   private readonly reservationService = inject(ReservationService);
   readonly auth = inject(AuthService);
@@ -54,17 +53,20 @@ export class ReservationCardComponent {
     this.statuses.map(status => [status.value, status.label])
   );
 
-  ngOnChanges(): void {
-    if (!this.reservation?.id) {
-      return;
-    }
-    if (this.factureReservationId !== this.reservation.id) {
-      this.factureReservationId = this.reservation.id;
-      this.facture.set(null);
-      if (this.shouldLoadFacture(this.reservation.statut)) {
-        this.loadFacture(this.reservation.id);
+  constructor() {
+    effect(() => {
+      const reservation = this.reservation();
+      if (!reservation?.id) {
+        return;
       }
-    }
+      if (this.factureReservationId !== reservation.id) {
+        this.factureReservationId = reservation.id;
+        this.facture.set(null);
+        if (this.shouldLoadFacture(reservation.statut)) {
+          this.loadFacture(reservation.id);
+        }
+      }
+    });
   }
 
   updateStatus(value: ReservationStatus): void {
@@ -73,9 +75,10 @@ export class ReservationCardComponent {
     }
     this.error.set(null);
     this.saving.set(true);
-    this.reservationService.updateStatus(this.reservation.id, value).subscribe({
+    const reservation = this.reservation();
+    this.reservationService.updateStatus(reservation.id, value).subscribe({
       next: () => {
-        this.reservation.statut = value;
+        reservation.statut = value;
         this.saving.set(false);
       },
       error: err => {
@@ -93,15 +96,17 @@ export class ReservationCardComponent {
   }
 
   factureBreakdown() {
-    const totalCatalogue = this.reservation.prixTotal ?? 0;
-    const totalTables = this.reservation.tables ?? 0;
-    const remiseTables = this.reservation.remiseTablesOffertes ?? 0;
-    const remiseArgent = this.reservation.remiseArgent ?? 0;
+    const reservation = this.reservation();
+    const totalCatalogue = reservation.prixTotal ?? 0;
+    const totalTables = reservation.tables ?? 0;
+    const remiseTables = reservation.remiseTablesOffertes ?? 0;
+    const remiseArgent = reservation.remiseArgent ?? 0;
     const prixMoyen = totalTables > 0 ? totalCatalogue / totalTables : 0;
     const valeurRemiseTables = Math.min(remiseTables, totalTables) * prixMoyen;
-    const totalFinal = this.reservation.prixFinal ?? Math.max(0, totalCatalogue - valeurRemiseTables - remiseArgent);
+    const totalFinal =
+      reservation.prixFinal ?? Math.max(0, totalCatalogue - valeurRemiseTables - remiseArgent);
 
-    const lignes = (this.reservation.lignes ?? []).map(line => {
+    const lignes = (reservation.lignes ?? []).map(line => {
       const tables = line.nombre_tables ?? 0;
       const surface = line.surface_m2 ?? 0;
       const prixTable = line.prix_table ?? 0;
@@ -129,8 +134,13 @@ export class ReservationCardComponent {
       this.showContacts.set(false);
       return;
     }
+    const reservation = this.reservation();
+    if (!reservation?.id) {
+      this.loadingContacts.set(false);
+      return;
+    }
     this.loadingContacts.set(true);
-    this.reservationService.loadContacts(this.reservation.id).subscribe({
+    this.reservationService.loadContacts(reservation.id).subscribe({
       next: data => {
         this.contacts.set(data ?? []);
         this.showContacts.set(true);
@@ -153,9 +163,10 @@ export class ReservationCardComponent {
     this.error.set(null);
     this.saving.set(true);
     const note = 'Contact ajouté depuis la fiche réservation';
-    this.reservationService.addContact(this.reservation.id, note, 'telephone').subscribe({
+    const reservation = this.reservation();
+    this.reservationService.addContact(reservation.id, note, 'telephone').subscribe({
       next: () => {
-        this.reservation.lastContact = new Date().toISOString();
+        reservation.lastContact = new Date().toISOString();
         this.saving.set(false);
         if (this.showContacts()) {
           this.toggleContacts();
@@ -181,21 +192,21 @@ export class ReservationCardComponent {
     if (!this.auth.canManageReservations()) {
       return;
     }
-    this.editRequested.emit(this.reservation);
+    this.editRequested.emit(this.reservation());
   }
 
   requestGames(): void {
     if (!this.auth.canManagePlacement()) {
       return;
     }
-    this.gamesRequested.emit(this.reservation);
+    this.gamesRequested.emit(this.reservation());
   }
 
   toggleFactureDetails(): void {
     const next = !this.showFactureDetails();
     this.showFactureDetails.set(next);
     if (next && !this.facture() && !this.factureLoading()) {
-      this.loadFacture(this.reservation.id);
+      this.loadFacture(this.reservation().id);
     }
   }
 
@@ -205,12 +216,13 @@ export class ReservationCardComponent {
     }
     this.factureError.set(null);
     this.factureLoading.set(true);
-    this.reservationService.createFacture(this.reservation.id).subscribe({
+    const reservation = this.reservation();
+    this.reservationService.createFacture(reservation.id).subscribe({
       next: response => {
         const facture = response?.facture ?? null;
         if (facture) {
           this.facture.set(facture);
-          this.reservation.statut = 'facture';
+          reservation.statut = 'facture';
           this.showFactureDetails.set(true);
         }
         this.factureLoading.set(false);
@@ -238,7 +250,7 @@ export class ReservationCardComponent {
         const updated = response?.facture ?? null;
         if (updated) {
           this.facture.set(updated);
-          this.reservation.statut = 'facture_payee';
+          this.reservation().statut = 'facture_payee';
           this.showFactureDetails.set(true);
         }
         this.factureLoading.set(false);
@@ -254,7 +266,7 @@ export class ReservationCardComponent {
   }
 
   canCreateFacture(): boolean {
-    return this.reservation.statut === 'present';
+    return this.reservation().statut === 'present';
   }
 
   canMarkPayee(): boolean {

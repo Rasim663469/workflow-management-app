@@ -190,6 +190,12 @@ export class ReservationService {
     });
   }
 
+  delete(id: string | number) {
+    return this.http.delete(`${environment.apiUrl}/reservations/${id}`, {
+      withCredentials: true,
+    });
+  }
+
   updateStatus(id: string | number, statut_workflow: ReservationStatus) {
     return this.http.put(
       `${environment.apiUrl}/reservations/${id}`,

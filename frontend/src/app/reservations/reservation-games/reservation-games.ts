@@ -1,4 +1,4 @@
-import { Component, effect, inject, Input, signal } from '@angular/core';
+import { Component, effect, inject, input, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { ReservationCard } from '@services/reservation.service';
 import { JeuService } from '@services/jeu.service';
@@ -11,10 +11,15 @@ import { AuthService } from '@shared/auth/auth.service';
 type DraftMap = Record<number, Partial<JeuFestivalDto>>;
 
 type ReservationTypeBudget = {
-  standard: number;
-  grandes: number;
-  mairie: number;
-  total: number;
+  wishes: {
+    standard: number;
+    grandes: number;
+    mairie: number;
+    total: number;
+  };
+  reservedTotal: number;
+  reservedRemaining: number;
+  usedTotal: number;
 };
 
 @Component({
@@ -31,9 +36,9 @@ export class ReservationGamesComponent {
   private readonly festivalService = inject(FestivalService);
   readonly auth = inject(AuthService);
 
-  @Input() reservation: ReservationCard | null = null;
-  @Input({ required: true }) festivalId!: number | string;
-  @Input() festival: FestivalDto | null = null;
+  reservation = input<ReservationCard | null>(null);
+  festivalId = input.required<number | string>();
+  festival = input<FestivalDto | null>(null);
 
   readonly jeux = this.jeuService.jeux;
   readonly games = signal<JeuFestivalDto[]>([]);
@@ -46,6 +51,7 @@ export class ReservationGamesComponent {
   readonly unplacedAlert = signal<string | null>(null);
   readonly stockUsage = signal<FestivalStockUsageDto | null>(null);
   readonly reservationBudget = signal<ReservationTypeBudget | null>(null);
+  readonly wishesAlert = signal<string | null>(null);
 
   readonly newGame = signal({
     jeu_id: null as number | null,
@@ -59,11 +65,11 @@ export class ReservationGamesComponent {
   });
 
   remainingForZonePlan(zonePlanId: number): number | null {
-    if (!this.reservation) return null;
+    if (!this.reservation()) return null;
     const zonePlan = this.zonesPlan().find(z => z.id === zonePlanId);
     if (!zonePlan) return null;
     const zoneId = zonePlan.zone_tarifaire_id;
-    const reserved = (this.reservation.lignes ?? []).reduce((sum, line) => {
+    const reserved = (this.reservation()!.lignes ?? []).reduce((sum, line) => {
       if (line.zone_tarifaire_id !== zoneId) return sum;
       const tables = Number(line.nombre_tables ?? 0);
       const m2 = Number(line.surface_m2 ?? 0);
@@ -78,20 +84,31 @@ export class ReservationGamesComponent {
     return reserved - used;
   }
 
+  eligibleZones(): ZonePlanDto[] {
+    if (!this.reservation()?.lignes?.length) return this.zonesPlan();
+    const allowed = new Set(
+      this.reservation()!.lignes.map(line => Number(line.zone_tarifaire_id))
+    );
+    return this.zonesPlan().filter(zone => allowed.has(Number(zone.zone_tarifaire_id)));
+  }
+
   constructor() {
     effect(() => {
-      if (this.reservation?.editeurId) {
-        this.jeuService.loadByEditeur(this.reservation.editeurId);
+      const reservation = this.reservation();
+      if (reservation?.editeurId) {
+        this.jeuService.loadByEditeur(reservation.editeurId);
       }
     });
     effect(() => {
-      if (this.reservation?.id) {
+      const reservation = this.reservation();
+      if (reservation?.id) {
         this.loadGames();
       }
     });
     effect(() => {
-      if (this.festivalId) {
-        this.zonePlanService.listByFestival(this.festivalId).subscribe({
+      const festivalId = this.festivalId();
+      if (festivalId) {
+        this.zonePlanService.listByFestival(festivalId).subscribe({
           next: rows => {
             this.zonesPlan.set(rows ?? []);
             this.computeAlerts();
@@ -126,37 +143,19 @@ export class ReservationGamesComponent {
     return total / qty;
   }
 
-  ngOnChanges(): void {
-    if (this.reservation?.editeurId) {
-      this.jeuService.loadByEditeur(this.reservation.editeurId);
-    }
-    if (this.reservation?.id) {
-      this.loadGames();
-    }
-    if (this.festivalId) {
-      this.zonePlanService.listByFestival(this.festivalId).subscribe({
-        next: rows => {
-          this.zonesPlan.set(rows ?? []);
-          this.computeAlerts();
-        },
-        error: () => this.zonesPlan.set([]),
-      });
-    }
-  }
-
   handleSubmit(event: Event): void {
     event.preventDefault();
     this.create();
   }
 
   private loadGames(): void {
-    if (!this.reservation?.id) {
+    if (!this.reservation()?.id) {
       this.games.set([]);
       return;
     }
     this.loading.set(true);
     this.error.set(null);
-    this.jeuFestivalService.listByReservation(this.reservation.id).subscribe({
+    this.jeuFestivalService.listByReservation(this.reservation()!.id).subscribe({
       next: rows => {
         this.games.set(rows ?? []);
         this.loading.set(false);
@@ -192,12 +191,12 @@ export class ReservationGamesComponent {
 
     this.computeReservationBudget(games, zones);
 
-    if (!this.festivalId) {
+    if (!this.festivalId()) {
       this.stockAlert.set(null);
       this.stockUsage.set(null);
       return;
     }
-    this.festivalService.getStockUsage(this.festivalId).subscribe({
+    this.festivalService.getStockUsage(this.festivalId()).subscribe({
       next: data => {
         this.stockUsage.set(data);
         const alerts: string[] = [];
@@ -215,20 +214,22 @@ export class ReservationGamesComponent {
   }
 
   private computeReservationBudget(games: JeuFestivalDto[], zones: ZonePlanDto[]): void {
-    if (!this.reservation) {
+    if (!this.reservation()) {
       this.reservationBudget.set(null);
+      this.wishesAlert.set(null);
       return;
     }
 
-    const reservedTotal = (this.reservation.lignes ?? []).reduce((sum, line) => {
+    const reservation = this.reservation()!;
+    const reservedTotal = (reservation.lignes ?? []).reduce((sum, line) => {
       const tables = Number(line.nombre_tables ?? 0);
       const m2 = Number(line.surface_m2 ?? 0);
       return sum + tables + Math.ceil(m2 / 4);
     }, 0);
 
-    const desiredGrandes = Number(this.reservation.souhaitGrandesTables ?? 0);
-    const desiredMairie = Number(this.reservation.souhaitTablesMairie ?? 0);
-    const desiredStandardRaw = Number(this.reservation.souhaitTablesStandard ?? 0);
+    const desiredGrandes = Number(reservation.souhaitGrandesTables ?? 0);
+    const desiredMairie = Number(reservation.souhaitTablesMairie ?? 0);
+    const desiredStandard = Number(reservation.souhaitTablesStandard ?? 0);
 
     const usedByType = { standard: 0, grandes: 0, mairie: 0 };
     for (const game of games) {
@@ -238,12 +239,29 @@ export class ReservationGamesComponent {
       usedByType[key] += Number(game.tables_utilisees ?? 0);
     }
 
+    const usedTotal = usedByType.standard + usedByType.grandes + usedByType.mairie;
+    const wishesTotal = desiredStandard + desiredGrandes + desiredMairie;
+    const reservedRemaining = reservedTotal - usedTotal;
+
     this.reservationBudget.set({
-      standard: reservedTotal - usedByType.standard - usedByType.grandes - usedByType.mairie,
-      grandes: desiredGrandes - usedByType.grandes,
-      mairie: desiredMairie - usedByType.mairie,
-      total: reservedTotal,
+      wishes: {
+        standard: desiredStandard,
+        grandes: desiredGrandes,
+        mairie: desiredMairie,
+        total: wishesTotal,
+      },
+      reservedTotal,
+      reservedRemaining,
+      usedTotal,
     });
+
+    if (wishesTotal > reservedTotal) {
+      this.wishesAlert.set(
+        'La somme des souhaits (standard + grandes + mairie) dépasse le total réservé.'
+      );
+    } else {
+      this.wishesAlert.set(null);
+    }
   }
 
   updateDraft(id: number, patch: Partial<JeuFestivalDto>): void {
@@ -298,7 +316,7 @@ export class ReservationGamesComponent {
       this.error.set('Vous ne pouvez pas modifier le placement des jeux.');
       return;
     }
-    if (!this.reservation?.id) return;
+    if (!this.reservation()?.id) return;
     const draft = this.newGame();
     if (!draft.jeu_id) {
       this.error.set('Sélectionnez un jeu.');
@@ -308,7 +326,7 @@ export class ReservationGamesComponent {
     this.jeuFestivalService
       .create({
         jeu_id: draft.jeu_id,
-        reservation_id: Number(this.reservation.id),
+        reservation_id: Number(this.reservation()!.id),
         zone_plan_id: draft.zone_plan_id,
         quantite: Number(draft.quantite ?? 1),
         nombre_tables_allouees: Number(draft.tables_utilisees ?? 1),

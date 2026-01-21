@@ -1,4 +1,4 @@
-import { Component, effect, inject, Input, signal } from '@angular/core';
+import { Component, effect, inject, input, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ZonePlanService, ZonePlanDto } from '@services/zone-plan.service';
 import { ZoneTarifaireDto, ZoneTarifaireService } from '@services/zone-tarifaire.service';
@@ -16,7 +16,7 @@ export class PlanZonesComponent {
   private readonly zoneTarifaireService = inject(ZoneTarifaireService);
   readonly auth = inject(AuthService);
 
-  @Input({ required: true }) festivalId!: number | string;
+  festivalId = input.required<number | string>();
 
   readonly zones = signal<ZonePlanDto[]>([]);
   readonly zonesTarifaires = signal<ZoneTarifaireDto[]>([]);
@@ -45,23 +45,18 @@ export class PlanZonesComponent {
 
   constructor() {
     effect(() => {
-      if (this.festivalId) {
+      const festivalId = this.festivalId();
+      if (festivalId) {
         this.loadData();
       }
     });
-  }
-
-  ngOnChanges(): void {
-    if (this.festivalId) {
-      this.loadData();
-    }
   }
 
   private loadData(): void {
     this.loading.set(true);
     this.error.set(null);
 
-    this.zonePlanService.listByFestival(this.festivalId).subscribe({
+    this.zonePlanService.listByFestival(this.festivalId()).subscribe({
       next: rows => {
         this.zones.set(rows ?? []);
         this.loading.set(false);
@@ -74,7 +69,7 @@ export class PlanZonesComponent {
       },
     });
 
-    this.zoneTarifaireService.listByFestival(this.festivalId).subscribe({
+    this.zoneTarifaireService.listByFestival(this.festivalId()).subscribe({
       next: rows => this.zonesTarifaires.set(rows ?? []),
       error: () => this.zonesTarifaires.set([]),
     });
@@ -97,7 +92,7 @@ export class PlanZonesComponent {
 
     this.zonePlanService
       .create({
-        festival_id: Number(this.festivalId),
+        festival_id: Number(this.festivalId()),
         zone_tarifaire_id: Number(zone_tarifaire_id),
         nom: nom.trim(),
         nombre_tables: Number(nombre_tables ?? 0),

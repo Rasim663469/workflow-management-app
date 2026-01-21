@@ -20,9 +20,9 @@ import { ensureFactures } from './db/initFactures.js';
 import zoneTarifaireRouter from './routes/zone_tarifaire.js';
 import jeuRouter from './routes/jeu.js';
 import contatcRouter from './routes/contact.js'
+import contactEditeurRouter from './routes/contact_editeur.js';
 import zonePlanRouter from './routes/zone-plan.js'
 import jeuFestivalRoutes from './routes/jeu_festival.js';
-import contactRoutes from './routes/contact.js';
 import editeurRouter from './routes/editeur.js';
 import reservationRouter from './routes/reservation.js';
 import mecanismeRouter from './routes/mecanisme.js';
@@ -95,8 +95,8 @@ app.use('/api/mecanismes', mecanismeRouter);
 app.use('/api/types-jeu', typeJeuRouter);
 app.use('/jeu_festival', verifyToken, jeuFestivalRoutes);
 app.use('/api/jeu_festival', verifyToken, jeuFestivalRoutes);
-app.use('/contact_editeur', verifyToken, contactRoutes);
-app.use('/api/contact_editeur', verifyToken, contactRoutes);
+app.use('/contact_editeur', verifyToken, contactEditeurRouter);
+app.use('/api/contact_editeur', verifyToken, contactEditeurRouter);
 app.use('/api/admin', verifyToken, requireRoles(['super_admin']), (req, res) => {
   res.json({ message: 'Welcome admin' });
 });

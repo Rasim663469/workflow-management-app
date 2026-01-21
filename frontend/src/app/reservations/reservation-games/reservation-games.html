@@ -6,15 +6,16 @@
     </div>
   </header>
 
-  @if (!reservation) {
+  @if (!reservation()) {
     <p class="empty">Sélectionnez une réservation pour gérer les jeux.</p>
   }
 
-  @if (reservation) {
+  @if (reservation()) {
     @if (!auth.canManagePlacement()) {
       <p class="error">Accès réservé aux organisateurs pour le placement des jeux.</p>
     }
     <div class="alerts">
+      @if (wishesAlert()) { <p class="alert">{{ wishesAlert() }}</p> }
       @if (stockAlert()) { <p class="alert">{{ stockAlert() }}</p> }
       @if (capacityAlert()) { <p class="alert">{{ capacityAlert() }}</p> }
       @if (unplacedAlert()) { <p class="alert">{{ unplacedAlert() }}</p> }
@@ -24,23 +25,33 @@
       <div class="stock-grid">
         <div class="stock-card">
           <p class="label">Standard (souhaité)</p>
-          <p class="value">{{ budget.standard }}</p>
-          <p class="sub">Restant sur la réservation</p>
+          <p class="value">{{ budget.wishes.standard }}</p>
+          <p class="sub">Souhait exprimé</p>
         </div>
         <div class="stock-card">
           <p class="label">Grandes (souhaité)</p>
-          <p class="value">{{ budget.grandes }}</p>
-          <p class="sub">Souhait restant (indicatif)</p>
+          <p class="value">{{ budget.wishes.grandes }}</p>
+          <p class="sub">Souhait exprimé</p>
         </div>
         <div class="stock-card">
           <p class="label">Mairie (souhaité)</p>
-          <p class="value">{{ budget.mairie }}</p>
-          <p class="sub">Souhait restant (indicatif)</p>
+          <p class="value">{{ budget.wishes.mairie }}</p>
+          <p class="sub">Souhait exprimé</p>
         </div>
         <div class="stock-card">
           <p class="label">Total tables souhaitées</p>
-          <p class="value">{{ budget.total }}</p>
-          <p class="sub">Espace réservé</p>
+          <p class="value">{{ budget.wishes.total }}</p>
+          <p class="sub">Somme des souhaits</p>
+        </div>
+        <div class="stock-card">
+          <p class="label">Espace réservé</p>
+          <p class="value">{{ budget.reservedTotal }}</p>
+          <p class="sub">Tables réservées</p>
+        </div>
+        <div class="stock-card">
+          <p class="label">Reste sur réservation</p>
+          <p class="value">{{ budget.reservedRemaining }}</p>
+          <p class="sub">Après placement</p>
         </div>
       </div>
     }
@@ -129,7 +140,7 @@
           [disabled]="!auth.canManagePlacement()"
         >
           <option value="">Non placée</option>
-          @for (zone of zonesPlan(); track zone.id) {
+          @for (zone of eligibleZones(); track zone.id) {
             <option [value]="zone.id">
               {{ zone.nom }}
               @if (remainingForZonePlan(zone.id) !== null) {
@@ -210,7 +221,7 @@
               [disabled]="!auth.canManagePlacement()"
             >
               <option value="">Non placée</option>
-              @for (zone of zonesPlan(); track zone.id) {
+              @for (zone of eligibleZones(); track zone.id) {
                 <option [value]="zone.id">{{ zone.nom }}</option>
               }
             </select>

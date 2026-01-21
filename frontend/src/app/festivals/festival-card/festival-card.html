@@ -1,11 +1,11 @@
-<article class="festival-card" [routerLink]="['/festivals', festival.id]" style="cursor: pointer;">
+<article class="festival-card" [routerLink]="['/festivals', festival().id]" style="cursor: pointer;">
   <header>
-    <h3 class="festival-name">{{ festival.name }}</h3>
-    <p class="festival-location"><strong>Lieu :</strong> {{ festival.location }}</p>
+    <h3 class="festival-name">{{ festival().name }}</h3>
+    <p class="festival-location"><strong>Lieu :</strong> {{ festival().location }}</p>
 
     <div class="festival-dates">
-      <p><strong>Début :</strong> {{ festival.displayDateDebut }}</p>
-      <p><strong>Fin :</strong> {{ festival.displayDateFin }}</p>
+      <p><strong>Début :</strong> {{ festival().displayDateDebut }}</p>
+      <p><strong>Fin :</strong> {{ festival().displayDateFin }}</p>
     </div>
   </header>
 
@@ -16,9 +16,9 @@
   <div class="festival-body">
 
 
-    @if (festival.description && festival.description.length > 0) {
+    @if (festival().description?.length) {
     <p class="festival-description">
-      {{ festival.description }}
+      {{ festival().description }}
     </p>
     }
   </div>
@@ -37,9 +37,9 @@
       </div>
     }
 
-    @if (festival.tariffZones?.length) {
+    @if (festival().tariffZones.length) {
       <ul class="tariff-zones">
-        @for (zone of festival.tariffZones; track zone.id ?? zone.name) {
+        @for (zone of festival().tariffZones; track zone.id ?? zone.name) {
           <li class="tariff-zone">
             <span class="zone-name">{{ zone.name }}</span>
             <span class="zone-details">
@@ -56,7 +56,7 @@
   @if (auth.canManageFestivals() || auth.canManagePlacement()) {
   <footer class="actions" (click)="$event.stopPropagation()">
     @if (auth.canManageReservations()) {
-      <a class="primary-button" [routerLink]="['/reservations']" [queryParams]="{ festivalId: festival.id }">
+      <a class="primary-button" [routerLink]="['/reservations']" [queryParams]="{ festivalId: festival().id }">
         Gérer les réservations
       </a>
     }
@@ -64,13 +64,13 @@
       <a
         class="primary-button"
         [routerLink]="['/reservations']"
-        [queryParams]="{ festivalId: festival.id, tab: 'jeux' }"
+        [queryParams]="{ festivalId: festival().id, tab: 'jeux' }"
       >
         Gérer le placement des jeux
       </a>
     }
     @if (auth.canManageFestivals()) {
-      <a class="secondary-button" [routerLink]="['/festivals', festival.id, 'edit']">
+      <a class="secondary-button" [routerLink]="['/festivals', festival().id, 'edit']">
         Modifier
       </a>
     }

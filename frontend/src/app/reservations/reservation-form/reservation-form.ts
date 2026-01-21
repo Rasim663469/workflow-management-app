@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, effect, inject, signal } from '@angular/core';
+import { Component, effect, inject, input, output, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CurrencyPipe } from '@angular/common';
 import { ReservationCard, ReservationService } from '@services/reservation.service';
@@ -25,11 +25,11 @@ export class ReservationFormComponent {
   private readonly zoneTarifaireService = inject(ZoneTarifaireService);
   readonly auth = inject(AuthService);
 
-  @Input({ required: true }) festivalId!: number | string;
-  @Input() reservationToEdit: ReservationCard | null = null;
-  @Output() created = new EventEmitter<void>();
-  @Output() updated = new EventEmitter<void>();
-  @Output() cancelled = new EventEmitter<void>();
+  festivalId = input.required<number | string>();
+  reservationToEdit = input<ReservationCard | null>(null);
+  created = output<void>();
+  updated = output<void>();
+  cancelled = output<void>();
 
   readonly editeurs = this.editeurService.editeurs;
   readonly editeursLoading = this.editeurService.loading;
@@ -39,6 +39,7 @@ export class ReservationFormComponent {
   readonly errorZones = signal<string | null>(null);
   readonly totalEstimate = signal<number>(0);
   readonly zoneErrors = signal<Record<number, string>>({});
+  readonly editAllowanceByZone = signal<Record<number, number>>({});
 
   readonly submitting = signal(false);
   readonly submitError = signal<string | null>(null);
@@ -68,26 +69,26 @@ export class ReservationFormComponent {
 
   constructor() {
     effect(() => this.editeurService.loadAll());
-  }
-
-  ngOnChanges(): void {
-    this.loadZones();
-    if (this.reservationToEdit) {
-      this.applyEditState(this.reservationToEdit);
-    } else if (this.editingId()) {
-      this.resetForm();
-    }
+    effect(() => {
+      this.loadZones();
+      const reservation = this.reservationToEdit();
+      if (reservation) {
+        this.applyEditState(reservation);
+      } else if (this.editingId()) {
+        this.resetForm();
+      }
+    });
   }
 
   private loadZones(): void {
-    if (!this.festivalId) {
+    if (!this.festivalId()) {
       this.zones.set([]);
       return;
     }
 
     this.loadingZones.set(true);
     this.errorZones.set(null);
-    this.zoneTarifaireService.listByFestival(this.festivalId).subscribe({
+    this.zoneTarifaireService.listByFestival(this.festivalId()).subscribe({
       next: data => {
         this.zones.set(data ?? []);
         this.loadingZones.set(false);
@@ -175,8 +176,15 @@ export class ReservationFormComponent {
     }
     for (const [zoneId, totalTables] of totalsByZone.entries()) {
       const zone = this.zones().find(z => z.id === zoneId);
-      if (zone && totalTables > zone.nombre_tables_disponibles) {
-        errors[zoneId] = `Max ${zone.nombre_tables_disponibles} table(s) disponibles`;
+      if (zone) {
+        const allowance =
+          this.editingId() && this.editAllowanceByZone()[zoneId]
+            ? this.editAllowanceByZone()[zoneId]
+            : 0;
+        const available = zone.nombre_tables_disponibles + allowance;
+        if (totalTables > available) {
+          errors[zoneId] = `Max ${available} table(s) disponibles`;
+        }
       }
     }
     this.zoneErrors.set(errors);
@@ -244,7 +252,7 @@ export class ReservationFormComponent {
     this.reservationService
       .create({
         editeur_id: Number(editeurId),
-        festival_id: Number(this.festivalId),
+        festival_id: Number(this.festivalId()),
         lignes: lignesPayload,
         remise_tables_offertes,
         remise_argent,
@@ -310,6 +318,16 @@ export class ReservationFormComponent {
     return (Number(line.nombre_tables) || 0) + this.lineTablesFromArea(line);
   }
 
+  availableForZone(zoneId: number): number {
+    const zone = this.zones().find(z => z.id === zoneId);
+    if (!zone) return 0;
+    const allowance =
+      this.editingId() && this.editAllowanceByZone()[zoneId]
+        ? this.editAllowanceByZone()[zoneId]
+        : 0;
+    return zone.nombre_tables_disponibles + allowance;
+  }
+
   private totalTablesFromLines(): number {
     return this.lignes().reduce((sum, line) => {
       const tables = Number(line.nombre_tables) || 0;
@@ -321,6 +339,39 @@ export class ReservationFormComponent {
   cancelEdit(): void {
     this.resetForm();
     this.cancelled.emit();
+  }
+
+  deleteReservation(): void {
+    if (!this.auth.canManageReservations()) {
+      this.submitError.set('Vous ne pouvez pas supprimer des réservations.');
+      return;
+    }
+    if (this.locked()) {
+      this.submitError.set('Suppression interdite : facture payée.');
+      return;
+    }
+    const id = this.editingId();
+    if (!id) return;
+    const ok = window.confirm('Supprimer cette réservation ? Cette action est irréversible.');
+    if (!ok) return;
+    this.submitting.set(true);
+    this.submitError.set(null);
+    this.submitSuccess.set(null);
+    this.reservationService.delete(id).subscribe({
+      next: () => {
+        this.submitting.set(false);
+        this.submitSuccess.set('Réservation supprimée.');
+        this.updated.emit();
+        this.resetForm();
+      },
+      error: err => {
+        const message =
+          err?.error?.error ??
+          (err instanceof Error ? err.message : 'Erreur lors de la suppression');
+        this.submitError.set(message);
+        this.submitting.set(false);
+      },
+    });
   }
 
   private applyEditState(reservation: ReservationCard): void {
@@ -350,6 +401,15 @@ export class ReservationFormComponent {
         }))
       : [{ zone_tarifaire_id: null, nombre_tables: 1, surface_m2: 0 }];
 
+    const allowance: Record<number, number> = {};
+    for (const line of lines) {
+      if (line.zone_tarifaire_id == null) continue;
+      const totalTables =
+        (Number(line.nombre_tables) || 0) + Math.ceil((Number(line.surface_m2) || 0) / this.tableAreaM2);
+      allowance[line.zone_tarifaire_id] = (allowance[line.zone_tarifaire_id] ?? 0) + totalTables;
+    }
+    this.editAllowanceByZone.set(allowance);
+
     this.lignes.set(lines);
     this.recomputeTotal();
   }
@@ -357,6 +417,7 @@ export class ReservationFormComponent {
   private resetForm(): void {
     this.editingId.set(null);
     this.locked.set(false);
+    this.editAllowanceByZone.set({});
     this.form.reset({
       editeur_id: null,
       remise_tables_offertes: 0,

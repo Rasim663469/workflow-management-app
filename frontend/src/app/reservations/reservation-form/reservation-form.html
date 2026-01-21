@@ -49,7 +49,7 @@
               <option value="">Choisir une zone</option>
               @for (zone of zones(); track zone.id) {
                 <option [value]="zone.id">
-                  {{ zone.nom }} — {{ zone.prix_table | currency : 'EUR' : 'symbol' : '1.0-0' }} ({{ zone.nombre_tables_disponibles }} dispo)
+                  {{ zone.nom }} — {{ zone.prix_table | currency : 'EUR' : 'symbol' : '1.0-0' }} ({{ availableForZone(zone.id) }} dispo)
                 </option>
               }
             </select>
@@ -164,6 +164,9 @@
       </button>
       @if (editingId()) {
         <button type="button" class="ghost" (click)="cancelEdit()">Annuler</button>
+        <button type="button" class="ghost danger" (click)="deleteReservation()" [disabled]="submitting() || locked()">
+          Supprimer
+        </button>
       }
       @if (submitSuccess()) {
         <span class="success">{{ submitSuccess() }}</span>
