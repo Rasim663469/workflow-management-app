@@ -45,6 +45,12 @@ export class CrmService {
   readonly loading = this._loading.asReadonly();
   readonly error = this._error.asReadonly();
 
+  clear(): void {
+    this._rows.set([]);
+    this._error.set(null);
+    this._loading.set(false);
+  }
+
   loadByFestival(festivalId: number | string): void {
     if (!festivalId) {
       this._rows.set([]);

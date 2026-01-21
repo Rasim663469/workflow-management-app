@@ -73,7 +73,7 @@
     </div>
 
     <div class="crm-grid">
-      @for (row of filteredRows(); track row.editeur_id) {
+      @for (row of filteredRows(); track row.editeur_id + '-' + (festivalId ?? '0')) {
         <article class="crm-row">
           <div class="info">
             <div>
@@ -101,12 +101,14 @@
           <div class="actions">
             <label class="sr-only">Statut CRM</label>
             <select
-              [value]="row.statut ?? 'pas_de_contact'"
+              [value]="'' + (row.statut ?? 'pas_de_contact')"
               (change)="updateStatus(row.editeur_id, $any($event.target).value)"
               [disabled]="saving()"
             >
               @for (status of statuses; track status.value) {
-                <option [value]="status.value">{{ status.label }}</option>
+                <option [value]="status.value">
+                  {{ status.label }}
+                </option>
               }
             </select>
             <select

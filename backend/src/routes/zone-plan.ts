@@ -18,12 +18,29 @@ router.post(
 
     try {
         const zoneTarifRes = await pool.query(
-            'SELECT festival_id FROM zone_tarifaire WHERE id = $1',
+            'SELECT festival_id, nombre_tables_total FROM zone_tarifaire WHERE id = $1',
             [zone_tarifaire_id]
         );
         const zoneTarif = zoneTarifRes.rows[0];
         if (!zoneTarif || Number(zoneTarif.festival_id) !== Number(festival_id)) {
             return res.status(400).json({ error: 'La zone tarifaire doit appartenir au festival.' });
+        }
+
+        const totalTables = Number(zoneTarif.nombre_tables_total ?? 0);
+        const requestedTables = Number(nombre_tables);
+        if (!Number.isFinite(requestedTables) || requestedTables <= 0) {
+            return res.status(400).json({ error: 'nombre_tables invalide.' });
+        }
+
+        const usedRes = await pool.query(
+            'SELECT COALESCE(SUM(nombre_tables), 0) AS used FROM zone_plan WHERE zone_tarifaire_id = $1',
+            [zone_tarifaire_id]
+        );
+        const usedTables = Number(usedRes.rows[0]?.used ?? 0);
+        if (usedTables + requestedTables > totalTables) {
+            return res.status(400).json({
+                error: 'Capacité dépassée: la somme des zones du plan excède la zone tarifaire.',
+            });
         }
 
         const result = await pool.query(
@@ -103,6 +120,8 @@ router.patch(
     const values: any[] = [];
     let paramIndex = 1;
     let currentFestivalId: number | null = null;
+    let currentZoneTarifaireId: number | null = null;
+    let currentTables: number | null = null;
 
     if (nom !== undefined) {
         updates.push(`nom = $${paramIndex}`);
@@ -146,7 +165,7 @@ router.patch(
             currentFestivalId = Number(current.rows[0]?.festival_id ?? festival_id ?? 0) || null;
         }
         const zoneTarifRes = await pool.query(
-            'SELECT festival_id FROM zone_tarifaire WHERE id = $1',
+            'SELECT festival_id, nombre_tables_total FROM zone_tarifaire WHERE id = $1',
             [zone_tarifaire_id]
         );
         const zoneTarif = zoneTarifRes.rows[0];
@@ -157,6 +176,45 @@ router.patch(
         updates.push(`zone_tarifaire_id = $${paramIndex}`);
         values.push(zone_tarifaire_id);
         paramIndex++;
+    }
+
+    if (nombre_tables !== undefined || zone_tarifaire_id !== undefined) {
+        const currentRowRes = await pool.query(
+            'SELECT zone_tarifaire_id, nombre_tables FROM zone_plan WHERE id = $1',
+            [id]
+        );
+        const currentRow = currentRowRes.rows[0];
+        if (!currentRow) return res.status(404).json({ error: 'Zone plan non trouvée' });
+        currentZoneTarifaireId = Number(currentRow.zone_tarifaire_id);
+        currentTables = Number(currentRow.nombre_tables);
+
+        const targetZoneTarifaireId = zone_tarifaire_id !== undefined
+            ? Number(zone_tarifaire_id)
+            : currentZoneTarifaireId;
+        const targetTables = nombre_tables !== undefined
+            ? Number(nombre_tables)
+            : currentTables;
+
+        if (!Number.isFinite(targetTables) || targetTables <= 0) {
+            return res.status(400).json({ error: 'nombre_tables invalide.' });
+        }
+
+        const zoneTarifRes = await pool.query(
+            'SELECT nombre_tables_total FROM zone_tarifaire WHERE id = $1',
+            [targetZoneTarifaireId]
+        );
+        const totalTables = Number(zoneTarifRes.rows[0]?.nombre_tables_total ?? 0);
+
+        const usedRes = await pool.query(
+            'SELECT COALESCE(SUM(nombre_tables), 0) AS used FROM zone_plan WHERE zone_tarifaire_id = $1 AND id <> $2',
+            [targetZoneTarifaireId, id]
+        );
+        const usedTables = Number(usedRes.rows[0]?.used ?? 0);
+        if (usedTables + targetTables > totalTables) {
+            return res.status(400).json({
+                error: 'Capacité dépassée: la somme des zones du plan excède la zone tarifaire.',
+            });
+        }
     }
 
     if (updates.length === 0) {

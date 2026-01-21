@@ -330,7 +330,10 @@ router.get(
       SELECT 
         r.*,
         e.nom AS editeur_nom,
-        COALESCE(SUM(rd.nombre_tables), 0) AS tables_totales,
+        (
+          COALESCE(SUM(rd.nombre_tables), 0)
+          + COALESCE(SUM(CEIL(COALESCE(rd.surface_m2, 0) / 4.0)), 0)
+        ) AS tables_totales,
         lc.last_contact,
         COALESCE(json_agg(
           json_build_object(
@@ -377,7 +380,10 @@ router.get(
       SELECT 
         r.*,
         e.nom AS editeur_nom,
-        COALESCE(SUM(rd.nombre_tables), 0) AS tables_totales
+        (
+          COALESCE(SUM(rd.nombre_tables), 0)
+          + COALESCE(SUM(CEIL(COALESCE(rd.surface_m2, 0) / 4.0)), 0)
+        ) AS tables_totales
       FROM reservation r
       JOIN editeur e ON e.id = r.editeur_id
       LEFT JOIN reservation_detail rd ON rd.reservation_id = r.id
@@ -612,30 +618,33 @@ router.put('/:id', requireRoles(['super_admin', 'super_organisateur']), async (r
         newMap.set(line.zone_tarifaire_id, lineTables(line));
       }
       const zoneIds = new Set<number>([...oldMap.keys(), ...newMap.keys()]);
+
       for (const zoneId of zoneIds) {
+        const zoneRes = await client.query(
+          `SELECT id, festival_id, nombre_tables_disponibles
+           FROM zone_tarifaire
+           WHERE id = $1`,
+          [zoneId]
+        );
+        const zone = zoneRes.rows[0];
+        if (!zone || zone.festival_id !== Number(reservation.festival_id)) {
+          await client.query('ROLLBACK');
+          return res.status(400).json({ error: 'Zone tarifaire invalide pour ce festival.' });
+        }
+
         const oldQty = oldMap.get(zoneId) ?? 0;
         const newQty = newMap.get(zoneId) ?? 0;
-        const delta = newQty - oldQty;
-        if (delta > 0) {
-          const zone = zoneInfos.get(zoneId);
-          if (!zone || zone.disponibles < delta) {
-            await client.query('ROLLBACK');
-            return res.status(400).json({ error: 'Tables insuffisantes dans une des zones demandées.' });
-          }
-          await client.query(
-            `UPDATE zone_tarifaire 
-             SET nombre_tables_disponibles = nombre_tables_disponibles - $1 
-             WHERE id = $2`,
-            [delta, zoneId]
-          );
-        } else if (delta < 0) {
-          await client.query(
-            `UPDATE zone_tarifaire 
-             SET nombre_tables_disponibles = nombre_tables_disponibles + $1 
-             WHERE id = $2`,
-            [Math.abs(delta), zoneId]
-          );
+        const available = Number(zone.nombre_tables_disponibles ?? 0) + oldQty;
+        if (newQty > available) {
+          await client.query('ROLLBACK');
+          return res.status(400).json({ error: 'Tables insuffisantes dans une des zones demandées.' });
         }
+        await client.query(
+          `UPDATE zone_tarifaire
+             SET nombre_tables_disponibles = $1
+           WHERE id = $2`,
+          [available - newQty, zoneId]
+        );
       }
 
       await client.query('DELETE FROM reservation_detail WHERE reservation_id = $1', [id]);
@@ -856,11 +865,29 @@ router.delete('/:id', requireRoles(['super_admin', 'super_organisateur']), async
   try {
     await client.query('BEGIN');
 
+    const reservationRes = await client.query(
+      'SELECT id, statut_workflow FROM reservation WHERE id = $1',
+      [id]
+    );
+    const reservation = reservationRes.rows[0];
+    if (!reservation) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Réservation non trouvée' });
+    }
+    const rawStatus = String(reservation.statut_workflow ?? '')
+      .toLowerCase()
+      .replace(/\s+/g, '_');
+    if (rawStatus === 'facture_payee') {
+      await client.query('ROLLBACK');
+      return res.status(409).json({ error: 'Suppression interdite : facture payée.' });
+    }
+
     const detailRes = await client.query(
       'SELECT zone_tarifaire_id, nombre_tables, surface_m2 FROM reservation_detail WHERE reservation_id = $1',
       [id]
     );
 
+    await client.query('DELETE FROM jeu_festival WHERE reservation_id = $1', [id]);
     const deleteDetails = await client.query('DELETE FROM reservation_detail WHERE reservation_id = $1', [id]);
     const deleteRes = await client.query('DELETE FROM reservation WHERE id = $1 RETURNING *', [id]);
 

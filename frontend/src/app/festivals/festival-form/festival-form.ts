@@ -55,7 +55,7 @@ export class FestivalForm implements OnInit {
     stockTablesGrandes: new FormControl<number>(0, { nonNullable: true, validators: [Validators.min(0)] }),
     stockTablesMairie: new FormControl<number>(0, { nonNullable: true, validators: [Validators.min(0)] }),
     stockChaises: new FormControl<number>(0, { nonNullable: true, validators: [Validators.min(0)] }),
-    tariffZones: new FormArray<TariffZoneFormGroup>([this.createZoneGroup()]),
+    tariffZones: new FormArray<TariffZoneFormGroup>([]),
   });
 
   get tariffZones(): FormArray<TariffZoneFormGroup> {
@@ -68,6 +68,8 @@ export class FestivalForm implements OnInit {
       this.editing.set(true);
       this.festivalId = id;
       this.loadFestival(id);
+    } else if (this.tariffZones.length === 0) {
+      this.tariffZones.push(this.createZoneGroup());
     }
   }
 
@@ -94,6 +96,17 @@ export class FestivalForm implements OnInit {
     }
 
     this.tariffZones.removeAt(index);
+  }
+
+  deleteFestival(): void {
+    if (!this.editing() || !this.festivalId) return;
+    const ok = window.confirm('Supprimer ce festival ? Cette action est irréversible.');
+    if (!ok) return;
+    this.submitError.set(null);
+    this.submitSuccess.set(null);
+    this.festivalService.deleteFestival(this.festivalId);
+    this.submitSuccess.set('Festival supprimé.');
+    this.router.navigate(['/home']);
   }
 
   onSubmit() {
@@ -300,11 +313,31 @@ export class FestivalForm implements OnInit {
           stockChaises: data.stockChaises ?? 0,
         });
         this.tariffZones.clear();
-        const zones = (data.tariffZones ?? []) as TariffZoneDto[];
-        if (zones.length === 0) {
+        const zonesRaw = data.tariffZones ?? [];
+        const zones = Array.isArray(zonesRaw) ? zonesRaw : [];
+        const normalizedZones = zones
+          .map((zone: any) => {
+            const pricePerTable = Number(zone.pricePerTable ?? zone.prix_table ?? 0);
+            const pricePerM2Value =
+              zone.pricePerM2 !== undefined && zone.pricePerM2 !== null
+                ? Number(zone.pricePerM2)
+                : zone.prix_m2 !== undefined && zone.prix_m2 !== null
+                  ? Number(zone.prix_m2)
+                  : pricePerTable / 4;
+            return {
+              id: zone.id ?? zone.zone_id ?? null,
+              name: zone.name ?? zone.nom ?? '',
+              totalTables: Number(zone.totalTables ?? zone.nombre_tables_total ?? 0),
+              pricePerTable,
+              pricePerM2: Number.isFinite(pricePerM2Value) ? pricePerM2Value : pricePerTable / 4,
+            };
+          })
+          .filter((zone: any) => zone.name || zone.totalTables || zone.pricePerTable || zone.pricePerM2);
+
+        if (normalizedZones.length === 0) {
           this.tariffZones.push(this.createZoneGroup());
         } else {
-          zones.forEach(z => this.tariffZones.push(this.createZoneGroup(z)));
+          normalizedZones.forEach(z => this.tariffZones.push(this.createZoneGroup(z)));
         }
       },
       error: err => console.error('Erreur lors du chargement du festival', err),

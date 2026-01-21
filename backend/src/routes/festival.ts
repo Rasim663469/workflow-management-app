@@ -104,7 +104,7 @@ router.get('/', async (_req, res) => {
         f.date_debut AS "dateDebut",
         f.date_fin AS "dateFin",
         f.description,
-        f.nombre_total_tables AS "totalTables",
+        COALESCE(MAX(zsum.total_tables), f.nombre_total_tables) AS "totalTables",
         f.stock_tables_standard AS "stockTablesStandard",
         f.stock_tables_grandes AS "stockTablesGrandes",
         f.stock_tables_mairie AS "stockTablesMairie",
@@ -127,6 +127,11 @@ router.get('/', async (_req, res) => {
           )
         ) FILTER (WHERE e.id IS NOT NULL), '[]') AS "editeurs"
       FROM festival f
+      LEFT JOIN LATERAL (
+        SELECT SUM(nombre_tables_total) AS total_tables
+        FROM zone_tarifaire
+        WHERE festival_id = f.id
+      ) zsum ON true
       LEFT JOIN zone_tarifaire zt ON zt.festival_id = f.id
       LEFT JOIN reservation r ON r.festival_id = f.id
       LEFT JOIN editeur e ON e.id = r.editeur_id
@@ -217,7 +222,7 @@ router.get('/:id', async (req, res) => {
         f.date_debut AS "dateDebut",
         f.date_fin AS "dateFin",
         f.description,
-        f.nombre_total_tables AS "totalTables",
+        COALESCE(MAX(zsum.total_tables), f.nombre_total_tables) AS "totalTables",
         f.stock_tables_standard AS "stockTablesStandard",
         f.stock_tables_grandes AS "stockTablesGrandes",
         f.stock_tables_mairie AS "stockTablesMairie",
@@ -239,6 +244,11 @@ router.get('/:id', async (req, res) => {
           )
         ) FILTER (WHERE e.id IS NOT NULL), '[]') AS "editeurs"
       FROM festival f
+      LEFT JOIN LATERAL (
+        SELECT SUM(nombre_tables_total) AS total_tables
+        FROM zone_tarifaire
+        WHERE festival_id = f.id
+      ) zsum ON true
       LEFT JOIN zone_tarifaire zt ON zt.festival_id = f.id
       LEFT JOIN reservation r ON r.festival_id = f.id
       LEFT JOIN editeur e ON e.id = r.editeur_id

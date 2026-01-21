@@ -2,73 +2,79 @@
   <header>
     <div>
       <p class="eyebrow">Éditeur</p>
-      <h3>{{ reservation.editeur }}</h3>
+      <h3>{{ reservation().editeur }}</h3>
     </div>
-    <span class="badge" [attr.data-status]="reservation.statut">
-      {{ labelForStatus(reservation.statut) }}
+    <span class="badge" [attr.data-status]="reservation().statut">
+      {{ labelForStatus(reservation().statut) }}
     </span>
   </header>
 
   <div class="meta">
     <div>
       <p class="label">Tables (espace)</p>
-      <p class="value">{{ reservation.tables }}</p>
+      <p class="value">{{ reservation().tables }}</p>
     </div>
     <div>
       <p class="label">Total</p>
-      <p class="value">{{ reservation.prixTotal | currency : 'EUR' : 'symbol' : '1.0-0' }}</p>
+      <p class="value">{{ reservation().prixTotal | currency : 'EUR' : 'symbol' : '1.0-0' }}</p>
     </div>
     <div>
       <p class="label">À payer</p>
-      <p class="value strong">{{ reservation.prixFinal | currency : 'EUR' : 'symbol' : '1.0-0' }}</p>
+      <p class="value strong">{{ reservation().prixFinal | currency : 'EUR' : 'symbol' : '1.0-0' }}</p>
     </div>
   </div>
 
-  @if (reservation.prisesElectriques || reservation.besoinAnimateur || reservation.souhaitGrandesTables || reservation.souhaitTablesStandard || reservation.souhaitTablesMairie) {
+  @if (reservation().prisesElectriques || reservation().besoinAnimateur || reservation().souhaitGrandesTables || reservation().souhaitTablesStandard || reservation().souhaitTablesMairie) {
     <div class="meta">
       <div>
         <p class="label">Prises</p>
-        <p class="value">{{ reservation.prisesElectriques ?? 0 }}</p>
+        <p class="value">{{ reservation().prisesElectriques ?? 0 }}</p>
       </div>
       <div>
         <p class="label">Animateur</p>
-        <p class="value">{{ reservation.besoinAnimateur ? 'Oui' : 'Non' }}</p>
+        <p class="value">{{ reservation().besoinAnimateur ? 'Oui' : 'Non' }}</p>
       </div>
       <div>
         <p class="label">Grandes tables souhaitées</p>
-        <p class="value">{{ reservation.souhaitGrandesTables ?? 0 }}</p>
+        <p class="value">{{ reservation().souhaitGrandesTables ?? 0 }}</p>
       </div>
       <div>
         <p class="label">Tables standard souhaitées (indicatif)</p>
-        <p class="value">{{ reservation.souhaitTablesStandard ?? 0 }}</p>
+        <p class="value">{{ reservation().souhaitTablesStandard ?? 0 }}</p>
       </div>
       <div>
         <p class="label">Tables mairie souhaitées (indicatif)</p>
-        <p class="value">{{ reservation.souhaitTablesMairie ?? 0 }}</p>
+        <p class="value">{{ reservation().souhaitTablesMairie ?? 0 }}</p>
       </div>
     </div>
   }
 
-  <ul class="zones" *ngIf="reservation.lignes.length">
-    <li *ngFor="let line of reservation.lignes">
-      <strong>{{ line.zone_nom ?? 'Zone' }}</strong>
-      <span>{{ line.nombre_tables }} table(s)</span>
-      @if (line.surface_m2 && line.surface_m2 > 0) {
-        <span>{{ line.surface_m2 }} m²</span>
+  @if (reservation().lignes.length) {
+    <ul class="zones">
+      @for (line of reservation().lignes; track line.zone_nom ?? $index) {
+        <li>
+          <strong>{{ line.zone_nom ?? 'Zone' }}</strong>
+          <span>{{ line.nombre_tables }} table(s)</span>
+          @if (line.surface_m2 && line.surface_m2 > 0) {
+            <span>{{ line.surface_m2 }} m²</span>
+          }
+          @if (line.prix_table !== undefined && line.prix_table !== null) {
+            <span class="price">
+              {{ line.prix_table | currency : 'EUR' : 'symbol' : '1.0-0' }}
+            </span>
+          }
+          @if (line.prix_m2 !== undefined && line.prix_m2 !== null && line.surface_m2 && line.surface_m2 > 0) {
+            <span class="price">
+              {{ line.prix_m2 | currency : 'EUR' : 'symbol' : '1.0-0' }}/m²
+            </span>
+          }
+        </li>
       }
-      <span class="price" *ngIf="line.prix_table !== undefined && line.prix_table !== null">
-        {{ line.prix_table | currency : 'EUR' : 'symbol' : '1.0-0' }}
-      </span>
-      @if (line.prix_m2 !== undefined && line.prix_m2 !== null && line.surface_m2 && line.surface_m2 > 0) {
-        <span class="price">
-          {{ line.prix_m2 | currency : 'EUR' : 'symbol' : '1.0-0' }}/m²
-        </span>
-      }
-    </li>
-  </ul>
+    </ul>
+  }
 
-  @if (lastContact) {
-    <p class="contact">Dernier contact : {{ lastContact | date }}</p>
+  @if (lastContact()) {
+    <p class="contact">Dernier contact : {{ lastContact() | date }}</p>
   }
   @else {
     <p class="contact">Dernier contact : aucun</p>
@@ -78,8 +84,8 @@
     <label for="statut">Workflow</label>
     <select
       id="statut"
-      [ngModel]="reservation.statut"
-      (ngModelChange)="updateStatus($event)"
+      [value]="reservation().statut"
+      (change)="updateStatus($any($event.target).value)"
       [disabled]="saving() || !auth.canManageReservations()"
     >
       @for (status of statuses; track status.value) {

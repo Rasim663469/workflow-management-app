@@ -4,7 +4,6 @@ import { ReservationFormComponent } from '../reservation-form/reservation-form';
 import { CrmListComponent } from '../../crm/crm-list/crm-list';
 import { FestivalService } from '@services/festival.service';
 import { ReservationCard, ReservationService } from '@services/reservation.service';
-import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PlanZonesComponent } from '../../plan-zones/plan-zones';
 import { ReservationGamesComponent } from '../reservation-games/reservation-games';
@@ -19,7 +18,6 @@ import { AuthService } from '@shared/auth/auth.service';
     ReservationGamesComponent,
     PlanZonesComponent,
     CrmListComponent,
-    FormsModule,
   ],
   templateUrl: './reservations-page.html',
   styleUrl: './reservations-page.scss',

@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, Input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { CrmContactDto, CrmService, CrmStatus } from '@services/crm.service';
 
@@ -12,7 +12,7 @@ import { CrmContactDto, CrmService, CrmStatus } from '@services/crm.service';
 export class CrmListComponent {
   private readonly crmService = inject(CrmService);
 
-  @Input({ required: true }) festivalId!: number | string;
+  readonly festivalId = input.required<number | string>();
 
   readonly rows = this.crmService.rows;
   readonly loading = this.crmService.loading;
@@ -118,9 +118,12 @@ export class CrmListComponent {
 
   constructor() {
     effect(() => {
-      if (this.festivalId) {
-        this.crmService.loadByFestival(this.festivalId);
+      const normalized = this.festivalId();
+      this.crmService.clear();
+      if (normalized) {
+        this.crmService.loadByFestival(normalized);
       }
+      this.resetLocalState();
     });
     effect(() => {
       const rows = this.rows();
@@ -145,18 +148,28 @@ export class CrmListComponent {
     });
   }
 
-  ngOnChanges(): void {
-    if (this.festivalId) {
-      this.crmService.loadByFestival(this.festivalId);
-    }
+  private resetLocalState(): void {
+    this.searchQuery.set('');
+    this.statusFilter.set('all');
+    this.reservantOnly.set(false);
+    this.typeFilter.set('all');
+    this.sortBy.set('name');
+    this.historyOpen.set({});
+    this.contactsByEditeur.set({});
+    this.contactsLoading.set({});
+    this.contactsError.set({});
+    this.notesDraft.set({});
+    this.contactDrafts.set({});
   }
 
   updateStatus(editeurId: number, status: CrmStatus): void {
+    const festivalId = this.festivalId();
+    if (!festivalId) return;
     this.saveError.set(null);
     this.saving.set(true);
-    this.crmService.updateStatus(editeurId, this.festivalId, status).subscribe({
+    this.crmService.updateStatus(editeurId, festivalId, status).subscribe({
       next: () => {
-        this.crmService.loadByFestival(this.festivalId);
+        this.crmService.loadByFestival(festivalId);
         this.saving.set(false);
       },
       error: err => {
@@ -189,14 +202,16 @@ export class CrmListComponent {
   }
 
   markContactToday(editeurId: number): void {
+    const festivalId = this.festivalId();
+    if (!festivalId) return;
     this.saveError.set(null);
     this.saving.set(true);
     const draft = this.contactDrafts()[editeurId] ?? { type_contact: 'email', notes: '' };
-    this.crmService.addContact(editeurId, this.festivalId, draft.notes, draft.type_contact).subscribe({
+    this.crmService.addContact(editeurId, festivalId, draft.notes, draft.type_contact).subscribe({
       next: () => {
-        this.crmService.updateStatus(editeurId, this.festivalId, 'contact_pris').subscribe({
+        this.crmService.updateStatus(editeurId, festivalId, 'contact_pris').subscribe({
           next: () => {
-            this.crmService.loadByFestival(this.festivalId);
+            this.crmService.loadByFestival(festivalId);
             this.refreshHistory(editeurId);
             this.saving.set(false);
           },
@@ -218,13 +233,15 @@ export class CrmListComponent {
   }
 
   updateNotes(editeurId: number, currentStatus: CrmStatus | null | undefined): void {
+    const festivalId = this.festivalId();
+    if (!festivalId) return;
     const notes = (this.notesDraft()[editeurId] ?? '').trim() || null;
     const statut = (currentStatus ?? 'pas_de_contact') as CrmStatus;
     this.saveError.set(null);
     this.saving.set(true);
-    this.crmService.updateStatus(editeurId, this.festivalId, statut, notes).subscribe({
+    this.crmService.updateStatus(editeurId, festivalId, statut, notes).subscribe({
       next: () => {
-        this.crmService.loadByFestival(this.festivalId);
+        this.crmService.loadByFestival(festivalId);
         this.saving.set(false);
       },
       error: err => {
@@ -261,9 +278,11 @@ export class CrmListComponent {
   }
 
   private loadHistory(editeurId: number): void {
+    const festivalId = this.festivalId();
+    if (!festivalId) return;
     this.contactsLoading.update(map => ({ ...map, [editeurId]: true }));
     this.contactsError.update(map => ({ ...map, [editeurId]: null }));
-    this.crmService.loadContacts(editeurId, this.festivalId).subscribe({
+    this.crmService.loadContacts(editeurId, festivalId).subscribe({
       next: rows => {
         this.contactsByEditeur.update(map => ({ ...map, [editeurId]: rows ?? [] }));
         this.contactsLoading.update(map => ({ ...map, [editeurId]: false }));

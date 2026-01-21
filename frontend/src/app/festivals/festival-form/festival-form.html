@@ -75,6 +75,9 @@
 
   <div class="form-actions">
     <button type="submit">{{ editing() ? 'Mettre à jour' : 'Créer le festival' }}</button>
+    @if (editing()) {
+      <button type="button" class="ghost danger" (click)="deleteFestival()">Supprimer le festival</button>
+    }
     @if (submitError()) {
       <p class="error">{{ submitError() }}</p>
     }

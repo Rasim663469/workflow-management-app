@@ -71,8 +71,42 @@ router.put('/:id', requireRoles(['super_admin', 'super_organisateur']), async (r
     const values: any[] = [];
     let paramIndex = 1;
 
+    let currentTotal: number | null = null;
+    let currentAvailable: number | null = null;
+
     if (nom !== undefined) { updates.push(`nom = $${paramIndex++}`); values.push(nom); }
-    if (nombre_tables_total !== undefined) { updates.push(`nombre_tables_total = $${paramIndex++}`); values.push(nombre_tables_total); }
+    if (nombre_tables_total !== undefined) {
+        const nextTotal = Number(nombre_tables_total);
+        if (!Number.isFinite(nextTotal) || nextTotal < 0) {
+            return res.status(400).json({ error: 'nombre_tables_total invalide.' });
+        }
+
+        try {
+            const { rows } = await pool.query(
+                'SELECT nombre_tables_total, nombre_tables_disponibles FROM zone_tarifaire WHERE id = $1',
+                [id]
+            );
+            if (rows.length === 0) return res.status(404).json({ error: 'Zone non trouvée' });
+            currentTotal = Number(rows[0].nombre_tables_total ?? 0);
+            currentAvailable = Number(rows[0].nombre_tables_disponibles ?? 0);
+        } catch (err) {
+            console.error(err);
+            return res.status(500).json({ error: 'Erreur serveur' });
+        }
+
+        const usedTables = Math.max(0, currentTotal - currentAvailable);
+        if (nextTotal < usedTables) {
+            return res.status(400).json({
+                error: 'nombre_tables_total ne peut pas être inférieur aux tables déjà réservées.',
+            });
+        }
+
+        updates.push(`nombre_tables_total = $${paramIndex++}`);
+        values.push(nextTotal);
+
+        updates.push(`nombre_tables_disponibles = $${paramIndex++}`);
+        values.push(nextTotal - usedTables);
+    }
     if (prix_table !== undefined) { updates.push(`prix_table = $${paramIndex++}`); values.push(prix_table); }
     if (prix_m2 !== undefined) { updates.push(`prix_m2 = $${paramIndex++}`); values.push(prix_m2); }
     

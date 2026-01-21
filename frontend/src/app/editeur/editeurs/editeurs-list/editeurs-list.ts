@@ -2,14 +2,13 @@ import { Component, computed, effect, inject, signal } from '@angular/core';
 import { EditeurCard } from '../editeur-card/editeur-card';
 import { EditeurService } from '@services/editeur.service';
 
-import { RouterLink } from '@angular/router';
 
 import { AuthService } from '@shared/auth/auth.service';
 
 @Component({
   selector: 'app-editeurs-list',
   standalone: true,
-  imports: [EditeurCard, RouterLink],
+  imports: [EditeurCard],
   templateUrl: './editeurs-list.html',
   styleUrl: './editeurs-list.scss'
 })
