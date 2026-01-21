@@ -9,7 +9,7 @@
 .home-shell {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
 }
 
 .home-bar {
@@ -17,6 +17,10 @@
   align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
+  padding: 0.75rem 1.25rem;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-soft);
 }
 
 .brand {
@@ -35,11 +39,12 @@
 .auth-actions button,
 .btn-link {
   border-radius: 999px;
-  padding: 0.55rem 1.2rem;
+  padding: 0.55rem 1.35rem;
   font-weight: 600;
-  background: var(--ink-900);
+  background: linear-gradient(135deg, #0f1b3d, #1d2b5a);
   color: #fff;
   border: none;
+  box-shadow: 0 8px 20px rgba(15, 27, 61, 0.25);
 }
 
 .btn-link {
@@ -52,24 +57,7 @@
 .home-content {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-}
-
-.home-intro {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.home-intro h1 {
-  font-size: clamp(2rem, 3vw, 2.75rem);
-  margin: 0;
-}
-
-.home-intro p {
-  font-size: 1.02rem;
-  margin: 0;
-  color: var(--ink-700);
+  gap: 1.25rem;
 }
 
 .error {
