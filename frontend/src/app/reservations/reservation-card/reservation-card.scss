@@ -1,15 +1,14 @@
 .reservation-card {
-  padding: 1rem 1.25rem;
-  border-radius: 12px;
-  background: #ffffff;
-  color: #0f172a;
-  border: 1px solid #e5e7eb;
-  box-shadow:
-    0 8px 16px rgba(0, 0, 0, 0.05),
-    0 2px 8px rgba(0, 0, 0, 0.04);
+  padding: 1.2rem 1.4rem;
+  border-radius: var(--radius-lg);
+  background: var(--paper-100);
+  color: var(--ink-900);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: var(--shadow-soft);
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.85rem;
+  overflow: hidden;
 }
 
 header {
@@ -20,47 +19,41 @@ header {
 }
 
 .eyebrow {
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.75rem;
-  color: #6b7280;
   margin: 0;
 }
 
 h3 {
   margin: 0.1rem 0 0;
-  color: #111827;
+  color: var(--brand-900);
+  word-break: break-word;
 }
 
 .badge {
-  padding: 0.35rem 0.65rem;
-  border-radius: 999px;
-  font-size: 0.85rem;
-  background: #e0e7ff;
-  border: 1px solid #cbd5e1;
-  color: #1e40af;
+  background: rgba(44, 74, 168, 0.12);
+  border: 1px solid rgba(44, 74, 168, 0.3);
+  color: var(--brand-700);
 }
 
 .meta {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 0.5rem;
+  gap: 0.6rem;
 }
 
 .label {
   margin: 0;
-  color: #6b7280;
+  color: var(--ink-500);
   font-size: 0.85rem;
 }
 
 .value {
   margin: 0;
   font-weight: 700;
-  color: #111827;
+  color: var(--ink-900);
 }
 
 .value.strong {
-  color: #16a34a;
+  color: var(--success-600);
 }
 
 .zones {
@@ -74,95 +67,97 @@ h3 {
 
 .zones li {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
-  background: #f9fafb;
-  padding: 0.5rem 0.75rem;
-  border-radius: 8px;
+  gap: 0.35rem 0.75rem;
+  background: rgba(15, 23, 42, 0.04);
+  padding: 0.55rem 0.85rem;
+  border-radius: var(--radius-sm);
   font-size: 0.95rem;
-  border: 1px solid #eef0f4;
+  border: 1px solid rgba(15, 23, 42, 0.08);
 }
 
 .zones .price {
-  color: #6b7280;
+  color: var(--ink-500);
 }
 
 .contact {
   margin: 0;
-  color: #6b7280;
+  color: var(--ink-500);
   font-size: 0.85rem;
 }
 
 .workflow {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.5rem;
   label {
-    color: #374151;
+    color: var(--ink-700);
     font-weight: 600;
   }
   select {
-    padding: 0.45rem 0.7rem;
-    border-radius: 8px;
-    border: 1px solid #d1d5db;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(15, 23, 42, 0.16);
     background: #fff;
-    color: #0f172a;
+    color: var(--ink-900);
   }
-  .secondary {
-    background: #fff;
-    color: #273c75;
-    border: 1px solid #dcdde1;
-    padding: 0.45rem 0.8rem;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s, transform 0.1s;
-  }
-  .secondary:hover {
-    background: #f1f2f6;
-    transform: translateY(-1px);
-  }
-  .secondary:active {
-    transform: translateY(0);
-  }
-  .secondary:disabled {
-    cursor: not-allowed;
-    opacity: 0.65;
-  }
+}
+
+.actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
 }
 
 .pill {
-  background: #e5e7eb;
-  border: 1px solid #d1d5db;
-  color: #111827;
-  padding: 0.25rem 0.6rem;
-  border-radius: 999px;
-  font-size: 0.85rem;
+  background: rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(15, 23, 42, 0.16);
+  color: var(--ink-900);
 }
 
 .pill[data-status='facture'] {
-  background: #fef3c7;
-  border-color: #f59e0b;
-  color: #92400e;
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.5);
+  color: #7c4a04;
 }
 
 .pill[data-status='payee'] {
-  background: #dcfce7;
-  border-color: #22c55e;
-  color: #166534;
+  background: rgba(15, 118, 110, 0.18);
+  border-color: rgba(15, 118, 110, 0.4);
+  color: #0b4a44;
 }
 
 .facture-details {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.6rem;
+  padding: 0.85rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(15, 23, 42, 0.03);
+}
+
+.facture-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.6rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  margin-bottom: 0.6rem;
+  grid-column: 1 / -1;
+}
+
+.facture-lines {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
   gap: 0.5rem;
-  padding: 0.75rem;
-  border-radius: 10px;
-  border: 1px solid #e5e7eb;
-  background: #f8fafc;
 }
 
 .error {
-  color: #b91c1c;
-  font-size: 0.85rem;
+  color: var(--danger-600);
 }

@@ -16,9 +16,31 @@ export class AuthService {
 
   readonly currentUser = this._currentUser.asReadonly();
   readonly isLoggedIn = computed(() => this._currentUser() != null);
-  readonly isAdmin = computed(() => this.currentUser()?.role === 'admin');
+  readonly isSuperAdmin = computed(() => this.currentUser()?.role === 'super_admin');
+  readonly isSuperOrganisateur = computed(
+    () => this.currentUser()?.role === 'super_organisateur'
+  );
+  readonly isOrganisateur = computed(() => this.currentUser()?.role === 'organisateur');
+  readonly isBenevole = computed(() => this.currentUser()?.role === 'benevole');
+  readonly canManageFestivals = computed(
+    () => this.isSuperAdmin() || this.isSuperOrganisateur()
+  );
+  readonly canManageReservations = computed(
+    () => this.isSuperAdmin() || this.isSuperOrganisateur()
+  );
+  readonly canManagePlacement = computed(
+    () => this.canManageReservations() || this.isOrganisateur()
+  );
+  readonly isAdmin = computed(() => this.canManageFestivals());
   readonly isLoading = this._isLoading.asReadonly();
   readonly error = this._error.asReadonly();
+
+  hasAnyRole(roles: string[]): boolean {
+    const role = this.currentUser()?.role;
+    if (!role) return false;
+    if (role === 'super_admin') return true;
+    return roles.includes(role);
+  }
 
   login(login: string, password: string) {
     this._isLoading.set(true);

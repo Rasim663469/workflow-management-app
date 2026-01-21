@@ -1,20 +1,101 @@
 <section class="editeur-detail">
   <header class="detail-header">
-    <h2>Détails de l'éditeur</h2>
-    <p class="subtitle">Sélectionnez un onglet pour gérer les infos ou les jeux.</p>
+    <div>
+      <h2>Dossier éditeur</h2>
+      <p class="subtitle">Gérez les contacts et les jeux associés à cet éditeur.</p>
+    </div>
   </header>
 
-  @if(editeurId) {
-    <section class="detail-actions">
-      <div class="action-card">
-        <div class="action-text">
-          <h3>Jeux</h3>
-          <p>Consulter tous les jeux associés à cet éditeur.</p>
-        </div>
-        <a class="action-link" [routerLink]="['/editeurs', editeurId, 'jeux']">Voir les jeux</a>
+  @if (editeur()) {
+    <section class="editeur-overview">
+      <div>
+        <h3>{{ editeur()!.name }}</h3>
+        <p>{{ editeur()!.description }}</p>
+      </div>
+      <div class="overview-meta">
+        <span class="pill">{{ editeur()!.type_reservant || 'Type non défini' }}</span>
+        <span class="pill">{{ editeur()!.est_reservant ? 'Réservant' : 'Non réservant' }}</span>
       </div>
     </section>
   }
 
-  <router-outlet></router-outlet>
+  <nav class="detail-tabs">
+    <button type="button" [class.active]="activeTab() === 'contacts'" (click)="setTab('contacts')">
+      Contacts
+    </button>
+    <button type="button" [class.active]="activeTab() === 'jeux'" (click)="setTab('jeux')">
+      Jeux
+    </button>
+  </nav>
+
+  @if (activeTab() === 'contacts') {
+    <section class="contacts-section">
+      <header>
+        <h3>Contacts</h3>
+        <p>Ajoutez ou retirez les contacts de l'éditeur.</p>
+      </header>
+
+      <app-contact-form (add)="addContact($event)"></app-contact-form>
+
+      @if (contacts().length === 0) {
+        <div class="placeholder">Aucun contact enregistré pour cet éditeur.</div>
+      }
+      @else {
+        <div class="contacts-grid">
+          @for (contact of contacts(); track contact.id) {
+            <article class="contact-edit-card">
+              <header>
+                <strong>{{ contact.name }}</strong>
+                <button type="button" class="ghost danger" (click)="removeContact(contact.id)">Supprimer</button>
+              </header>
+
+              <div class="contact-edit-fields">
+                <label>
+                  Nom complet
+                  <input
+                    type="text"
+                    [value]="contactDraft(contact).name"
+                    (input)="updateContactDraft(contact.id, 'name', $any($event.target).value)"
+                  />
+                </label>
+                <label>
+                  Email
+                  <input
+                    type="email"
+                    [value]="contactDraft(contact).email"
+                    (input)="updateContactDraft(contact.id, 'email', $any($event.target).value)"
+                  />
+                </label>
+                <label>
+                  Telephone
+                  <input
+                    type="tel"
+                    [value]="contactDraft(contact).phone"
+                    (input)="updateContactDraft(contact.id, 'phone', $any($event.target).value)"
+                  />
+                </label>
+                <label>
+                  Role
+                  <input
+                    type="text"
+                    [value]="contactDraft(contact).role"
+                    (input)="updateContactDraft(contact.id, 'role', $any($event.target).value)"
+                  />
+                </label>
+              </div>
+
+              <div class="contact-actions">
+                <button type="button" class="ghost" (click)="cancelEditContact(contact.id)">Annuler</button>
+                <button type="button" (click)="saveContact(contact.id)">Enregistrer</button>
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </section>
+  }
+
+  @if (activeTab() === 'jeux') {
+    <app-editeur-jeux [editeurId]="editeurId" [editeurName]="editeur()?.name ?? ''"></app-editeur-jeux>
+  }
 </section>

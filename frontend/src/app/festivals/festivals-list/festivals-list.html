@@ -2,9 +2,9 @@
   <header class="section-header">
     <div>
       <p class="eyebrow">Festivals</p>
-      <h2>Découvrez les prochains festivals</h2>
+    <h2>Festivals à venir</h2>
     </div>
-    @if (isAdmin()) {
+  @if (canManageFestivals()) {
       <button class="primary" routerLink="/festivals/new">Ajouter un festival</button>
     }
   </header>

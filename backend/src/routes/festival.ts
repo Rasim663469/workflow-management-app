@@ -1,12 +1,16 @@
 import { Router } from 'express';
 import pool from '../db/database.js';
-import { requireAdmin } from '../middleware/auth-admin.js';
+import { requireRoles } from '../middleware/auth-admin.js';
 import { verifyToken } from '../middleware/token-management.js';
 
 const router = Router();
 
 // CREATE + zones tarifaires
-router.post('/', verifyToken, requireAdmin, async (req, res) => {
+router.post(
+  '/',
+  verifyToken,
+  requireRoles(['super_admin', 'super_organisateur']),
+  async (req, res) => {
   const {
     nom,
     location,
@@ -256,7 +260,11 @@ router.get('/:id', async (req, res) => {
 });
 
 // UPDATE 
-router.patch('/:id', verifyToken, requireAdmin, async (req, res) => {
+router.patch(
+  '/:id',
+  verifyToken,
+  requireRoles(['super_admin', 'super_organisateur']),
+  async (req, res) => {
   const { id } = req.params;
   const {
     nom,
@@ -322,7 +330,11 @@ router.patch('/:id', verifyToken, requireAdmin, async (req, res) => {
 });
 
 // DELETE 
-router.delete('/:id', verifyToken, requireAdmin, async (req, res) => {
+router.delete(
+  '/:id',
+  verifyToken,
+  requireRoles(['super_admin', 'super_organisateur']),
+  async (req, res) => {
   const { id } = req.params;
 
   try {

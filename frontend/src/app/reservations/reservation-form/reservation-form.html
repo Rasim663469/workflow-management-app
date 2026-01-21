@@ -3,10 +3,10 @@
     <div>
       @if (editingId()) {
         <p class="eyebrow">Modification</p>
-        <h2>Mettre à jour la réservation</h2>
+        <h2>Mise à jour de la réservation</h2>
       } @else {
         <p class="eyebrow">Nouvelle réservation</p>
-        <h2>Associer un éditeur</h2>
+        <h2>Associer un éditeur à la réservation</h2>
       }
     </div>
     @if (loadingZones()) {
@@ -22,6 +22,9 @@
     <p class="error">Réservation verrouillée : la facture est payée.</p>
   }
 
+  @if (!auth.canManageReservations()) {
+    <p class="error">Accès réservé aux super-organisateurs.</p>
+  } @else {
   <form [formGroup]="form" (ngSubmit)="submit()">
       <div class="field">
         <label for="editeur">Éditeur *</label>
@@ -170,4 +173,5 @@
       }
     </footer>
   </form>
+  }
 </section>

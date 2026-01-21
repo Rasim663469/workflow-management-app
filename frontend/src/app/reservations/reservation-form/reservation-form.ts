@@ -4,6 +4,7 @@ import { CurrencyPipe } from '@angular/common';
 import { ReservationCard, ReservationService } from '@services/reservation.service';
 import { EditeurService } from '@services/editeur.service';
 import { ZoneTarifaireDto, ZoneTarifaireService } from '@services/zone-tarifaire.service';
+import { AuthService } from '@shared/auth/auth.service';
 
 type LineForm = {
   zone_tarifaire_id: number | null;
@@ -22,6 +23,7 @@ export class ReservationFormComponent {
   private readonly reservationService = inject(ReservationService);
   private readonly editeurService = inject(EditeurService);
   private readonly zoneTarifaireService = inject(ZoneTarifaireService);
+  readonly auth = inject(AuthService);
 
   @Input({ required: true }) festivalId!: number | string;
   @Input() reservationToEdit: ReservationCard | null = null;
@@ -122,6 +124,10 @@ export class ReservationFormComponent {
   }
 
   submit(): void {
+    if (!this.auth.canManageReservations()) {
+      this.submitError.set('Vous ne pouvez pas créer ou modifier des réservations.');
+      return;
+    }
     this.submitError.set(null);
     this.submitSuccess.set(null);
 
@@ -249,7 +255,7 @@ export class ReservationFormComponent {
         souhait_tables_standard,
         souhait_tables_mairie,
         notes,
-        statut_workflow: 'pas_de_contact',
+        statut_workflow: 'present',
       })
       .subscribe({
         next: () => {

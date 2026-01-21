@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import pool from '../db/database.js';
+import { requireRoles } from '../middleware/auth-admin.js';
 
 const router = Router();
 
@@ -68,7 +69,10 @@ async function getUsedTablesInReservationZone(reservationId: number, zoneTarifai
     return Number(rows[0]?.total ?? 0);
 }
 
-router.post('/', async (req, res) => {
+router.post(
+    '/',
+    requireRoles(['super_admin', 'super_organisateur', 'organisateur']),
+    async (req, res) => {
     const { 
         jeu_id, 
         reservation_id, 
@@ -155,7 +159,10 @@ router.post('/', async (req, res) => {
 });
 
 // GET 
-router.get('/', async (req, res) => {
+router.get(
+    '/',
+    requireRoles(['super_admin', 'super_organisateur', 'organisateur', 'benevole']),
+    async (req, res) => {
     const { reservation_id, festival_id } = req.query;
 
     if (!reservation_id && !festival_id) {
@@ -195,7 +202,10 @@ router.get('/', async (req, res) => {
 });
 
 // UPDATE 
-router.put('/:id', async (req, res) => {
+router.put(
+    '/:id',
+    requireRoles(['super_admin', 'super_organisateur', 'organisateur']),
+    async (req, res) => {
     const { id } = req.params;
     const { 
         quantite, 
@@ -277,7 +287,10 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE
-router.delete('/:id', async (req, res) => {
+router.delete(
+    '/:id',
+    requireRoles(['super_admin', 'super_organisateur', 'organisateur']),
+    async (req, res) => {
     const { id } = req.params;
 
     try {

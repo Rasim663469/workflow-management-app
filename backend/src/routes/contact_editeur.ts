@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import pool from '../db/database.js';
+import { requireRoles } from '../middleware/auth-admin.js';
 
 const router = Router();
 
 // CREATE : Ajouter une note de contact
-router.post('/', async (req, res) => {
-    const { editeur_id, festival_id, date_contact, notes } = req.body;
+router.post('/', requireRoles(['super_admin', 'super_organisateur']), async (req, res) => {
+    const { editeur_id, festival_id, date_contact, notes, type_contact } = req.body;
 
     if (!editeur_id || !festival_id) {
         return res.status(400).json({ error: 'editeur_id et festival_id sont requis.' });
@@ -13,13 +14,23 @@ router.post('/', async (req, res) => {
 
     try {
         // Si date_contact n'est pas fourni, on utilise NOW() via SQL
+        const normalizedType = typeof type_contact === 'string'
+            ? type_contact.trim().toLowerCase()
+            : null;
+
         const query = `
-            INSERT INTO contact_editeur (editeur_id, festival_id, date_contact, notes) 
-            VALUES ($1, $2, COALESCE($3, NOW()), $4) 
+            INSERT INTO contact_editeur (editeur_id, festival_id, date_contact, notes, type_contact) 
+            VALUES ($1, $2, COALESCE($3, NOW()), $4, $5) 
             RETURNING *
         `;
         
-        const { rows } = await pool.query(query, [editeur_id, festival_id, date_contact, notes]);
+        const { rows } = await pool.query(query, [
+            editeur_id,
+            festival_id,
+            date_contact,
+            notes,
+            normalizedType || null
+        ]);
 
         res.status(201).json({
             message: 'Contact enregistré',
@@ -76,9 +87,9 @@ router.get('/', async (req, res) => {
 });
 
 // UPDATE 
-router.put('/:id', async (req, res) => {
+router.put('/:id', requireRoles(['super_admin', 'super_organisateur']), async (req, res) => {
     const { id } = req.params;
-    const { date_contact, notes } = req.body;
+    const { date_contact, notes, type_contact } = req.body;
 
     const updates = [];
     const values = [];
@@ -86,6 +97,12 @@ router.put('/:id', async (req, res) => {
 
     if (date_contact !== undefined) { updates.push(`date_contact = $${paramIndex++}`); values.push(date_contact); }
     if (notes !== undefined) { updates.push(`notes = $${paramIndex++}`); values.push(notes); }
+    if (type_contact !== undefined) {
+        updates.push(`type_contact = $${paramIndex++}`);
+        values.push(
+            typeof type_contact === 'string' ? type_contact.trim().toLowerCase() : null
+        );
+    }
 
     if (updates.length === 0) return res.status(400).json({ error: 'Rien à modifier' });
 
@@ -106,7 +123,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireRoles(['super_admin', 'super_organisateur']), async (req, res) => {
     const { id } = req.params;
 
     try {

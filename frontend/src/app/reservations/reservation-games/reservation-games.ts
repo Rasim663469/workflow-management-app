@@ -6,6 +6,7 @@ import { JeuFestivalService, JeuFestivalDto } from '@services/jeu-festival.servi
 import { ZonePlanDto, ZonePlanService } from '@services/zone-plan.service';
 import { FestivalDto } from '../../festivals/festival/festival-dto';
 import { FestivalService, FestivalStockUsageDto } from '@services/festival.service';
+import { AuthService } from '@shared/auth/auth.service';
 
 type DraftMap = Record<number, Partial<JeuFestivalDto>>;
 
@@ -28,6 +29,7 @@ export class ReservationGamesComponent {
   private readonly jeuFestivalService = inject(JeuFestivalService);
   private readonly zonePlanService = inject(ZonePlanService);
   private readonly festivalService = inject(FestivalService);
+  readonly auth = inject(AuthService);
 
   @Input() reservation: ReservationCard | null = null;
   @Input({ required: true }) festivalId!: number | string;
@@ -245,6 +247,9 @@ export class ReservationGamesComponent {
   }
 
   updateDraft(id: number, patch: Partial<JeuFestivalDto>): void {
+    if (!this.auth.canManagePlacement()) {
+      return;
+    }
     this.drafts.update(drafts => ({
       ...drafts,
       [id]: { ...(drafts[id] ?? {}), ...patch },
@@ -252,6 +257,9 @@ export class ReservationGamesComponent {
   }
 
   saveDraft(id: number): void {
+    if (!this.auth.canManagePlacement()) {
+      return;
+    }
     const draft = this.drafts()[id];
     if (!draft) return;
     this.jeuFestivalService.update(id, draft).subscribe({
@@ -272,6 +280,9 @@ export class ReservationGamesComponent {
   }
 
   delete(id: number): void {
+    if (!this.auth.canManagePlacement()) {
+      return;
+    }
     this.jeuFestivalService.delete(id).subscribe({
       next: () => this.loadGames(),
       error: err => {
@@ -283,6 +294,10 @@ export class ReservationGamesComponent {
   }
 
   create(): void {
+    if (!this.auth.canManagePlacement()) {
+      this.error.set('Vous ne pouvez pas modifier le placement des jeux.');
+      return;
+    }
     if (!this.reservation?.id) return;
     const draft = this.newGame();
     if (!draft.jeu_id) {

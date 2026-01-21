@@ -3,91 +3,57 @@
   flex-direction: column;
   align-items: center;
   padding: 3rem 1rem;
-  background: #f5f6fa;
-  font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
-  color: #2f3640;
+  color: var(--ink-900);
 }
 
 form {
-  background: #fff;
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: var(--radius-lg);
   padding: 2rem;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
-  width: 320px;
+  box-shadow: var(--shadow-soft);
+  width: min(360px, 92vw);
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  border: 1px solid rgba(15, 23, 42, 0.08);
 }
 
 h1 {
   font-size: 2rem;
-  color: #273c75;
   margin-bottom: 1rem;
   text-align: center;
-}
-
-p {
-  font-size: 1rem;
-  margin: 0.5rem 0;
 }
 
 label {
   display: flex;
   flex-direction: column;
   font-weight: 600;
-  color: #273c75;
+  color: var(--ink-700);
   font-size: 0.95rem;
+}
 
-  input {
-    margin-top: 0.3rem;
-    padding: 0.6rem;
-    border-radius: 6px;
-    border: 1px solid #dcdde1;
-    font-size: 1rem;
-    transition: border-color 0.2s, box-shadow 0.2s;
-
-    &:focus {
-      outline: none;
-      border-color: #0097e6;
-      box-shadow: 0 0 0 3px rgba(0, 151, 230, 0.15);
-    }
-  }
+label input {
+  margin-top: 0.3rem;
 }
 
 button {
-  background: #273c75;
-  color: #fff;
-  border: none;
-  padding: 0.6rem 1.2rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background 0.2s, transform 0.1s;
-
-  &:hover {
-    background: #40739e;
-    transform: translateY(-1px);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
+  align-self: center;
 }
 
 .error {
-  color: #e84118;
+  color: var(--danger-600);
   font-weight: 600;
-  background: rgba(232, 65, 24, 0.1);
+  background: rgba(194, 65, 12, 0.12);
   padding: 0.8rem 1rem;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(194, 65, 12, 0.35);
   margin-top: 1rem;
   text-align: center;
 }
 
 .error-message {
-  color: #e84118;
-  font-size: 11px;
-  margin: 0px;
-  font-weight: 300;
-  
+  color: var(--danger-600);
+  font-size: 0.75rem;
+  margin: 0;
+  font-weight: 400;
 }

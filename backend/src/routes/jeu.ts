@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import pool from '../db/database.js';
-import { requireAdmin } from '../middleware/auth-admin.js';
+import { requireRoles } from '../middleware/auth-admin.js';
+import { verifyToken } from '../middleware/token-management.js';
 
 const router = Router();
 
 // CRÉATION 
-router.post('/', requireAdmin, async (req, res) => {
+router.post('/', verifyToken, requireRoles(['super_admin', 'super_organisateur']), async (req, res) => {
     const { editeur_id, nom, auteurs, age_min, age_max, type_jeu } = req.body;
 
     // Seuls editeur_id et nom sont  obligatoires
@@ -128,7 +129,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // MISE À JOUR 
-router.put('/:id', requireAdmin, async (req, res) => {
+router.put('/:id', verifyToken, requireRoles(['super_admin', 'super_organisateur']), async (req, res) => {
     const { id } = req.params;
     const { nom, auteurs, age_min, age_max, type_jeu } = req.body;
 
@@ -160,7 +161,7 @@ router.put('/:id', requireAdmin, async (req, res) => {
 });
 
 // SUPPRESSION 
-router.delete('/:id', requireAdmin, async (req, res) => {
+router.delete('/:id', verifyToken, requireRoles(['super_admin', 'super_organisateur']), async (req, res) => {
     const { id } = req.params;
     try {
         const { rowCount } = await pool.query('DELETE FROM jeu WHERE id = $1', [id]);

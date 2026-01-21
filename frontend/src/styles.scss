@@ -1,1 +1,188 @@
-/* You can add global styles to this file, and also import other style files */
+/* Global theme */
+:root {
+  --ink-900: #1b1b1f;
+  --ink-700: #2f2f3a;
+  --ink-500: #4a4a5a;
+  --paper-100: #ffffff;
+  --paper-200: #f3f4f8;
+  --paper-300: #e8ebf3;
+  --brand-900: #0f1c3f;
+  --brand-700: #1f356f;
+  --brand-500: #2c4aa8;
+  --accent-600: #d97706;
+  --accent-500: #f59e0b;
+  --success-600: #0f766e;
+  --danger-600: #c2410c;
+  --shadow-soft: 0 10px 30px rgba(15, 23, 42, 0.12);
+  --shadow-tight: 0 6px 16px rgba(15, 23, 42, 0.12);
+  --radius-lg: 18px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Gill Sans", "Trebuchet MS", "Segoe UI", sans-serif;
+  color: var(--ink-900);
+  background: linear-gradient(135deg, #f7f3ee 0%, #eef1f8 45%, #e8f1ff 100%);
+  background-attachment: fixed;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 12% 18%, rgba(245, 158, 11, 0.14) 0, transparent 38%),
+    radial-gradient(circle at 86% 22%, rgba(44, 74, 168, 0.12) 0, transparent 40%),
+    radial-gradient(circle at 72% 82%, rgba(15, 28, 63, 0.12) 0, transparent 35%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: "Garamond", "Georgia", serif;
+  letter-spacing: 0.02em;
+  color: var(--brand-900);
+}
+
+a {
+  color: var(--brand-500);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+:where(button, .button-link, .primary-button) {
+  font-family: inherit;
+  border: none;
+  border-radius: 999px;
+  padding: 0.6rem 1.4rem;
+  background: linear-gradient(135deg, var(--brand-700), var(--brand-500));
+  color: #fff;
+  font-weight: 600;
+  box-shadow: var(--shadow-tight);
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+}
+
+:where(button, .button-link, .primary-button):hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-soft);
+}
+
+:where(button, .button-link, .primary-button):disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.secondary,
+.secondary-button,
+.ghost {
+  background: #fff;
+  color: var(--brand-700);
+  border: 1px solid rgba(31, 53, 111, 0.2);
+  box-shadow: none;
+}
+
+.secondary:hover:not(:disabled),
+.secondary-button:hover:not(:disabled),
+.ghost:hover:not(:disabled) {
+  background: var(--paper-200);
+}
+
+input,
+select,
+textarea {
+  font-family: inherit;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(15, 23, 42, 0.16);
+  padding: 0.6rem 0.75rem;
+  background: #fff;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--brand-500);
+  box-shadow: 0 0 0 4px rgba(44, 74, 168, 0.15);
+}
+
+.card {
+  background: var(--paper-100);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.pill,
+.badge,
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  background: var(--paper-300);
+  color: var(--ink-700);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 0.7rem;
+  color: var(--ink-500);
+  margin: 0 0 0.4rem;
+}
+
+.error {
+  color: var(--ink-600);
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  border: none;
+}
+
+.success {
+  color: var(--ink-600);
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+}
+
+.empty,
+.status {
+  color: var(--ink-500);
+}
+
+.tabs .tab {
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: #fff;
+  padding: 0.45rem 1rem;
+  font-weight: 600;
+  color: var(--brand-700);
+}
+
+.tabs .tab.active {
+  background: var(--brand-700);
+  color: #fff;
+  border-color: transparent;
+}

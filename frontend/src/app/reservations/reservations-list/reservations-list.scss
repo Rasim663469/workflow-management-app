@@ -1,12 +1,10 @@
 .card {
   padding: 1.25rem;
-  border-radius: 16px;
-  background: #ffffff;
-  color: #0f172a;
-  border: 1px solid #e5e7eb;
-  box-shadow:
-    0 8px 16px rgba(0, 0, 0, 0.05),
-    0 2px 8px rgba(0, 0, 0, 0.04);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--ink-900);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: var(--shadow-soft);
 }
 
 header {
@@ -23,22 +21,15 @@ header {
 }
 
 .pill {
-  background: #e5e7eb;
-  border: 1px solid #d1d5db;
-  color: #111827;
-  padding: 0.35rem 0.7rem;
-  border-radius: 999px;
-  font-size: 0.9rem;
+  background: rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(15, 23, 42, 0.16);
+  color: var(--ink-900);
 }
 
 .eyebrow {
   margin: 0;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #6b7280;
-  font-size: 0.75rem;
 }
 
 .error {
-  color: #b91c1c;
+  color: var(--danger-600);
 }

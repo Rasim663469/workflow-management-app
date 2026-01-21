@@ -1,8 +1,38 @@
 <section class="editeur-jeux">
-  <header>
-    <h3>Jeux de l'éditeur {{ editeurId }}</h3>
-    <p>Retrouvez ici tous les jeux associés à cet éditeur.</p>
+  <header class="section-header">
+    <div>
+      <h3>Jeux de {{ resolvedEditeurName() }}</h3>
+      <p>Ajoutez, consultez ou retirez les jeux associés à cet éditeur.</p>
+    </div>
   </header>
+
+  <form class="jeu-form" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="form-grid">
+      <label>
+        Nom du jeu *
+        <input type="text" formControlName="nom" placeholder="Nom du jeu" />
+      </label>
+      <label>
+        Auteur(s)
+        <input type="text" formControlName="auteurs" placeholder="Auteur, autrice..." />
+      </label>
+      <label>
+        Âge min
+        <input type="number" formControlName="age_min" min="0" />
+      </label>
+      <label>
+        Âge max
+        <input type="number" formControlName="age_max" min="0" />
+      </label>
+      <label>
+        Type
+        <input type="text" formControlName="type_jeu" placeholder="Famille, genre..." />
+      </label>
+    </div>
+    <div class="form-actions">
+      <button type="submit" [disabled]="form.invalid">Ajouter le jeu</button>
+    </div>
+  </form>
 
   @if (error()) {
     <p class="alert alert-error">{{ error() }}</p>
@@ -30,6 +60,63 @@
             <p class="jeu-age">{{ ageRange(jeu) }}</p>
             @if (jeu.mecanismes?.length) {
               <p class="jeu-mecanismes">Mécanismes : {{ (jeu.mecanismes ?? []).join(', ') }}</p>
+            }
+
+            @if (editing()[jeu.id]) {
+              <div class="jeu-edit-grid">
+                <label>
+                  Nom
+                  <input
+                    type="text"
+                    [value]="jeuDrafts()[jeu.id]?.nom"
+                    (input)="updateDraft(jeu.id, 'nom', $any($event.target).value)"
+                  />
+                </label>
+                <label>
+                  Auteur(s)
+                  <input
+                    type="text"
+                    [value]="jeuDrafts()[jeu.id]?.auteurs"
+                    (input)="updateDraft(jeu.id, 'auteurs', $any($event.target).value)"
+                  />
+                </label>
+                <label>
+                  Age min
+                  <input
+                    type="number"
+                    [value]="jeuDrafts()[jeu.id]?.age_min"
+                    (input)="updateDraft(jeu.id, 'age_min', toNumberOrNull($any($event.target).value))"
+                  />
+                </label>
+                <label>
+                  Age max
+                  <input
+                    type="number"
+                    [value]="jeuDrafts()[jeu.id]?.age_max"
+                    (input)="updateDraft(jeu.id, 'age_max', toNumberOrNull($any($event.target).value))"
+                  />
+                </label>
+                <label>
+                  Type
+                  <input
+                    type="text"
+                    [value]="jeuDrafts()[jeu.id]?.type_jeu"
+                    (input)="updateDraft(jeu.id, 'type_jeu', $any($event.target).value)"
+                  />
+                </label>
+              </div>
+              <div class="jeu-actions">
+                <button type="button" class="ghost" (click)="cancelEdit(jeu.id)">Annuler</button>
+                <button type="button" (click)="saveEdit(jeu.id)">Enregistrer</button>
+              </div>
+            }
+            @else {
+              <div class="jeu-actions">
+                <button type="button" class="ghost" (click)="startEdit(jeu)">Modifier</button>
+                <button type="button" class="ghost danger" (click)="removeJeu(jeu.id)">
+                  Supprimer
+                </button>
+              </div>
             }
           </article>
         }

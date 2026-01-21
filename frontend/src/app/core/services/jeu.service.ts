@@ -74,6 +74,49 @@ export class JeuService {
       );
   }
 
+  update(jeuId: string | number, payload: {
+    nom?: string;
+    auteurs?: string | null;
+    age_min?: number | null;
+    age_max?: number | null;
+    type_jeu?: string | null;
+  }, editeurId: string | number): void {
+    const id = `${jeuId ?? ''}`.trim();
+    if (!id) return;
+
+    this._error.set(null);
+    this.http
+      .put(`${environment.apiUrl}/jeux/${id}`, payload, { withCredentials: true })
+      .pipe(
+        tap(() => this.loadByEditeur(editeurId)),
+        catchError(err => {
+          const message =
+            err instanceof Error ? err.message : 'Erreur lors de la mise a jour du jeu';
+          this._error.set(message);
+          return of(null);
+        })
+      )
+      .subscribe();
+  }
+
+  delete(jeuId: string | number, editeurId: string | number): void {
+    const id = `${jeuId ?? ''}`.trim();
+    if (!id) return;
+
+    this.http
+      .delete(`${environment.apiUrl}/jeux/${id}`, { withCredentials: true })
+      .pipe(
+        tap(() => this.loadByEditeur(editeurId)),
+        catchError(err => {
+          const message =
+            err instanceof Error ? err.message : 'Erreur lors de la suppression du jeu';
+          this._error.set(message);
+          return of(null);
+        })
+      )
+      .subscribe();
+  }
+
   loadByEditeur(editeurId: string | number): void {
     const normalizedId = `${editeurId ?? ''}`.trim();
 

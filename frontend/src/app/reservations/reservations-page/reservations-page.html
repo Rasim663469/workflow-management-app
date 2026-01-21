@@ -20,25 +20,35 @@
 
   @if (selectedFestivalId()) {
     <div class="tabs">
-      <button type="button" class="tab" [class.active]="activeTab() === 'suivi'" (click)="activeTab.set('suivi')">
-        Suivi CRM
-      </button>
+      @if (auth.canManageReservations()) {
+        <button type="button" class="tab" [class.active]="activeTab() === 'suivi'" (click)="activeTab.set('suivi')">
+          Suivi CRM
+        </button>
+      }
       <button type="button" class="tab" [class.active]="activeTab() === 'reservations'" (click)="activeTab.set('reservations')">
         Réservations
       </button>
-      <button type="button" class="tab" [class.active]="activeTab() === 'nouvelle'" (click)="activeTab.set('nouvelle')">
-        Nouvelle réservation
-      </button>
-      <button type="button" class="tab" [class.active]="activeTab() === 'jeux'" (click)="activeTab.set('jeux')">
-        Jeux & placement
-      </button>
-      <button type="button" class="tab" [class.active]="activeTab() === 'plan'" (click)="activeTab.set('plan')">
-        Zones du plan
-      </button>
+      @if (auth.canManageReservations()) {
+        <button type="button" class="tab" [class.active]="activeTab() === 'nouvelle'" (click)="activeTab.set('nouvelle')">
+          Nouvelle réservation
+        </button>
+      }
+      @if (auth.canManagePlacement()) {
+        <button type="button" class="tab" [class.active]="activeTab() === 'jeux'" (click)="activeTab.set('jeux')">
+          Jeux & placement
+        </button>
+        <button type="button" class="tab" [class.active]="activeTab() === 'plan'" (click)="activeTab.set('plan')">
+          Zones du plan
+        </button>
+      }
     </div>
 
     @if (activeTab() === 'suivi') {
-      <app-crm-list [festivalId]="selectedFestivalId()!" />
+      @if (auth.canManageReservations()) {
+        <app-crm-list [festivalId]="selectedFestivalId()!" />
+      } @else {
+        <p class="empty">Accès réservé aux super-organisateurs.</p>
+      }
     }
 
     @if (activeTab() === 'reservations') {
@@ -50,25 +60,37 @@
     }
 
     @if (activeTab() === 'nouvelle') {
-      <app-reservation-form
-        [festivalId]="selectedFestivalId()!"
-        [reservationToEdit]="editingReservation()"
-        (created)="handleCreated()"
-        (updated)="handleUpdated()"
-        (cancelled)="handleCancelled()"
-      />
+      @if (auth.canManageReservations()) {
+        <app-reservation-form
+          [festivalId]="selectedFestivalId()!"
+          [reservationToEdit]="editingReservation()"
+          (created)="handleCreated()"
+          (updated)="handleUpdated()"
+          (cancelled)="handleCancelled()"
+        />
+      } @else {
+        <p class="empty">Vous ne pouvez pas créer/modifier de réservations.</p>
+      }
     }
 
     @if (activeTab() === 'jeux') {
-      <app-reservation-games
-        [festivalId]="selectedFestivalId()!"
-        [festival]="currentFestival()"
-        [reservation]="gamesReservation()"
-      />
+      @if (auth.canManagePlacement()) {
+        <app-reservation-games
+          [festivalId]="selectedFestivalId()!"
+          [festival]="currentFestival()"
+          [reservation]="gamesReservation()"
+        />
+      } @else {
+        <p class="empty">Vous ne pouvez pas gérer le placement des jeux.</p>
+      }
     }
 
     @if (activeTab() === 'plan') {
-      <app-plan-zones [festivalId]="selectedFestivalId()!" />
+      @if (auth.canManagePlacement()) {
+        <app-plan-zones [festivalId]="selectedFestivalId()!" />
+      } @else {
+        <p class="empty">Vous ne pouvez pas gérer les zones du plan.</p>
+      }
     }
   } @else {
     <p>Aucun festival disponible.</p>

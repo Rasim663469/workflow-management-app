@@ -5,7 +5,13 @@ CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY,
   login TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
-  role TEXT DEFAULT 'user'
+  role TEXT NOT NULL DEFAULT 'benevole',
+  CONSTRAINT chk_user_role CHECK (role IN (
+    'super_admin',
+    'super_organisateur',
+    'organisateur',
+    'benevole'
+  ))
 );
 
 -- ===========================
@@ -161,6 +167,7 @@ CREATE TABLE IF NOT EXISTS contact_editeur (
     editeur_id INT NOT NULL,
     festival_id INT NOT NULL,
     date_contact TIMESTAMP NOT NULL,
+    type_contact VARCHAR(20),
     notes TEXT,
     CONSTRAINT fk_contact_editeur_editeur
         FOREIGN KEY (editeur_id) REFERENCES editeur(id)

@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import pool from '../db/database.js';
+import type { PoolClient } from 'pg';
+import { requireRoles } from '../middleware/auth-admin.js';
 
 type ReservationLineInput = {
   zone_tarifaire_id: number;
@@ -9,36 +11,15 @@ type ReservationLineInput = {
 
 const router = Router();
 
-const ALLOWED_WORKFLOWS = [
-  'brouillon',
-  'pas_de_contact',
-  'contact_pris',
-  'discussion_en_cours',
-  'sera_absent',
-  'considere_absent',
-  'present',
-  'facture',
-  'facture_payee',
-  'envoyée',
-  'validée',
-  'annulée',
-] as const;
-const DEFAULT_WORKFLOW = 'pas_de_contact';
+const ALLOWED_WORKFLOWS = ['present', 'facture', 'facture_payee', 'annulée'] as const;
+const DEFAULT_WORKFLOW = 'present';
 const TABLE_AREA_M2 = 4;
 const PRICE_PER_OUTLET = 250;
 
 const WORKFLOW_TRANSITIONS: Record<string, string[]> = {
-  brouillon: ['pas_de_contact', 'contact_pris', 'discussion_en_cours', 'present', 'annulée'],
-  pas_de_contact: ['contact_pris', 'discussion_en_cours', 'sera_absent', 'considere_absent', 'present', 'annulée'],
-  contact_pris: ['discussion_en_cours', 'sera_absent', 'considere_absent', 'present', 'annulée'],
-  discussion_en_cours: ['sera_absent', 'considere_absent', 'present', 'annulée'],
-  sera_absent: ['considere_absent', 'annulée'],
-  considere_absent: ['contact_pris', 'discussion_en_cours', 'present', 'annulée'],
   present: ['facture', 'annulée'],
   facture: ['facture_payee', 'annulée'],
   facture_payee: [],
-  envoyée: ['validée', 'annulée'],
-  validée: ['facture', 'annulée'],
   annulée: [],
 };
 
@@ -50,6 +31,39 @@ function isTransitionAllowed(current: string, next: string): boolean {
   if (current === next) return true;
   const allowed = WORKFLOW_TRANSITIONS[current] ?? [];
   return allowed.includes(next);
+}
+
+type CrmStatus =
+  | 'pas_de_contact'
+  | 'contact_pris'
+  | 'discussion_en_cours'
+  | 'sera_absent'
+  | 'considere_absent'
+  | 'present';
+
+function mapReservationStatusToCrm(status: string): CrmStatus | null {
+  if (status === 'annulée') return 'sera_absent';
+  if (status === 'facture' || status === 'facture_payee' || status === 'present') return 'present';
+  return null;
+}
+
+async function syncCrmStatus(
+  client: PoolClient,
+  editeurId: number,
+  festivalId: number,
+  status: string
+): Promise<void> {
+  const crmStatus = mapReservationStatusToCrm(status);
+  if (!crmStatus) return;
+  await client.query(
+    `
+    INSERT INTO crm_suivi (editeur_id, festival_id, statut, derniere_relance)
+    VALUES ($1, $2, $3, CASE WHEN $3 = 'contact_pris' THEN NOW() ELSE NULL END)
+    ON CONFLICT (editeur_id, festival_id)
+    DO UPDATE SET statut = EXCLUDED.statut
+    `,
+    [editeurId, festivalId, crmStatus]
+  );
 }
 
 type ZoneInfo = { prix_table: number; prix_m2: number; disponibles: number; nom: string | null };
@@ -129,7 +143,7 @@ function computePrice(
 }
 
 // CREATE with multiple tariff zones + price calculation
-router.post('/', async (req, res) => {
+router.post('/', requireRoles(['super_admin', 'super_organisateur']), async (req, res) => {
   const {
     editeur_id,
     festival_id,
@@ -273,6 +287,8 @@ router.post('/', async (req, res) => {
       );
     }
 
+    await syncCrmStatus(client, Number(editeur_id), Number(festival_id), workflow);
+
     await client.query('COMMIT');
 
     res.status(201).json({
@@ -302,7 +318,10 @@ router.post('/', async (req, res) => {
 });
 
 // LIST by festival (cards view)
-router.get('/festival/:festivalId', async (req, res) => {
+router.get(
+  '/festival/:festivalId',
+  requireRoles(['super_admin', 'super_organisateur', 'organisateur', 'benevole']),
+  async (req, res) => {
   const { festivalId } = req.params;
 
   try {
@@ -347,7 +366,10 @@ router.get('/festival/:festivalId', async (req, res) => {
 });
 
 // READ by filters (fallback)
-router.get('/', async (req, res) => {
+router.get(
+  '/',
+  requireRoles(['super_admin', 'super_organisateur', 'organisateur', 'benevole']),
+  async (req, res) => {
   const { festival_id, editeur_id } = req.query;
 
   try {
@@ -388,7 +410,10 @@ router.get('/', async (req, res) => {
 });
 
 // DETAIL
-router.get('/:id', async (req, res) => {
+router.get(
+  '/:id',
+  requireRoles(['super_admin', 'super_organisateur', 'organisateur', 'benevole']),
+  async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -426,7 +451,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // UPDATE (workflow / remises / présence)
-router.put('/:id', async (req, res) => {
+router.put('/:id', requireRoles(['super_admin', 'super_organisateur']), async (req, res) => {
   const { id } = req.params;
   const {
     statut_workflow,
@@ -660,6 +685,10 @@ router.put('/:id', async (req, res) => {
     const query = `UPDATE reservation SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING *`;
     const { rows } = await client.query(query, values);
 
+    if (statut_workflow !== undefined) {
+      await syncCrmStatus(client, reservation.editeur_id, reservation.festival_id, statut_workflow);
+    }
+
     await client.query('COMMIT');
     res.json({ message: 'Réservation mise à jour', reservation: rows[0], prix: price });
   } catch (err) {
@@ -672,7 +701,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // CREATE facture for reservation
-router.post('/:id/factures', async (req, res) => {
+router.post('/:id/factures', requireRoles(['super_admin', 'super_organisateur']), async (req, res) => {
   const { id } = req.params;
   const client = await pool.connect();
 
@@ -742,37 +771,60 @@ router.post('/:id/factures', async (req, res) => {
 });
 
 // CONTACTS history for reservation (editeur + festival)
-router.post('/:id/contacts', async (req, res) => {
+router.post('/:id/contacts', requireRoles(['super_admin', 'super_organisateur']), async (req, res) => {
   const { id } = req.params;
-  const { date_contact, notes } = req.body;
+  const { date_contact, notes, type_contact } = req.body;
+  const client = await pool.connect();
 
   try {
-    const reservationRes = await pool.query(
-      'SELECT editeur_id, festival_id FROM reservation WHERE id = $1',
+    await client.query('BEGIN');
+
+    const reservationRes = await client.query(
+      'SELECT id, editeur_id, festival_id, statut_workflow FROM reservation WHERE id = $1',
       [id]
     );
     const reservation = reservationRes.rows[0];
-    if (!reservation) return res.status(404).json({ error: 'Réservation non trouvée' });
+    if (!reservation) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Réservation non trouvée' });
+    }
 
-    const { rows } = await pool.query(
-      `INSERT INTO contact_editeur (editeur_id, festival_id, date_contact, notes) 
-       VALUES ($1, $2, COALESCE($3, NOW()), $4) 
+    const { rows } = await client.query(
+      `INSERT INTO contact_editeur (editeur_id, festival_id, date_contact, notes, type_contact) 
+       VALUES ($1, $2, COALESCE($3, NOW()), $4, $5) 
        RETURNING *`,
-      [reservation.editeur_id, reservation.festival_id, date_contact, notes]
+      [reservation.editeur_id, reservation.festival_id, date_contact, notes, type_contact]
     );
 
+    await client.query(
+      `
+      INSERT INTO crm_suivi (editeur_id, festival_id, statut, derniere_relance)
+      VALUES ($1, $2, 'contact_pris', NOW())
+      ON CONFLICT (editeur_id, festival_id)
+      DO UPDATE SET statut = 'contact_pris', derniere_relance = NOW()
+      `,
+      [reservation.editeur_id, reservation.festival_id]
+    );
+
+    await client.query('COMMIT');
     res.status(201).json({ message: 'Contact enregistré', contact: rows[0] });
   } catch (err: any) {
+    await client.query('ROLLBACK');
     console.error(err);
     if (err.code === '23503') {
       res.status(400).json({ error: "L'éditeur ou le festival n'existe pas." });
     } else {
       res.status(500).json({ error: 'Erreur serveur.' });
     }
+  } finally {
+    client.release();
   }
 });
 
-router.get('/:id/contacts', async (req, res) => {
+router.get(
+  '/:id/contacts',
+  requireRoles(['super_admin', 'super_organisateur', 'organisateur', 'benevole']),
+  async (req, res) => {
   const { id } = req.params;
   try {
     const reservationRes = await pool.query(
@@ -797,7 +849,7 @@ router.get('/:id/contacts', async (req, res) => {
 });
 
 // DELETE (restock tables)
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireRoles(['super_admin', 'super_organisateur']), async (req, res) => {
   const { id } = req.params;
   const client = await pool.connect();
 

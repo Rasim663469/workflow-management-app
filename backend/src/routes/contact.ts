@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import pool from '../db/database.js';
+import { requireRoles } from '../middleware/auth-admin.js';
 
 const router = Router();
 
 // CRÉER un contact 
 
-router.post('/', async (req, res) => {
+router.post('/', requireRoles(['super_admin', 'super_organisateur']), async (req, res) => {
     const { editeur_id, nom, prenom, email, telephone, role } = req.body;
 
     if (!editeur_id || !nom || !prenom || !email) {
@@ -63,7 +64,7 @@ router.get('/', async (req, res) => {
 });
 
 // MODIFIER un contact
-router.put('/:id', async (req, res) => {
+router.put('/:id', requireRoles(['super_admin', 'super_organisateur']), async (req, res) => {
     const { id } = req.params;
     const { nom, prenom, email, telephone, role } = req.body;
 
@@ -99,7 +100,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // SUPPRIMER un contact 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireRoles(['super_admin', 'super_organisateur']), async (req, res) => {
     const { id } = req.params;
     try {
         const { rowCount } = await pool.query('DELETE FROM contact WHERE id = $1', [id]);

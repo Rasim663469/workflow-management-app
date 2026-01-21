@@ -1,19 +1,15 @@
-@use 'sass:color';
-
 .festival-card {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  padding: 1rem 1.25rem;
-  border-radius: 12px;
-  background: #ffffff;
-  box-shadow:
-    0 8px 16px rgba(0, 0, 0, 0.05),
-    0 2px 8px rgba(0, 0, 0, 0.04);
-  border: 1px solid #e7e9ee;
+  padding: 1.1rem 1.3rem;
+  border-radius: var(--radius-lg);
+  background: #fff;
+  box-shadow: var(--shadow-soft);
+  border: 1px solid rgba(15, 23, 42, 0.08);
   flex: 0 0 calc(33.333% - 1rem);
   min-width: 280px;
-  max-width: 400px;
+  max-width: 420px;
 
   header {
     display: flex;
@@ -23,26 +19,26 @@
 
   .festival-name {
     margin: 0;
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     font-weight: 700;
-    color: #1f2937;
+    color: var(--brand-900);
   }
 
   .festival-location {
     margin: 0;
-    color: #4b5563;
+    color: var(--ink-700);
     font-weight: 500;
   }
 
   .festival-date {
     margin: 0;
-    color: #6b7280;
+    color: var(--ink-500);
     font-size: 0.95rem;
   }
 
   .festival-description {
     margin: 0;
-    color: #374151;
+    color: var(--ink-700);
     font-weight: 500;
   }
 
@@ -51,7 +47,7 @@
     flex-wrap: wrap;
     gap: 0.5rem 1.25rem;
     font-weight: 600;
-    color: #1f2937;
+    color: var(--ink-900);
   }
 
   .festival-stats p {
@@ -62,8 +58,8 @@
     align-self: flex-start;
     padding: 0.25rem 0.65rem;
     border-radius: 999px;
-    background: rgba(16, 185, 129, 0.15);
-    color: #047857;
+    background: rgba(15, 118, 110, 0.18);
+    color: var(--success-600);
     font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.04em;
@@ -77,7 +73,7 @@
 
   .empty {
     margin: 0.35rem 0 0;
-    color: #6b7280;
+    color: var(--ink-500);
     font-size: 0.95rem;
   }
 
@@ -95,25 +91,23 @@
     justify-content: space-between;
     align-items: center;
     padding: 0.75rem 0.85rem;
-    border-radius: 10px;
-    background: #f9fafb;
-    border: 1px solid #eef0f4;
+    border-radius: var(--radius-md);
+    background: rgba(15, 23, 42, 0.04);
+    border: 1px solid rgba(15, 23, 42, 0.08);
   }
 
   .zone-name {
     font-weight: 600;
-    color: #1f2937;
+    color: var(--brand-700);
   }
 
   .zone-details {
     display: flex;
     gap: 0.75rem;
-    color: #4b5563;
+    color: var(--ink-500);
     font-size: 0.95rem;
   }
 }
-
-
 
 .actions {
   display: flex;
@@ -127,17 +121,17 @@
   align-items: center;
   gap: 0.4rem;
   padding: 0.6rem 1rem;
-  border-radius: 10px;
-  background: #2563eb;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--brand-700), var(--brand-500));
   color: #fff;
   text-decoration: none;
   font-weight: 700;
-  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.2);
-  transition: transform 0.05s ease, box-shadow 0.1s ease;
+  box-shadow: var(--shadow-tight);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
 
   &:hover {
     transform: translateY(-1px);
-    box-shadow: 0 12px 30px rgba(37, 99, 235, 0.24);
+    box-shadow: var(--shadow-soft);
   }
 }
 
@@ -146,16 +140,16 @@
   align-items: center;
   gap: 0.3rem;
   padding: 0.55rem 0.9rem;
-  border-radius: 10px;
-  background: #f3f4f6;
-  color: #111827;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--brand-700);
   text-decoration: none;
   font-weight: 700;
-  border: 1px solid #e5e7eb;
-  transition: transform 0.05s ease, box-shadow 0.1s ease;
+  border: 1px solid rgba(31, 53, 111, 0.2);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
 
   &:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow-tight);
   }
 }

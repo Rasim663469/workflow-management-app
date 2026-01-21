@@ -8,6 +8,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PlanZonesComponent } from '../../plan-zones/plan-zones';
 import { ReservationGamesComponent } from '../reservation-games/reservation-games';
+import { AuthService } from '@shared/auth/auth.service';
 
 @Component({
   selector: 'app-reservations-page',
@@ -28,6 +29,7 @@ export class ReservationsPageComponent {
   private readonly reservationService = inject(ReservationService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  readonly auth = inject(AuthService);
 
   readonly festivals = this.festivalService.remoteFestivals;
   readonly loadingFestivals = this.festivalService.loading;
@@ -45,16 +47,52 @@ export class ReservationsPageComponent {
         this.reservationService.loadByFestival(current);
       }
     });
+    effect(() => {
+      if (!this.auth.canManageReservations()) {
+        const tab = this.activeTab();
+        if (tab === 'suivi' || tab === 'nouvelle') {
+          this.activeTab.set('reservations');
+        }
+      }
+      if (!this.auth.canManagePlacement()) {
+        const tab = this.activeTab();
+        if (tab === 'jeux' || tab === 'plan') {
+          this.activeTab.set('reservations');
+        }
+      }
+    });
   }
 
   ngOnInit(): void {
-    // Initialiser depuis la query (festivalId) si présent
+    // Initialiser depuis la query (festivalId/tab) si présent
     this.route.queryParamMap.subscribe(params => {
       const festivalId = params.get('festivalId');
       if (festivalId) {
         this.festivalService.setCurrentFestival(festivalId);
       }
+      const tab = params.get('tab');
+      if (tab) {
+        this.setActiveTabFromQuery(tab);
+      }
     });
+  }
+
+  private setActiveTabFromQuery(tab: string): void {
+    if (tab === 'jeux' || tab === 'plan') {
+      if (this.auth.canManagePlacement()) {
+        this.activeTab.set(tab);
+      }
+      return;
+    }
+    if (tab === 'nouvelle' || tab === 'suivi') {
+      if (this.auth.canManageReservations()) {
+        this.activeTab.set(tab);
+      }
+      return;
+    }
+    if (tab === 'reservations') {
+      this.activeTab.set('reservations');
+    }
   }
 
   onFestivalChange(event: Event): void {

@@ -1,9 +1,9 @@
-<h1>Admin Panel</h1>
+<h1>Administration</h1>
 
 <section class="card">
   <header>
     <p class="eyebrow">Réservations</p>
-    <h2>Gérer les réservations</h2>
+    <h2>Gestion des réservations</h2>
     <p class="lead">Accès direct à la page dédiée (list/cards + formulaire).</p>
   </header>
   <a routerLink="/reservations" class="button-link">Ouvrir la page Réservations</a>
@@ -12,7 +12,7 @@
 <section class="card">
   <header>
     <p class="eyebrow">Éditeurs</p>
-    <h2>Gérer les éditeurs</h2>
+    <h2>Gestion des éditeurs</h2>
     <p class="lead">Accéder à la liste des éditeurs pour en ajouter de nouveaux.</p>
   </header>
   <div class="actions">
@@ -24,7 +24,7 @@
 <section class="card">
   <header>
     <p class="eyebrow">Jeux</p>
-    <h2>Créer un jeu</h2>
+    <h2>Création d’un jeu</h2>
     <p class="lead">Associer un jeu à un éditeur existant.</p>
   </header>
 
@@ -92,25 +92,90 @@
 </section>
 
 <section class="card">
-  <h3>Liste des éditeurs</h3>
-  @if (editeurs().length === 0) {
-  <p>Aucun éditeur pour le moment.</p>
-  } @else {
-  <ul class="editeur-list">
-    @for (editeur of editeurs(); track editeur.id) {
-    <li>
-      <strong>{{ editeur.name }}</strong>
-      <small>{{ editeur.description }}</small>
-    </li>
+  <header>
+    <p class="eyebrow">Utilisateurs</p>
+    <h2>Créer un utilisateur</h2>
+    <p class="lead">Créer un compte et définir son rôle.</p>
+  </header>
+
+  <form [formGroup]="formUser" (ngSubmit)="submitUser()">
+    <div class="grid">
+      <div class="field">
+        <label for="loginUser">Login *</label>
+        <input id="loginUser" type="text" formControlName="login" placeholder="Login" />
+        @if (formUser.controls.login.invalid && formUser.controls.login.touched) {
+        <p class="error">Login obligatoire (2 caractères min).</p>
+        }
+      </div>
+      <div class="field">
+        <label for="passwordUser">Mot de passe *</label>
+        <input id="passwordUser" type="password" formControlName="password" placeholder="Mot de passe" />
+        @if (formUser.controls.password.invalid && formUser.controls.password.touched) {
+        <p class="error">Mot de passe obligatoire (4 caractères min).</p>
+        }
+      </div>
+      <div class="field">
+        <label for="roleUser">Rôle *</label>
+        <select id="roleUser" formControlName="role">
+          @for (role of roles; track role.value) {
+          <option [ngValue]="role.value">{{ role.label }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <button type="submit" [disabled]="creatingUser() || formUser.invalid">
+      {{ creatingUser() ? 'Création...' : 'Créer l’utilisateur' }}
+    </button>
+
+    @if (userSuccess()) {
+    <p class="success">{{ userSuccess() }}</p>
     }
-  </ul>
-  }
+    @if (userError()) {
+    <p class="error">{{ userError() }}</p>
+    }
+  </form>
 </section>
 
-<p>Utilisateurs :</p>
-@for (user of users(); track user.login) {
-<div class="user-card">
-  <h3>{{user.login}}</h3>
-  <p>Role: {{user.role}}</p>
-</div>
-}
+<section class="card">
+  <h3>Utilisateurs</h3>
+  @for (user of users(); track user.login) {
+  <div class="user-card">
+    <div>
+      <h3>{{ user.login }}</h3>
+      <p>Rôle actuel : {{ user.role }}</p>
+    </div>
+    @if (user.id) {
+      <div class="field inline">
+        <label>Changer rôle</label>
+        <select #roleSelect>
+          @for (role of roles; track role.value) {
+          <option [value]="role.value" [selected]="role.value === user.role">
+            {{ role.label }}
+          </option>
+          }
+        </select>
+        <button
+          type="button"
+          class="secondary"
+          (click)="updateRole(user.id!, toRole(roleSelect.value))"
+          [disabled]="updatingRoles()[user.id!]"
+        >
+          Mettre à jour
+        </button>
+        <button
+          type="button"
+          class="secondary danger"
+          (click)="deleteUser(user.id!)"
+          [disabled]="deletingUsers()[user.id!]"
+        >
+          Supprimer
+        </button>
+      </div>
+    }
+  </div>
+  }
+  @if (users().length === 0) {
+  <p>Aucun utilisateur pour le moment.</p>
+  }
+</section>

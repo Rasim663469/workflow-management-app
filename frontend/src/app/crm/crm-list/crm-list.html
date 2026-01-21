@@ -2,11 +2,45 @@
   <header>
     <div>
       <p class="eyebrow">CRM</p>
-      <h2>Suivi des contacts</h2>
+      <h2>Suivi CRM des contacts</h2>
+      <p class="subtitle">Éditeurs suivis : {{ rows().length }}</p>
     </div>
-    @if (loading()) {
-      <span class="pill">Chargement...</span>
-    }
+    <div class="controls">
+      <input
+        type="search"
+        placeholder="Rechercher un éditeur ou un type…"
+        [value]="searchQuery()"
+        (input)="setSearch($any($event.target).value)"
+      />
+      <select [value]="typeFilter()" (change)="setTypeFilter($any($event.target).value)">
+        <option value="all">Tous les types</option>
+        @for (type of reservantTypes; track type.value) {
+          <option [value]="type.value">{{ type.label }}</option>
+        }
+      </select>
+      <label class="toggle">
+        <input
+          type="checkbox"
+          [checked]="reservantOnly()"
+          (change)="toggleReservantOnly($any($event.target).checked)"
+        />
+        Réservants uniquement
+      </label>
+      <select [value]="statusFilter()" (change)="setStatusFilter($any($event.target).value)">
+        <option value="all">Tous les statuts</option>
+        @for (status of statuses; track status.value) {
+          <option [value]="status.value">{{ status.label }}</option>
+        }
+      </select>
+      <select [value]="sortBy()" (change)="setSort($any($event.target).value)">
+        <option value="name">Trier: nom</option>
+        <option value="last_contact">Trier: dernier contact</option>
+        <option value="contacts">Trier: nombre de contacts</option>
+      </select>
+      @if (loading()) {
+        <span class="pill">Chargement…</span>
+      }
+    </div>
   </header>
 
   @if (error()) {
@@ -18,26 +52,52 @@
   }
 
   @if (!loading() && rows().length === 0) {
-    <p class="empty">Aucun éditeur.</p>
+    <p class="empty">Aucun éditeur enregistré.</p>
   }
 
   @if (rows().length > 0) {
+    <div class="status-tabs">
+      <button type="button" class="pill" [class.active]="statusFilter() === 'all'" (click)="setStatusFilter('all')">
+        Tous <span>{{ rows().length }}</span>
+      </button>
+      @for (status of statuses; track status.value) {
+        <button
+          type="button"
+          class="pill"
+          [class.active]="statusFilter() === status.value"
+          (click)="setStatusFilter(status.value)"
+        >
+          {{ status.label }} <span>{{ statusCounts()[status.value] }}</span>
+        </button>
+      }
+    </div>
+
     <div class="crm-grid">
-      @for (row of rows(); track row.editeur_id) {
+      @for (row of filteredRows(); track row.editeur_id) {
         <article class="crm-row">
           <div class="info">
-            <p class="name">{{ row.editeur_nom }}</p>
-            <p class="meta">
-              {{ row.type_reservant || 'editeur' }}
-              @if (row.est_reservant === false) { · non réservant }
-            </p>
+            <div>
+              <p class="name">{{ row.editeur_nom }}</p>
+              <p class="meta">
+                {{ row.type_reservant || 'éditeur' }}
+                @if (row.est_reservant === false) { · non réservant }
+              </p>
+            </div>
+            <span class="badge" [attr.data-status]="row.statut ?? 'pas_de_contact'">
+              {{ statusLabel(row.statut) }}
+            </span>
           </div>
+
           <div class="stats">
             <span>Contacts: {{ row.total_contacts ?? 0 }}</span>
             <span>
               Dernier: {{ row.last_contact ? (row.last_contact | date:'shortDate') : '—' }}
             </span>
+            <span>
+              Relance: {{ row.derniere_relance ? (row.derniere_relance | date:'shortDate') : '—' }}
+            </span>
           </div>
+
           <div class="actions">
             <label class="sr-only">Statut CRM</label>
             <select
@@ -49,7 +109,67 @@
                 <option [value]="status.value">{{ status.label }}</option>
               }
             </select>
+            <select
+              class="compact"
+              [value]="contactDrafts()[row.editeur_id]?.type_contact ?? 'email'"
+              (change)="setContactDraft(row.editeur_id, { type_contact: $any($event.target).value })"
+            >
+              @for (type of contactTypes; track type.value) {
+                <option [value]="type.value">{{ type.label }}</option>
+              }
+            </select>
+            <input
+              class="compact"
+              type="text"
+              placeholder="Note rapide"
+              [value]="contactDrafts()[row.editeur_id]?.notes ?? ''"
+              (input)="setContactDraft(row.editeur_id, { notes: $any($event.target).value })"
+            />
+            <button type="button" class="secondary" (click)="markContactToday(row.editeur_id)" [disabled]="saving()">
+              Ajouter contact
+            </button>
+            <button type="button" class="ghost" (click)="toggleHistory(row.editeur_id)">
+              @if (historyOpen()[row.editeur_id]) { Masquer l’historique } @else { Historique }
+            </button>
           </div>
+
+          <div class="notes">
+            <label class="sr-only">Notes CRM</label>
+            <textarea
+              rows="2"
+              placeholder="Notes CRM (suivi interne)"
+              [value]="notesDraft()[row.editeur_id]"
+              (input)="setNotesDraft(row.editeur_id, $any($event.target).value)"
+            ></textarea>
+            <button type="button" class="ghost" (click)="updateNotes(row.editeur_id, row.statut)">
+              Enregistrer les notes
+            </button>
+          </div>
+
+          @if (historyOpen()[row.editeur_id]) {
+            <div class="history">
+              @if (contactsLoading()[row.editeur_id]) {
+                <p class="muted">Chargement…</p>
+              }
+              @if (contactsError()[row.editeur_id]) {
+                <p class="error">{{ contactsError()[row.editeur_id] }}</p>
+              }
+              @if (!contactsLoading()[row.editeur_id] && !(contactsByEditeur()[row.editeur_id]?.length)) {
+                <p class="muted">Aucun contact enregistré.</p>
+              }
+              @if (contactsByEditeur()[row.editeur_id]?.length) {
+                <ul>
+                  @for (contact of contactsByEditeur()[row.editeur_id]; track contact.id) {
+                    <li>
+                      <strong>{{ contact.date_contact | date:'short' }}</strong>
+                      @if (contact.type_contact) { <span>{{ contact.type_contact }}</span> }
+                      @if (contact.notes) { <span>{{ contact.notes }}</span> }
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+          }
         </article>
       }
     </div>
