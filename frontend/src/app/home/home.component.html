@@ -1,15 +1,27 @@
-<h1>{{title}}</h1>
-@if(auth.isLoggedIn()) {
-    <p>Welcome, <strong>{{auth.currentUser()?.login}}</strong>!</p>
-    <button (click)="auth.logout()" [disabled]="auth.isLoading()">Logout</button>
-}
-@else {
-    <p> You are not logged in.</p>
-    <a routerLink="/login">Go to Login</a>
-}
+<section class="home-shell">
+  <header class="home-bar">
+    <div class="brand">FestivalManager</div>
+    <div class="auth-actions">
+      @if (auth.isLoggedIn()) {
+        <button type="button" (click)="auth.logout()" [disabled]="auth.isLoading()">
+          Se deconnecter
+        </button>
+      } @else {
+        <a routerLink="/login" class="btn-link">Se connecter</a>
+      }
+    </div>
+  </header>
 
-@if(auth.error()) {
-    <p class="error">{{auth.error()}}</p>
-}
+  @if (auth.error()) {
+    <p class="error">{{ auth.error() }}</p>
+  }
 
-<app-festivals-list></app-festivals-list>
+  <section class="home-content">
+    <div class="home-intro">
+      <h1>Festivals a venir</h1>
+      <p>Suivez les festivals et preparez vos reservations.</p>
+    </div>
+
+    <app-festivals-list></app-festivals-list>
+  </section>
+</section>

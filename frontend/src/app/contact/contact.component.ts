@@ -11,6 +11,7 @@ import { ContactDto } from './contactDTO';
 })
 export class ContactComponent {
     contact = input.required<ContactDto>();
+    canDelete = input<boolean>(false);
     remove = output<string>();
 
     onDelete() {

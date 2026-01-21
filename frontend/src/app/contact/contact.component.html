@@ -10,7 +10,9 @@
         }
     </div>
 
+    @if (canDelete()) {
     <button type="button" class="delete-btn" (click)="onDelete()">
         Supprimer
     </button>
+    }
 </div>

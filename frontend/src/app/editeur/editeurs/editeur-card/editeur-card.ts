@@ -47,6 +47,7 @@ export class EditeurCard {
   }
 
   handleContactAdd(newContact: CreateContactDto) {
+    if (!this.authService.isSuperAdmin()) return;
     this.editeurService.addContact({
       ...newContact,
       editeurId: this.editeur().id
@@ -55,6 +56,7 @@ export class EditeurCard {
   }
 
   handleDeleteContact(contactId: string) {
+    if (!this.authService.isSuperAdmin()) return;
     this.editeurService.deleteContact(contactId);
   }
 }

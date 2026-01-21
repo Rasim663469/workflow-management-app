@@ -17,16 +17,15 @@
   </div>
 
   <div class="card-actions">
-    @if (authService.canManageFestivals()) {
-    <button type="button" class="btn-action" (click)="onCreateContact($event)">
-      {{ showForm() ? 'Fermer' : 'Ajouter un contact' }}
-    </button>
-
+    @if (authService.isSuperAdmin()) {
+      <button type="button" class="btn-action" (click)="onCreateContact($event)">
+        {{ showForm() ? 'Fermer' : 'Ajouter un contact' }}
+      </button>
+    }
 
     <button type="button" class="btn-action" (click)="onShowContact($event)">
       {{ showContacts() ? 'Cacher' : 'Voir les contacts' }}
     </button>
-    }
   </div>
 
   @if (showForm()) {
@@ -38,7 +37,11 @@
   @if (showContacts()) {
   <div class="contacts-list" (click)="$event.stopPropagation()">
     @for (c of associatedContacts(); track c.id) {
-    <app-contact [contact]="c" (remove)="handleDeleteContact($event)" />
+    <app-contact
+      [contact]="c"
+      [canDelete]="authService.isSuperAdmin()"
+      (remove)="handleDeleteContact($event)"
+    />
     } @empty {
     <p class="empty-msg">Aucun contact trouvé pour cet éditeur.</p>
     }
