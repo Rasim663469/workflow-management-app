@@ -1,20 +1,31 @@
 <nav class="app-header">
-  <div class="nav-inner">
-    <a routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
-    <a routerLink="/jeux" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Jeux</a>
-    <a routerLink="/editeurs" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Editeurs</a>
-    @if(auth.isSuperAdmin()) {
-      <a routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Admin</a>
-    }
-    @if(!auth.isLoggedIn()) {
-      <a routerLink="/login" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Login</a>
-    }
+  <div class="nav-left">
+    <div class="brand">FestivalManager</div>
+    <div class="nav-links">
+      <a routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Accueil</a>
+      <a routerLink="/jeux" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Jeux</a>
+      <a routerLink="/editeurs" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Editeurs</a>
+      @if(auth.isSuperAdmin()) {
+        <a routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Admin</a>
+      }
+    </div>
   </div>
-  <div class="nav-role">
-    @if (auth.isLoggedIn()) {
-      <span>Rôle : {{ roleLabel(auth.currentUser()?.role) }}</span>
+  <div class="nav-right">
+    <div class="nav-role">
+      @if (auth.isLoggedIn()) {
+        <span>Rôle : {{ roleLabel(auth.currentUser()?.role) }}</span>
+      } @else {
+        <span>Rôle : Invité</span>
+      }
+    </div>
+    @if(auth.isLoggedIn()) {
+      <button type="button" class="nav-btn" (click)="auth.logout()" [disabled]="auth.isLoading()">
+        Logout
+      </button>
     } @else {
-      <span>Rôle : Invité</span>
+      <a routerLink="/login" class="nav-btn" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        Login
+      </a>
     }
   </div>
 </nav>

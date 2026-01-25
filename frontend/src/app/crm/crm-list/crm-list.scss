@@ -2,7 +2,7 @@
   background: rgba(255, 255, 255, 0.95);
   border-radius: var(--radius-lg);
   padding: 1.2rem 1.5rem;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(63, 58, 51, 0.08);
   box-shadow: var(--shadow-soft);
   margin-bottom: 1.5rem;
   display: flex;
@@ -43,9 +43,9 @@
   }
 
   .pill {
-    background: rgba(44, 74, 168, 0.12);
+    background: rgba(161, 93, 43, 0.12);
     color: var(--brand-700);
-    border: 1px solid rgba(44, 74, 168, 0.3);
+    border: 1px solid rgba(161, 93, 43, 0.3);
   }
 
   .empty {
@@ -71,7 +71,7 @@
   .status-tabs .pill.active {
     border-color: var(--brand-700);
     color: var(--brand-700);
-    background: rgba(44, 74, 168, 0.15);
+    background: rgba(161, 93, 43, 0.15);
   }
 
   .status-tabs .pill span {
@@ -93,8 +93,8 @@
     gap: 1rem;
     padding: 0.9rem 1rem;
     border-radius: var(--radius-md);
-    background: rgba(15, 23, 42, 0.04);
-    border: 1px solid rgba(15, 23, 42, 0.08);
+    background: rgba(63, 58, 51, 0.04);
+    border: 1px solid rgba(63, 58, 51, 0.08);
   }
 
   .info {
@@ -120,7 +120,7 @@
   .badge {
     padding: 0.2rem 0.65rem;
     border-radius: 999px;
-    border: 1px solid rgba(15, 23, 42, 0.12);
+    border: 1px solid rgba(63, 58, 51, 0.12);
     font-size: 0.7rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -174,7 +174,7 @@
 
   .secondary {
     background: rgba(255, 255, 255, 0.7);
-    border: 1px solid rgba(15, 23, 42, 0.1);
+    border: 1px solid rgba(63, 58, 51, 0.1);
     padding: 0.4rem 0.75rem;
     border-radius: var(--radius-sm);
   }
@@ -200,7 +200,7 @@
   }
 
   .history {
-    border-top: 1px dashed rgba(15, 23, 42, 0.12);
+    border-top: 1px dashed rgba(63, 58, 51, 0.12);
     padding-top: 0.75rem;
     color: var(--ink-500);
   }

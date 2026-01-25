@@ -12,7 +12,7 @@
 }
 
 .jeu-form {
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(63, 58, 51, 0.08);
   border-radius: var(--radius-lg);
   padding: 1rem;
   background: #fff;
@@ -36,7 +36,7 @@
 .form-grid input {
   padding: 0.55rem 0.65rem;
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(15, 23, 42, 0.12);
+  border: 1px solid rgba(63, 58, 51, 0.12);
   background: #fff;
 }
 
@@ -62,7 +62,7 @@
 }
 
 .jeu-card {
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(63, 58, 51, 0.08);
   border-radius: var(--radius-md);
   padding: 1rem;
   background: #fff;
@@ -81,7 +81,7 @@
 
 .jeu-type {
   font-size: 0.8rem;
-  background: rgba(44, 74, 168, 0.12);
+  background: rgba(161, 93, 43, 0.12);
   color: var(--brand-700);
   padding: 0.2rem 0.55rem;
   border-radius: 999px;
@@ -104,7 +104,7 @@
 
 .ghost {
   background: transparent;
-  border: 1px solid rgba(15, 23, 42, 0.2);
+  border: 1px solid rgba(63, 58, 51, 0.2);
   border-radius: 999px;
   padding: 0.35rem 0.9rem;
   font-weight: 600;
@@ -133,7 +133,7 @@
   input {
     padding: 0.45rem 0.6rem;
     border-radius: var(--radius-sm);
-    border: 1px solid rgba(15, 23, 42, 0.12);
+    border: 1px solid rgba(63, 58, 51, 0.12);
   }
 }
 
@@ -145,21 +145,21 @@
 }
 
 .alert-info {
-  background: rgba(15, 23, 42, 0.04);
-  border-color: rgba(15, 23, 42, 0.12);
+  background: rgba(63, 58, 51, 0.04);
+  border-color: rgba(63, 58, 51, 0.12);
   color: var(--ink-700);
 }
 
 .alert-error {
-  background: rgba(15, 23, 42, 0.04);
-  border-color: rgba(15, 23, 42, 0.12);
+  background: rgba(63, 58, 51, 0.04);
+  border-color: rgba(63, 58, 51, 0.12);
   color: var(--ink-700);
 }
 
 .jeux-placeholder {
   padding: 1rem 1.25rem;
-  border: 1px dashed rgba(15, 23, 42, 0.25);
+  border: 1px dashed rgba(63, 58, 51, 0.25);
   border-radius: var(--radius-md);
-  background: rgba(15, 23, 42, 0.04);
+  background: rgba(63, 58, 51, 0.04);
   color: var(--ink-500);
 }
