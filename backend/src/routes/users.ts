@@ -113,13 +113,7 @@ router.delete('/:id', requireRoles(['super_admin']), async (req, res) => {
 
     const userRole = rows[0].role;
     if (userRole === 'super_admin') {
-      const countRes = await pool.query(
-        "SELECT COUNT(*)::int AS count FROM users WHERE role = 'super_admin'"
-      );
-      const count = countRes.rows[0]?.count ?? 0;
-      if (count <= 1) {
-        return res.status(400).json({ error: 'Le dernier super admin ne peut pas être supprimé.' });
-      }
+      return res.status(400).json({ error: 'Un super admin ne peut pas être supprimé.' });
     }
 
     await pool.query('DELETE FROM users WHERE id = $1', [id]);

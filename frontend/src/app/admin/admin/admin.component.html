@@ -207,14 +207,16 @@
         >
           Mettre à jour
         </button>
-        <button
-          type="button"
-          class="secondary danger"
-          (click)="deleteUser(user.id!)"
-          [disabled]="deletingUsers()[user.id!]"
-        >
-          Supprimer
-        </button>
+        @if (canDeleteUser(user.role)) {
+          <button
+            type="button"
+            class="secondary danger"
+            (click)="deleteUser(user.id!, user.role)"
+            [disabled]="deletingUsers()[user.id!]"
+          >
+            Supprimer
+          </button>
+        }
       </div>
     }
   </div>
