@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { UserService } from '@shared/users/user.service';
+import { AuthService } from '@shared/auth/auth.service';
 import { environment } from '@env/environment';
 import { EditeurService } from '@services/editeur.service';
 import { JeuService } from '@services/jeu.service';
@@ -15,6 +16,7 @@ import { JeuService } from '@services/jeu.service';
 })
 export class AdminComponent {
   private readonly userService = inject(UserService);
+  private readonly auth = inject(AuthService);
   private readonly http = inject(HttpClient);
   private readonly editeurService = inject(EditeurService);
   private readonly jeuService = inject(JeuService);
@@ -233,7 +235,8 @@ export class AdminComponent {
     });
   }
 
-  deleteUser(userId: number): void {
+  deleteUser(userId: number, role?: string | null): void {
+    if (!this.canDeleteUser(role)) return;
     this.userError.set(null);
     this.userSuccess.set(null);
     this.deletingUsers.update(state => ({ ...state, [userId]: true }));
@@ -257,5 +260,9 @@ export class AdminComponent {
     if (value === 'super_organisateur') return 'super_organisateur';
     if (value === 'organisateur') return 'organisateur';
     return 'benevole';
+  }
+
+  canDeleteUser(role?: string | null): boolean {
+    return role !== 'super_admin';
   }
 }

@@ -9,49 +9,7 @@
 .home-shell {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-}
-
-.home-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.5rem;
-  padding: 0.75rem 1.25rem;
-  background: rgba(255, 255, 255, 0.85);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-soft);
-}
-
-.brand {
-  font-size: clamp(1.6rem, 2.8vw, 2.2rem);
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: var(--ink-900);
-}
-
-.auth-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.auth-actions button,
-.btn-link {
-  border-radius: 999px;
-  padding: 0.55rem 1.35rem;
-  font-weight: 600;
-  background: linear-gradient(135deg, #0f1b3d, #1d2b5a);
-  color: #fff;
-  border: none;
-  box-shadow: 0 8px 20px rgba(15, 27, 61, 0.25);
-}
-
-.btn-link {
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  gap: 1rem;
 }
 
 .home-content {

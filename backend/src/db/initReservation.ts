@@ -24,5 +24,5 @@ export async function ensureReservationWorkflow(): Promise<void> {
     `ALTER TABLE reservation
      ADD CONSTRAINT chk_statut_workflow CHECK (statut_workflow IN (${allowed}))`
   );
-  console.log('👍 Workflow réservation vérifié');
+  console.log('Workflow réservation vérifié');
 }

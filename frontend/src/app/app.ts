@@ -29,7 +29,7 @@ export class App {
   }
 
   constructor() {
-    // Redirige la racine "/" vers "/home" pour les invités comme pour les connectés
+    
     if (this.router.url === '/' || window.location.pathname === '/') {
       this.router.navigateByUrl('/home');
     }

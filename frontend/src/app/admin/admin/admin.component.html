@@ -4,7 +4,7 @@
   <header>
     <p class="eyebrow">Réservations</p>
     <h2>Gestion des réservations</h2>
-    <p class="lead">Accès direct à la page dédiée (list/cards + formulaire).</p>
+    <p class="lead">Accès direct à la page dédiée.</p>
   </header>
   <a routerLink="/reservations" class="button-link">Ouvrir la page Réservations</a>
 </section>
@@ -207,14 +207,16 @@
         >
           Mettre à jour
         </button>
-        <button
-          type="button"
-          class="secondary danger"
-          (click)="deleteUser(user.id!)"
-          [disabled]="deletingUsers()[user.id!]"
-        >
-          Supprimer
-        </button>
+        @if (canDeleteUser(user.role)) {
+          <button
+            type="button"
+            class="secondary danger"
+            (click)="deleteUser(user.id!, user.role)"
+            [disabled]="deletingUsers()[user.id!]"
+          >
+            Supprimer
+          </button>
+        }
       </div>
     }
   </div>

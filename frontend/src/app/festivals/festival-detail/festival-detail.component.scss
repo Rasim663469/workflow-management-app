@@ -8,7 +8,7 @@
 }
 
 .festival-header {
-  background: linear-gradient(135deg, rgba(15, 28, 63, 0.98), rgba(31, 53, 111, 0.9));
+  background: linear-gradient(135deg, #2a1f16, #4a3526);
   color: #f8fafc;
   border-radius: var(--radius-lg);
   padding: 2rem 2.5rem;
@@ -50,7 +50,7 @@
   background: rgba(255, 255, 255, 0.95);
   border-radius: var(--radius-lg);
   padding: 1.5rem 2rem;
-  border: 1px solid rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(63, 58, 51, 0.06);
   box-shadow: var(--shadow-soft);
 
   h2 {
@@ -59,7 +59,7 @@
     color: var(--brand-900);
     font-weight: 700;
     padding-bottom: 0.65rem;
-    border-bottom: 2px solid rgba(31, 53, 111, 0.18);
+    border-bottom: 2px solid rgba(58, 47, 35, 0.18);
   }
 }
 
@@ -74,9 +74,9 @@
 
   li {
     padding: 1rem 1.25rem;
-    background: linear-gradient(120deg, rgba(44, 74, 168, 0.08), transparent 70%);
+    background: linear-gradient(120deg, rgba(161, 93, 43, 0.08), transparent 70%);
     border-radius: var(--radius-md);
-    border: 1px solid rgba(15, 23, 42, 0.06);
+    border: 1px solid rgba(63, 58, 51, 0.06);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 
     &:hover {
@@ -103,7 +103,7 @@
       margin: 0 0 1rem 0;
       font-weight: 700;
       padding-bottom: 0.5rem;
-      border-bottom: 1px solid rgba(31, 53, 111, 0.15);
+      border-bottom: 1px solid rgba(58, 47, 35, 0.15);
     }
   }
 }
@@ -120,7 +120,7 @@
     padding: 1.25rem;
     background: #fff;
     border-radius: var(--radius-md);
-    border: 1px solid rgba(15, 23, 42, 0.08);
+    border: 1px solid rgba(63, 58, 51, 0.08);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     position: relative;
     overflow: hidden;
@@ -129,7 +129,7 @@
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(120deg, rgba(44, 74, 168, 0.12), transparent 70%);
+      background: linear-gradient(120deg, rgba(161, 93, 43, 0.12), transparent 70%);
       opacity: 0;
       transition: opacity 0.2s ease;
       pointer-events: none;
@@ -167,7 +167,7 @@
     .game-details {
       margin-top: 0.75rem;
       padding-top: 0.75rem;
-      border-top: 1px solid rgba(15, 23, 42, 0.08);
+      border-top: 1px solid rgba(63, 58, 51, 0.08);
       font-size: 0.9rem;
       color: var(--ink-700);
       font-weight: 500;

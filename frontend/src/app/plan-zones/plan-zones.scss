@@ -2,7 +2,7 @@
   background: rgba(255, 255, 255, 0.95);
   border-radius: var(--radius-lg);
   padding: 1.25rem 1.5rem;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(63, 58, 51, 0.08);
   box-shadow: var(--shadow-soft);
   margin-bottom: 1.5rem;
 
@@ -14,9 +14,9 @@
   }
 
   .pill {
-    background: rgba(44, 74, 168, 0.12);
+    background: rgba(161, 93, 43, 0.12);
     color: var(--brand-700);
-    border: 1px solid rgba(44, 74, 168, 0.3);
+    border: 1px solid rgba(161, 93, 43, 0.3);
   }
 
   .plan-form {
@@ -41,7 +41,7 @@
   .ghost {
     background: #fff;
     color: var(--brand-700);
-    border: 1px solid rgba(31, 53, 111, 0.2);
+    border: 1px solid rgba(58, 47, 35, 0.2);
     box-shadow: none;
   }
 
@@ -57,8 +57,8 @@
     align-items: center;
     padding: 0.75rem 1rem;
     border-radius: var(--radius-md);
-    background: rgba(15, 23, 42, 0.04);
-    border: 1px solid rgba(15, 23, 42, 0.08);
+    background: rgba(63, 58, 51, 0.04);
+    border: 1px solid rgba(63, 58, 51, 0.08);
     gap: 0.75rem;
     flex-wrap: wrap;
   }
@@ -96,7 +96,7 @@
   .plan-edit select {
     padding: 0.55rem 0.75rem;
     border-radius: 0.75rem;
-    border: 1px solid rgba(15, 23, 42, 0.12);
+    border: 1px solid rgba(63, 58, 51, 0.12);
     background: #fff;
   }
 
