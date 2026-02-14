@@ -82,5 +82,5 @@ export async function ensureFestivals(): Promise<void> {
     }
   }
 
-  console.log('👍 Festivals vérifiés ou créés');
+  console.log(' Festivals vérifiés ou créés');
 }

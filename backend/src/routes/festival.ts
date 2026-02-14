@@ -5,7 +5,7 @@ import { verifyToken } from '../middleware/token-management.js';
 
 const router = Router();
 
-// CREATE + zones tarifaires
+// CREATE 
 router.post(
   '/',
   verifyToken,
@@ -36,7 +36,7 @@ router.post(
   try {
     await client.query('BEGIN');
 
-    // Option recommandée : on garde tous les champs de stock
+    
     const { rows } = await client.query(
       `INSERT INTO festival 
         (nom, location, nombre_total_tables, date_debut, date_fin, description, 
@@ -92,7 +92,7 @@ router.post(
   }
 });
 
-// READ ALL avec zones agrégées pour l'affichage (champs essentiels)
+
 router.get('/', async (_req, res) => {
   try {
     const { rows } = await pool.query(
@@ -366,7 +366,7 @@ router.delete(
   }
 });
 
-// READ games for a festival
+
 router.get('/:id/games', async (req, res) => {
   const { id } = req.params;
   try {

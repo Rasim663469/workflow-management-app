@@ -142,7 +142,7 @@ function computePrice(
   };
 }
 
-// CREATE with multiple tariff zones + price calculation
+// CREATE 
 router.post('/', requireRoles(['super_admin', 'super_organisateur']), async (req, res) => {
   const {
     editeur_id,
@@ -195,7 +195,7 @@ router.post('/', requireRoles(['super_admin', 'super_organisateur']), async (req
   try {
     await client.query('BEGIN');
 
-    // Récupérer les zones tarifaires concernées et vérifier le festival + disponibilités
+    
     const zoneInfos = new Map<number, ZoneInfo>();
 
     for (const line of normalizedLines) {
@@ -232,7 +232,7 @@ router.post('/', requireRoles(['super_admin', 'super_organisateur']), async (req
       prises_electriques
     );
 
-    // Mise à jour du stock pour chaque zone
+
     for (const line of normalizedLines) {
       await client.query(
         `UPDATE zone_tarifaire 
@@ -317,7 +317,7 @@ router.post('/', requireRoles(['super_admin', 'super_organisateur']), async (req
   }
 });
 
-// LIST by festival (cards view)
+
 router.get(
   '/festival/:festivalId',
   requireRoles(['super_admin', 'super_organisateur', 'organisateur', 'benevole']),
@@ -368,7 +368,7 @@ router.get(
   }
 });
 
-// READ by filters (fallback)
+
 router.get(
   '/',
   requireRoles(['super_admin', 'super_organisateur', 'organisateur', 'benevole']),
@@ -456,7 +456,7 @@ router.get(
   }
 });
 
-// UPDATE (workflow / remises / présence)
+// UPDATE 
 router.put('/:id', requireRoles(['super_admin', 'super_organisateur']), async (req, res) => {
   const { id } = req.params;
   const {
@@ -709,7 +709,7 @@ router.put('/:id', requireRoles(['super_admin', 'super_organisateur']), async (r
   }
 });
 
-// CREATE facture for reservation
+// CREATE facture 
 router.post('/:id/factures', requireRoles(['super_admin', 'super_organisateur']), async (req, res) => {
   const { id } = req.params;
   const client = await pool.connect();
@@ -779,7 +779,7 @@ router.post('/:id/factures', requireRoles(['super_admin', 'super_organisateur'])
   }
 });
 
-// CONTACTS history for reservation (editeur + festival)
+// CONTACTS
 router.post('/:id/contacts', requireRoles(['super_admin', 'super_organisateur']), async (req, res) => {
   const { id } = req.params;
   const { date_contact, notes, type_contact } = req.body;
@@ -857,7 +857,7 @@ router.get(
   }
 });
 
-// DELETE (restock tables)
+// DELETE 
 router.delete('/:id', requireRoles(['super_admin', 'super_organisateur']), async (req, res) => {
   const { id } = req.params;
   const client = await pool.connect();

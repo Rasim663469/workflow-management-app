@@ -32,5 +32,5 @@ export async function ensureEditeurs(): Promise<void> {
     );
   }
 
-  console.log('👍 Comptes éditeur vérifiés ou créés');
+  console.log(' Comptes éditeur vérifiés ou créés');
 }

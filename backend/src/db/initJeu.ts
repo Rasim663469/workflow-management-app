@@ -77,7 +77,7 @@ export async function ensureJeux(): Promise<void> {
     const editeurId = editeurIds.get(jeu.editeurLogin);
     if (!editeurId) {
       console.warn(
-        `⚠️  Aucun éditeur trouvé pour le login "${jeu.editeurLogin}", jeu "${jeu.nom}" ignoré.`
+        `  Aucun éditeur trouvé pour le login "${jeu.editeurLogin}", jeu "${jeu.nom}" ignoré.`
       );
       continue;
     }
@@ -96,5 +96,5 @@ export async function ensureJeux(): Promise<void> {
     );
   }
 
-  console.log('👍 Jeux vérifiés ou créés');
+  console.log(' Jeux vérifiés ou créés');
 }

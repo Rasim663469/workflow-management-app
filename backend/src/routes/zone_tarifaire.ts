@@ -15,7 +15,7 @@ router.post('/', requireRoles(['super_admin', 'super_organisateur']), async (req
     }
 
     try {
-        //Au départ, tables_disponibles = tables_total
+        
         const result = await pool.query(
             `INSERT INTO zone_tarifaire 
             (festival_id, nom, nombre_tables_total, nombre_tables_disponibles, prix_table, prix_m2) 
@@ -39,7 +39,7 @@ router.post('/', requireRoles(['super_admin', 'super_organisateur']), async (req
     }
 });
 
-// GET ALL ou FESTIVAL_ID
+
 router.get('/', async (req, res) => {
     const { festival_id } = req.query;
     

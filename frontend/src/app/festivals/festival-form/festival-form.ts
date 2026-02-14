@@ -165,7 +165,7 @@ export class FestivalForm implements OnInit {
         stockChaises: payload.stockChaises,
       }, payload.tariffZones);
     } else {
-      // Persiste en base puis recharge la liste pour récupérer l'ID et les données réelles
+      
       this.persistFestival(payload);
     }
   }
@@ -208,7 +208,7 @@ export class FestivalForm implements OnInit {
       )
       .subscribe({
         next: () => {
-          this.festivalService.loadAll(); // Rafraîchir pour récupérer l'ID réel et les zones
+          this.festivalService.loadAll(); 
           this.submitSuccess.set('Festival créé.');
           this.router.navigate(['/home']);
         },

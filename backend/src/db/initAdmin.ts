@@ -23,7 +23,7 @@ export async function ensureAdmin() {
   );
 
   if (rows.length > 0 && hasSuperAdmin && !hasInvalidRole) {
-    console.log('👍 Comptes utilisateurs existants conservés');
+    console.log(' Comptes utilisateurs existants conservés');
     return;
   }
 
@@ -38,5 +38,5 @@ export async function ensureAdmin() {
     );
   }
 
-  console.log('👍 Comptes utilisateurs réinitialisés');
+  console.log('Comptes utilisateurs réinitialisés');
 }

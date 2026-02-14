@@ -9,7 +9,7 @@ const router = Router();
 router.post('/', verifyToken, requireRoles(['super_admin', 'super_organisateur']), async (req, res) => {
     const { editeur_id, nom, auteurs, age_min, age_max, type_jeu } = req.body;
 
-    // Seuls editeur_id et nom sont  obligatoires
+    
     if (!editeur_id || !nom) {
         return res.status(400).json({ error: 'editeur_id et nom sont requis.' });
     }
@@ -37,7 +37,7 @@ router.post('/', verifyToken, requireRoles(['super_admin', 'super_organisateur']
     }
 });
 
-// GET ALL  ou UN EDITEUR 
+
 router.get('/', async (req, res) => {
     const { editeur_id, q, type, mecanisme, sort } = req.query;
     const values: any[] = [];

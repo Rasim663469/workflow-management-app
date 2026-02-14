@@ -69,5 +69,5 @@ export async function ensureContacts(): Promise<void> {
     );
   }
 
-  console.log('👍 Contacts éditeur vérifiés ou créés');
+  console.log(' Contacts éditeur vérifiés ou créés');
 }

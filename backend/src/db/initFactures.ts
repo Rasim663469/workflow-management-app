@@ -16,5 +16,5 @@ export async function ensureFactures(): Promise<void> {
       CONSTRAINT chk_facture_statut CHECK (statut IN ('facture', 'payee'))
     );
   `);
-  console.log('👍 Factures verifiees');
+  console.log(' Factures verifiees');
 }
